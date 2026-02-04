@@ -1,0 +1,54 @@
+Betul banget, Bang. Karena kita nambah satu data baru (Nama Mesin), otomatis "jalur" datanya harus kita buka di semua file terkait, mulai dari database sampai ke tampilan.
+Tapi tenang, perubahannya sangat simpel. Sebagai Staff Digitalisasi, ini ibarat kita nambah satu kabel baru di jalur panel. Berikut adalah bagian yang perlu diupdate:
+1. Database (SQL)
+Tambahkan kolom machine_name di tabel reports.
+ALTER TABLE reports ADD COLUMN machine_name VARCHAR(100) AFTER id;
+
+2. Model (app/Models/Report.php)
+Izinkan kolom machine_name untuk diisi (Mass Assignment).
+protected $fillable = ['machine_name', 'message', 'photos'];
+
+3. Controller (app/Http/Controllers/ReportController.php)
+Tangkap inputan mesin dari form dan simpan ke database.
+// Di dalam method store
+$request->validate([
+    'machine_name' => 'required', // Tambahkan validasi
+    'message' => 'required',
+    'photos.*' => 'image|mimes:jpeg,png,jpg|max:2048'
+]);
+
+Report::create([
+    'machine_name' => $request->machine_name, // Simpan ke database
+    'message' => $request->message,
+    'photos' => $paths
+]);
+
+4. Update Tampilan Home (Input)
+Kita tambahkan satu text box kecil di atas text box keluhan.
+<div class="mb-4">
+    <label class="block text-sm font-semibold text-gray-700 mb-1">Nama/Nomor Mesin</label>
+    <input type="text" name="machine_name" 
+        class="w-full border-2 border-gray-200 rounded-xl p-2 focus:border-blue-500 outline-none" 
+        placeholder="Contoh: Ilapak 1 / Line 3" required>
+</div>
+
+<div>
+    <label class="block text-sm font-semibold text-gray-700 mb-1">Isi Keluhan</label>
+    <textarea name="message" rows="4" class="w-full border-2 border-gray-200 rounded-xl p-2 focus:border-blue-500 outline-none resize-none" placeholder="Ketik keluhan di sini..." required></textarea>
+</div>
+
+5. Update Tampilan Admin (Riwayat)
+Sekarang di sisi Admin, kita bisa munculkan nama mesinnya sebagai judul kecil agar admin tahu mesin mana yang bermasalah.
+<div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+    <div class="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-1 rounded-md inline-block mb-2 uppercase">
+        MESIN: {{ $report->machine_name }}
+    </div>
+    
+    <p class="text-gray-700 leading-relaxed">{{ $report->message }}</p>
+    
+    </div>
+
+Kesimpulan
+Iya, semua file utama (Migration, Model, Controller, dan 2 View) harus disentuh sedikit. Di Laravel, alurnya selalu:
+Database -> Model -> Controller -> View.
+Mau saya buatkan file lengkapnya lagi yang sudah ada input Nama Mesin ini agar tinggal kamu copy-paste nanti pas sudah ada laptop?
