@@ -1,0 +1,207 @@
+"Gw mau bikin project laravel 11, project ini buat operator produksi, intinya fokusnya ke kebutuhan operator untuk laporan keluhan,
+
+
+Jadi gini. Screen utama ada 2
+
+1. main/home/index atau apalah sebagai halaman utama,
+
+Di screen ini ada 2 fitur, kotak text boxt dengan lebar 4 space text untuk input masukan
+
+Lalu di bawahnya ada opsi untuk insert gambar, munculin 1 icon aja tapi untuk file picker nya bisa choose banyak dan maksimal 10 foto
+
+2. admin_panel.php
+
+
+Nah file ini khusus untuk admin untuk melihat daftar riwayat inputan karyawan (file ini di hide) jadi jangan di tambah di home untuk direct ke file ini karena hanya admin yang tau,
+
+Jadi buat kaya form text chat gitu
+
+Isinya keluhan/masukan/text dibawahnya ada foto yang kaya thumbnail aja tapi pas di klik bisa di liat kaya preview
+
+
+Nah dari kedua file itu, aku mau kamu juga sekalian buatin database .env nya dengan nama database nya askb7
+
+Kemudian sekalian bikinin sql yang tinggal di import di mysql,
+
+
+Nah jadi total kan ada 4 file utama yang ku minta, tapi karena ini laravel jadi tolong buat file kebutuhan yang lain kaya buat route, controller, dll sesuai kebutuhan project ini,
+
+
+Tolong buatkan dan kirim lengkap file nya
+
+
+
+Halo! Sebagai Staff Digitalisasi, membuat sistem pelaporan yang streamlined untuk operator memang krusial. Kita akan menggunakan Laravel 11 dengan pendekatan yang minimalis namun fungsional.
+Karena Laravel 11 sudah tidak menggunakan Http/Controllers/Controller.php secara default (langsung di folder Controllers), strukturnya akan sangat bersih.
+Berikut adalah detail filenya:
+1. Konfigurasi Database (.env)
+Sesuaikan bagian database pada file .env Anda:
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=askb7
+DB_USERNAME=root
+DB_PASSWORD=
+
+2. Struktur Database (SQL)
+Silakan buat database bernama askb7 di MySQL, lalu jalankan query berikut:
+CREATE TABLE reports (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    message TEXT NOT NULL,
+    photos JSON DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+3. Migration & Model
+Laravel menggunakan Migration, namun karena Anda meminta SQL siap pakai, kita cukup buat Model-nya.
+File: app/Models/Report.php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Report extends Model
+{
+    protected $fillable = ['message', 'photos'];
+    protected $casts = ['photos' => 'array']; // Otomatis handle JSON ke Array
+}
+
+4. Controller
+Kita buat satu controller untuk menangani input operator dan tampilan admin.
+File: app/Http/Controllers/ReportController.php
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Report;
+use Illuminate\Http\Request;
+
+class ReportController extends Controller
+{
+    public function index() {
+        return view('operator_home');
+    }
+
+    public function store(Request $request) {
+        $request->validate([
+            'message' => 'required',
+            'photos.*' => 'image|mimes:jpeg,png,jpg|max:2048'
+        ]);
+
+        $paths = [];
+        if($request->hasFile('photos')) {
+            foreach($request->file('photos') as $photo) {
+                $paths[] = $photo->store('reports', 'public');
+            }
+        }
+
+        Report::create([
+            'message' => $request->message,
+            'photos' => $paths
+        ]);
+
+        return back()->with('success', 'Laporan berhasil terkirim!');
+    }
+
+    public function admin() {
+        $reports = Report::latest()->get();
+        return view('admin_panel', compact('reports'));
+    }
+}
+
+5. Routing
+File: routes/web.php
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ReportController;
+
+Route::get('/', [ReportController::class, 'index'])->name('home');
+Route::post('/report', [ReportController::class, 'store'])->name('report.store');
+
+// URL admin di-hide (hanya yang tahu linknya yang bisa akses)
+Route::get('/panel-admin-rahasia-askb7', [ReportController::class, 'admin']);
+
+6. View: Halaman Utama Operator
+Gunakan Tailwind CSS (CDN) agar cepat dan responsif di HP operator.
+File: resources/views/operator_home.blade.php
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Input Keluhan Produksi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-4">
+    <div class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden p-6">
+        <h2 class="text-xl font-bold mb-4">Form Keluhan Operator</h2>
+        
+        <form action="{{ route('report.store') }}" method="POST" enctype="multipart/form-data">
+            @csrf
+            <textarea name="message" rows="4" class="w-full border p-2 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Ketik keluhan/masukan di sini..." required></textarea>
+            
+            <div class="mt-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Lampiran Foto (Maks 10)</label>
+                <div class="flex items-center">
+                    <label class="cursor-pointer bg-gray-200 p-3 rounded-full hover:bg-gray-300 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <input type="file" name="photos[]" multiple class="hidden" accept="image/*">
+                    </label>
+                    <span class="ml-3 text-xs text-gray-500">Klik icon untuk pilih foto</span>
+                </div>
+            </div>
+
+            <button type="submit" class="w-full mt-6 bg-blue-600 text-white font-bold py-2 rounded-lg hover:bg-blue-700">Kirim Laporan</button>
+        </form>
+    </div>
+</body>
+</html>
+
+7. View: Admin Panel (Style Chat)
+File: resources/views/admin_panel.blade.php
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Riwayat Keluhan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-200 p-4">
+    <div class="max-w-2xl mx-auto">
+        <h1 class="text-2xl font-bold mb-6 text-gray-800">Riwayat Masukan Karyawan</h1>
+        
+        <div class="space-y-4">
+            @foreach($reports as $report)
+            <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-blue-500">
+                <p class="text-gray-800 whitespace-pre-wrap">{{ $report->message }}</p>
+                
+                @if($report->photos)
+                <div class="flex flex-wrap gap-2 mt-3">
+                    @foreach($report->photos as $path)
+                    <a href="{{ asset('storage/'.$path) }}" target="_blank">
+                        <img src="{{ asset('storage/'.$path) }}" class="w-20 h-20 object-cover rounded-md border hover:opacity-80 transition">
+                    </a>
+                    @endforeach
+                </div>
+                @endif
+                
+                <span class="text-[10px] text-gray-400 mt-2 block italic">{{ $report->created_at->format('d M Y, H:i') }} WIB</span>
+            </div>
+            @endforeach
+        </div>
+    </div>
+</body>
+</html>
+
+Langkah Penting Terakhir:
+ * Jalankan perintah php artisan storage:link di terminal agar foto yang diupload bisa muncul di browser.
+ * Pastikan folder storage/app/public/reports tersedia atau akan dibuat otomatis saat upload.
+"
+
