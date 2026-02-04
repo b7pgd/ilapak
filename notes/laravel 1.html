@@ -1,0 +1,70 @@
+<body style="max-width: 800px; margin: auto; font-family: sans-serif; padding: 20px;">
+
+
+
+
+.github
+app
+bootstrap
+config
+database
+public
+resources
+routes
+storage
+tests
+vendor
+.editorconfig
+.env
+.env.example
+.gitattributes
+.gitignore
+.styleci.yml
+artisan
+CHANGELOG.md
+composer.json
+composer.lock
+package.json
+phpunit.xml
+README.md
+vite.config.js
+
+
+
+Siap, Ghani! Mari kita bedah satu per satu "isi perut" Laravel 11 ini dengan bahasa yang mudah dimengerti buat orang lapangan di pabrik.
+Saya bagi menjadi tiga kelompok: Area Kerja (yang sering kamu buka), Mesin (yang penting tapi jarang disentuh), dan File Administrasi (file "receh" tapi penting).
+1. Area Kerja Utama (Sering Kamu Buka)
+Di sinilah tempat kamu "bertelur" kodingan:
+ * app/: Ini adalah Otak aplikasi. Di dalamnya ada folder Models (definisi tabel database) dan Http/Controllers (logika perhitungan, misal: rumus Simulasi Ilapak).
+ * database/: Isinya adalah Arsitektur Database. Ada folder migrations yang isinya file buat bikin tabel-tabel database tanpa perlu buka PHPMyAdmin.
+ * resources/: Ini tempat Tampilan. Di folder views, kamu bakal bikin file .blade.php (tampilan tombol, tabel, dll).
+ * routes/: Ini adalah Resepsionis. File web.php di sini gunanya buat daftar alamat URL (misal: domain.com/simulasi).
+ * .env: Ini Kunci Brankas. Isinya password database dan settingan rahasia lainnya.
+2. Area Mesin (Biarkan Saja, Jangan Dihapus)
+ * bootstrap/: File buat "starter" agar Laravel bisa mulai berjalan.
+ * config/: Kumpulan file pengaturan (pengaturan waktu, bahasa, mail server).
+ * public/: Ini adalah Pintu Depan. Semua file CSS, Gambar, dan JS yang bisa dilihat orang luar ditaruh di sini.
+ * storage/: Tempat Laravel naruh file "sampah" (cache) dan file upload-an user (misal: foto kerusakan mesin).
+ * vendor/: Ini Perpustakaan Raksasa. Isinya ribuan kode buatan orang lain agar Laravel bisa sakti. (Ukurannya paling besar, tapi jangan pernah diedit manual!).
+3. File "Receh" Administrasi (Daftar Cekal & Aturan)
+ * .github/: Settingan kalau kamu mau pakai robot otomatis di GitHub (GitHub Actions).
+ * artisan: File sakti untuk menjalankan perintah di terminal (Contoh: php artisan serve).
+ * composer.json & composer.lock: Daftar belanjaan "bumbu" (library) apa saja yang dipakai web kamu.
+ * package.json & vite.config.js: Daftar belanjaan buat urusan tampilan (CSS/Javascript).
+ * .gitignore: Daftar file/folder yang dilarang masuk ke GitHub (biar rahasia kamu aman).
+ * .env.example: Contoh file .env. Gunanya buat kasih tahu orang lain "Eh, web ini butuh password database lho" tanpa ngasih password aslinya.
+ * README.md: Buku manual/penjelasan singkat tentang project kamu.
+ * tests/ & phpunit.xml: Area buat bikin tes otomatis (memastikan kodinganmu nggak error setelah diupdate).
+ * .editorconfig & .styleci.yml: Aturan kerapihan koding (biar spasi dan tab seragam).
+ * .gitattributes: Aturan khusus buat sistem Git.
+ * CHANGELOG.md: Catatan riwayat perubahan versi aplikasi kamu.
+Kesimpulan Buat Kamu:
+Meskipun file dan foldernya banyak, sebagai it, 90% waktu kamu cuma bakal habis di folder:
+ * app/ (Logika)
+ * routes/ (Alamat Web)
+ * resources/ (Tampilan)
+ * database/ (Tabel)
+ * .env (Setting Database)
+Sisanya? Biarkan mereka bekerja di balik layar seperti mesin-mesin otomatis di pabrik yang nggak perlu kamu bongkar tiap hari selama nggak ada masalah.
+
+</body>
