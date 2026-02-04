@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo to Text OCR</title>
+    <style>
+        /* UI Fresh White & Blue */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; color: #333; text-align: center; padding: 20px; margin: 0; }
+        .container { background: #ffffff; padding: 30px; border-radius: 16px; max-width: 450px; margin: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #e1e4e8; }
+        
+        h2 { color: #1a73e8; margin-bottom: 5px; font-weight: 600; }
+        .sub-text { font-size: 13px; color: #666; margin-bottom: 20px; }
+        
+        /* Input & Hidden Canvas */
+        input[type="file"] { margin: 15px 0; width: 100%; font-size: 13px; }
+        #canvas { display: none; } /* Preview disembunyikan total */
+        
+        /* Status & Loading */
+        #status { margin: 15px 0; font-size: 14px; font-weight: bold; color: #1a73e8; min-height: 20px; }
+        
+        /* Output: Teks Hitam */
+        #output { 
+            white-space: pre-wrap; 
+            margin-top: 20px; 
+            background: #f8f9fa; 
+            color: #1a1a1a; 
+            padding: 15px; 
+            border-radius: 10px; 
+            text-align: left; 
+            font-size: 14px; 
+            min-height: 120px; 
+            border: 1px solid #ced4da;
+            line-height: 1.5;
+        }
+
+        /* Button Biru */
+        button { 
+            background: #1a73e8; 
+            color: white; 
+            border: none; 
+            padding: 15px; 
+            border-radius: 10px; 
+            width: 100%; 
+            font-weight: bold; 
+            cursor: pointer; 
+            font-size: 16px;
+            transition: background 0.2s;
+            box-shadow: 0 4px 6px rgba(26, 115, 232, 0.2);
+        }
+        button:hover { background: #1557b0; }
+        button:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; }
+
+        .engine-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            background: #e8f0fe;
+            color: #1a73e8;
+            font-size: 11px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>📷 Photo to Text</h2>
+    <div class="sub-text">Scan gambar langsung dari galeri atau kamera</div>
+    
+    <input type="file" id="fileInput" accept="image/*">
+    <canvas id="canvas"></canvas>
+    
+    <div id="status">Pilih foto untuk memulai</div>
+    <button id="scanBtn" disabled>MULAI SCAN</button>
+    
+    <div id="output">Hasil scan teks akan muncul di sini...</div>
+</div>
+
+<script>
+    const fileInput = document.getElementById('fileInput');
+    const scanBtn = document.getElementById('scanBtn');
+    const status = document.getElementById('status');
+    const output = document.getElementById('output');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    const API_KEY = 'K81551206988957';
+
+    fileInput.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => {
+                const scale = Math.min(1, 1000 / Math.max(img.width, img.height));
+                canvas.width = img.width * scale;
+                canvas.height = img.height * scale;
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                
+                status.textContent = "Gambar siap. Klik scan untuk memproses.";
+                scanBtn.disabled = false;
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    };
+
+    scanBtn.onclick = async () => {
+        scanBtn.disabled = true;
+        output.textContent = "Menganalisa gambar...";
+        
+        const callOCR = async (engine, timeoutMs = null) => {
+            status.innerHTML = `🚀 Memproses... <div class="engine-badge">Engine ${engine}</div>`;
+            
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+            const formData = new FormData();
+            formData.append('base64Image', dataUrl);
+            formData.append('apikey', API_KEY);
+            formData.append('language', 'eng');
+            formData.append('OCREngine', engine);
+            formData.append('scale', 'false');
+
+            // Kontrol Timeout
+            const controller = new AbortController();
+            let timeoutId = null;
+            
+            if (timeoutMs) {
+                timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+            }
+
+            try {
+                const response = await fetch('https://api.ocr.space/parse/image', {
+                    method: 'POST',
+                    body: formData,
+                    signal: controller.signal
+                });
+                if (timeoutId) clearTimeout(timeoutId);
+                return await response.json();
+            } catch (err) {
+                if (err.name === 'AbortError') {
+                    throw new Error("Timeout: Antrean Engine 2 terlalu lama.");
+                }
+                throw err;
+            }
+        };
+
+        try {
+            // Step 1: Coba Engine 2 dengan Timeout 2 Detik (2000ms)
+            let result;
+            try {
+                result = await callOCR('2', 2000); 
+            } catch (e) {
+                // Jika timeout 2 detik kena, buat result seolah-olah error agar masuk ke fallback
+                console.warn(e.message);
+                result = { OCRExitCode: 99, ErrorMessage: e.message };
+            }
+
+            if (result.OCRExitCode === 1) {
+                output.textContent = result.ParsedResults[0].ParsedText || "Teks tidak ditemukan.";
+                status.textContent = "✅ Scan Selesai!";
+            } else {
+                // Step 2: Fallback ke Engine 1 (Tanpa timeout ketat karena ini pilihan terakhir)
+                console.warn("Pindah ke Engine 1...");
+                let result2 = await callOCR('1');
+
+                if (result2.OCRExitCode === 1) {
+                    output.textContent = result2.ParsedResults[0].ParsedText;
+                    status.textContent = "✅ Selesai (Engine 1)";
+                } else {
+                    status.textContent = "❌ Gagal";
+                    output.textContent = "Error: " + result2.ErrorMessage;
+                }
+            }
+        } catch (err) {
+            status.textContent = "❌ Masalah Koneksi";
+            output.textContent = "Error: " + err.message;
+        } finally {
+            scanBtn.disabled = false;
+        }
+    };
+</script>
+
+</body>
+</html>
+

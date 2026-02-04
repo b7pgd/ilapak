@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Simulasi Counter Mesin Ilapak</title>
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --text-color: #333;
+        }
+
+        body { 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            background: var(--bg-color); 
+            padding: 15px; 
+            margin: 0;
+            color: var(--text-color);
+        }
+
+        .container { 
+            max-width: 500px; 
+            background: var(--card-bg); 
+            padding: 20px; 
+            border-radius: 15px; 
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1); 
+            margin: auto; 
+        }
+
+        h2 { 
+            text-align: center; 
+            color: var(--primary-color);
+            margin-bottom: 25px;
+            font-size: 1.4rem;
+        }
+
+        label { 
+            display: block; 
+            margin-top: 15px; 
+            font-weight: 600; 
+            font-size: 0.9rem;
+            color: #555;
+        }
+
+        input { 
+            width: 100%; 
+            padding: 12px; 
+            margin-top: 6px; 
+            box-sizing: border-box; 
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            border-color: var(--primary-color);
+        }
+
+        input::placeholder {
+            color: #aaa;
+            opacity: 1;
+        }
+
+        .row { 
+            display: flex; 
+            gap: 10px; 
+            align-items: flex-end; 
+        }
+
+        button { 
+            cursor: pointer; 
+            border-radius: 8px; 
+            border: none; 
+            transition: all 0.3s ease;
+        }
+
+        .btn-hitung { 
+            margin-top: 25px; 
+            width: 100%; 
+            padding: 15px; 
+            background: linear-gradient(135deg, #007bff, #0056b3); 
+            color: #fff; 
+            font-size: 1.1rem; 
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0,123,255,0.3);
+        }
+
+        .btn-hitung:active {
+            transform: scale(0.98);
+        }
+
+        .btn-extra { 
+            background: var(--secondary-color); 
+            color: #fff; 
+            padding: 0 15px; 
+            height: 45px; 
+            font-size: 0.8rem;
+            flex-shrink: 0;
+            font-weight: bold;
+        }
+
+        .extra-field { 
+            display: none; 
+            background: #fff9e6; 
+            padding: 15px; 
+            border-radius: 10px; 
+            margin-top: 10px; 
+            border: 1px dashed #ffc107; 
+        }
+
+        .result { 
+            margin-top: 25px; 
+            background: #f8f9fa; 
+            padding: 20px; 
+            border-radius: 12px; 
+            border: 1px solid #e9ecef;
+            display: none; 
+        }
+
+        .result p { 
+            margin: 12px 0; 
+            border-bottom: 1px solid #eee; 
+            padding-bottom: 8px; 
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1rem;
+        }
+
+        .val-group {
+            text-align: right;
+            display: inline-block;
+        }
+
+        .result strong {
+            color: #666;
+            font-weight: 600;
+        }
+
+        .blue { 
+            color: var(--primary-color); 
+            font-weight: bold; 
+            font-size: 1.2rem;
+        }
+
+        /* Garis Pemisah Full Grey sesuai permintaan */
+        .divider {
+            height: 2px;
+            background: #ddd;
+            border: none;
+            margin: 20px 0;
+        }
+
+        .extra-info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: -8px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #fff;
+            border-radius: 8px;
+            border-left: 4px solid #ffc107;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .extra-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .extra-val {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #856404;
+        }
+
+        .total-final-row {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid var(--primary-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .total-final-label {
+            font-weight: 800;
+            color: var(--primary-color);
+            font-size: 1rem;
+        }
+
+        .total-final-val {
+            font-size: 1.4rem;
+            font-weight: 900;
+            color: #004085;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Hitung Counter Ilapak</h2>
+
+    <label>Counter Tujuan (Total)</label>
+    <input type="number" id="counterTotal" placeholder="Contoh: 46300" inputmode="numeric">
+
+    <label>Counter Mesin 1 Saat Ini</label>
+    <div class="row">
+        <input type="number" id="counter1" placeholder="M1 Sekarang" inputmode="numeric">
+        <button class="btn-extra" onclick="toggleField('extra1')">➕ TAMBAHAN</button>
+    </div>
+    <div id="extra1" class="extra-field">
+        <label>Counter Tambahan M1 (Akibat Reset)</label>
+        <input type="number" id="tambah1" placeholder="Input Counter Tambahan Mesin 1" inputmode="numeric">
+    </div>
+
+    <label>Counter Mesin 2 Saat Ini</label>
+    <div class="row">
+        <input type="number" id="counter2" placeholder="M2 Sekarang" inputmode="numeric">
+        <button class="btn-extra" onclick="toggleField('extra2')">➕ TAMBAHAN</button>
+    </div>
+    <div id="extra2" class="extra-field">
+        <label>Counter Tambahan M2 (Akibat Reset)</label>
+        <input type="number" id="tambah2" placeholder="Input Counter Tambahan Mesin 2" inputmode="numeric">
+    </div>
+
+    <label>Speed Total Kedua Mesin (sachet / detik)</label>
+    <input type="number" id="speedTotal" placeholder="Contoh: 150" inputmode="numeric">
+
+    <label>Waktu Tambahan (Menit)</label>
+    <input type="number" id="waktuOpsional" placeholder="Misal: 15 (Kosongkan Jika Tidak Ada)" inputmode="numeric">
+
+    <button class="btn-hitung" onclick="hitung()">HITUNG ESTIMASI</button>
+
+    <div class="result" id="hasil">
+        <p><strong>Total Waktu:</strong> <span class="val-group"><span id="resTotalMenit"></span> menit</span></p>
+        <p><strong>Konversi Waktu:</strong> <span class="val-group" id="resKonv"></span></p>
+        <p><strong>Jam Selesai (WIB):</strong> <span class="val-group blue" style="color: #dc3545;" id="resJam"></span></p>
+        
+        <hr class="divider">
+        
+        <p><strong>Counter Akhir Mesin 1:</strong> <span class="val-group blue" id="resAkhir1"></span></p>
+        <div id="displayT1" class="extra-info-row" style="display:none;">
+            <span class="extra-label">Counter tambahan M1:</span>
+            <span id="resT1" class="extra-val"></span>
+        </div>
+        
+        <p><strong>Counter Akhir Mesin 2:</strong> <span class="val-group blue" id="resAkhir2"></span></p>
+        <div id="displayT2" class="extra-info-row" style="display:none;">
+            <span class="extra-label">Counter tambahan M2:</span>
+            <span id="resT2" class="extra-val"></span>
+        </div>
+
+        <div class="total-final-row">
+            <span class="total-final-label">TOTAL COUNTER AKHIR:</span>
+            <span id="resTotalAkhir" class="total-final-val"></span>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleField(id) {
+    const field = document.getElementById(id);
+    field.style.display = (field.style.display === 'block') ? 'none' : 'block';
+}
+
+function hitung() {
+    const target = Number(document.getElementById("counterTotal").value);
+    const m1 = Number(document.getElementById("counter1").value);
+    const m2 = Number(document.getElementById("counter2").value);
+    const t1 = Number(document.getElementById("tambah1").value) || 0;
+    const t2 = Number(document.getElementById("tambah2").value) || 0;
+    const speed = Number(document.getElementById("speedTotal").value);
+    const breakTime = Number(document.getElementById("waktuOpsional").value) || 0;
+
+    if (!target || !speed) {
+        alert("Mohon isi Target dan Speed!");
+        return;
+    }
+
+    const totalProduksiSekarang = m1 + m2 + t1 + t2;
+    const sisaBeban = target - totalProduksiSekarang;
+
+    if (sisaBeban <= 0) {
+        alert("Target sudah tercapai.");
+        return;
+    }
+
+    const jatahPerMesin = sisaBeban / 2;
+    const hasilAkhir1 = Math.round(m1 + jatahPerMesin);
+    const hasilAkhir2 = Math.round(m2 + jatahPerMesin);
+
+    const menitProduksi = Math.ceil(sisaBeban / speed);
+    const totalMenit = menitProduksi + breakTime;
+    
+    const h = Math.floor(totalMenit / 60);
+    const m = totalMenit % 60;
+
+    const now = new Date();
+    const finish = new Date(now.getTime() + totalMenit * 60000);
+    const jamSelesai = finish.toLocaleTimeString("id-ID", {hour: "2-digit", minute: "2-digit"}).replace(':', '.');
+
+    document.getElementById("resTotalMenit").innerText = totalMenit;
+    document.getElementById("resKonv").innerText = h + " jam " + m + " menit";
+    document.getElementById("resJam").innerText = jamSelesai;
+    document.getElementById("resAkhir1").innerText = hasilAkhir1;
+    document.getElementById("resAkhir2").innerText = hasilAkhir2;
+
+    if (t1 > 0) {
+        document.getElementById("displayT1").style.display = "flex";
+        document.getElementById("resT1").innerText = t1;
+    } else { document.getElementById("displayT1").style.display = "none"; }
+
+    if (t2 > 0) {
+        document.getElementById("displayT2").style.display = "flex";
+        document.getElementById("resT2").innerText = t2;
+    } else { document.getElementById("displayT2").style.display = "none"; }
+
+    // Hitung total akumulasi akhir untuk meyakinkan user
+    const akumulasiTotal = hasilAkhir1 + hasilAkhir2 + t1 + t2;
+    document.getElementById("resTotalAkhir").innerText = akumulasiTotal;
+
+    document.getElementById("hasil").style.display = "block";
+}
+</script>
+
+</body>
+</html>
+

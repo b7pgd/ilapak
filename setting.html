@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulasi Training Ilapak - Komix Ramping Fix</title>
+    <style>
+        :root {
+            --sachet-orange: #d18d5f;
+            --komix-green: #008450;
+        }
+
+        body {
+            background-color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            font-family: 'Arial Narrow', Arial, sans-serif;
+            margin: 0;
+        }
+
+        .training-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            padding: 40px 0;
+            border-bottom: 5px solid #ccc;
+        }
+
+        .machine-photo {
+            width: 290px;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 10px;
+            border: 2px solid #333;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .sachet-container {
+            width: 290px; 
+            height: 460px; 
+            background-color: var(--sachet-orange);
+            position: relative;
+            border: 1px solid #a3653d;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+            transition: transform 0.5s ease;
+        }
+
+        .flipped { transform: rotate(180deg); }
+
+        .sealing {
+            background-image: radial-gradient(#8d5634 1px, transparent 1px);
+            background-size: 3px 3px;
+            position: absolute;
+            z-index: 10;
+        }
+        
+        .sealing-top { top: 0; left: 0; width: 100%; height: 30px; border-bottom: 1px solid rgba(0,0,0,0.2); }
+        .sealing-bottom { bottom: 0; left: 0; width: 100%; height: 30px; border-top: 1px solid rgba(0,0,0,0.2); }
+        .sealing-side { top: 0; height: 100%; width: 15px; }
+        .sealing-left { left: 0; }
+        .sealing-right { right: 0; }
+
+        .content-wrapper {
+            position: absolute;
+            width: 400px; 
+            height: 260px; 
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-90deg);
+            display: flex;
+            flex-direction: column;
+            padding: 5px 30px; 
+            box-sizing: border-box;
+            transition: none;
+        }
+
+        .brand-section { display: flex; align-items: flex-end; margin-bottom: 3px; }
+        .brand-name { font-size: 48px; color: var(--komix-green); font-weight: 900; margin: 0; line-height: 0.8; letter-spacing: -2px; -webkit-text-stroke: 0.5px white; }
+        .brand-label { font-size: 9px; font-weight: bold; margin-bottom: 4px; margin-left: 8px; color: #000; }
+
+        .description-area { 
+            font-size: 7.8px; 
+            line-height: 1.1; 
+            color: #000; 
+            text-align: justify; 
+        }
+
+        .section-title { 
+            display: inline-block;
+            font-weight: bold; 
+            text-decoration: underline; 
+            margin-top: 1px;
+        }
+
+        .footer-elements { display: flex; align-items: flex-end; gap: 10px; margin-top: auto; padding-bottom: 5px; }
+        .barcode-area { background: white; padding: 1px 4px; text-align: center; }
+        .barcode-lines { width: 70px; height: 22px; background: repeating-linear-gradient(90deg, #000, #000 1.5px, #fff 1.5px, #fff 3.5px); }
+        .barcode-num { font-size: 7px; font-weight: bold; letter-spacing: 0.5px; color: #000; }
+
+        .icons-side-group { display: flex; align-items: center; gap: 8px; }
+        .blue-dot { width: 16px; height: 16px; background: #005dab; border-radius: 50%; border: 1px solid white; }
+        .netto-text { font-weight: bold; font-size: 11px; color: #000; }
+        .warning-box { border: 1px solid #000; padding: 1px 3px; font-size: 6px; text-align: center; width: 60px; background: rgba(255,255,255,0.2); font-weight: bold; line-height: 1; color: #000; }
+
+        .batch-code {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            font-size: 15px;
+            letter-spacing: 2px;
+            color: #1a1a1a;
+            z-index: 20;
+        }
+
+        .control-panel {
+            margin-top: 20px;
+            background: #333;
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column; 
+            align-items: center;
+            gap: 10px;
+            color: white;
+            min-width: 290px;
+        }
+        
+        .adjuster-row { display: flex; align-items: center; gap: 20px; justify-content: center; }
+        .btn-group { display: flex; gap: 10px; margin-top: 5px; }
+        .btn-adjust { background: #555; color: white; border: none; padding: 10px 20px; font-size: 20px; cursor: pointer; border-radius: 5px; }
+        .btn-reset { background: #b33939; color: white; border: none; padding: 8px 15px; font-size: 11px; cursor: pointer; border-radius: 4px; text-transform: uppercase; font-weight: bold; }
+        .btn-rotate { background: #2980b9; color: white; border: none; padding: 8px 15px; font-size: 11px; cursor: pointer; border-radius: 4px; text-transform: uppercase; font-weight: bold; }
+
+        .param-val { font-family: monospace; font-size: 24px; color: #0f0; min-width: 50px; text-align: center; }
+        .label-ctrl { font-size: 14px; text-transform: uppercase; font-weight: bold; color: #fff; }
+        
+        .info-box {
+            margin-top: 15px;
+            background: #fff;
+            padding: 12px;
+            border-left: 5px solid #b33939;
+            width: 290px;
+            box-sizing: border-box;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .desc-text { font-size: 14px; color: #222; text-align: left; line-height: 1.6; font-weight: bold; }
+        .desc-text span { color: #b33939; }
+    </style>
+</head>
+<body>
+
+    <div class="training-section">
+        <img src="https://raw.githubusercontent.com/coptah1-max/Ilapak/main/1.jpg" alt="Mesin Ilapak 1" class="machine-photo">
+        <div id="container-1" class="sachet-container">
+            <div id="s1-top" class="sealing sealing-top"></div>
+            <div id="s1-bottom" class="sealing sealing-bottom"></div>
+            <div class="sealing sealing-side sealing-left"></div>
+            <div class="sealing sealing-side sealing-right"></div>
+            <div class="content-wrapper" style="top: 50%">
+                <div class="brand-section"><h1 class="brand-name">KOMIX</h1><span class="brand-label">SIRUP OBAT BATUK</span></div>
+                <div class="description-area">
+                    <span class="section-title">KOMPOSISI:</span> Setiap sachet mengandung: Guaifenesin 100 mg, Dextromethorphan HBr 15 mg, Chlorphenamine Maleate 2 mg. Bahan tambahan: Sucrose, CMC Sodium, Starch, Polyoxyl, Sodium Citrate, Citric Acid, Sodium Benzoate, Pewarna Caramel, Perisa Artifisial, Saccharine Sodium.<br>
+                    <span class="section-title">CARA KERJA OBAT:</span> Antitusif, antihistamin dan ekspektoran.<br>
+                    <span class="section-title">INDIKASI:</span> Meredakan batuk.<br>
+                    <span class="section-title">DOSIS:</span> Dewasa 3x sehari 1-2 sachet.<br>
+                    <span class="section-title">PERINGATAN:</span> Hati-hati penderita gangguan hati/ginjal. Jangan mengendarai mesin.<br>
+                    <span class="section-title">EFEK SAMPING:</span> Mengantuk, mulut kering.<br>
+                    <span class="section-title">KONTRAINDIKASI:</span> Hipersensitif komponen obat.<br>
+                    <div style="margin-top:2px"><b>SIMPAN DI BAWAH 30&deg;C</b></div>
+                </div>
+                <div class="footer-elements">
+                    <div class="barcode-area"><div class="barcode-lines"></div><div class="barcode-num">8 993058 300500</div></div>
+                    <div class="icons-side-group"><div class="blue-dot"></div><div class="netto-text">NETTO 7mL</div><div class="warning-box">AWAS! OBAT KERAS</div></div>
+                </div>
+            </div>
+            <div class="batch-code" style="bottom: 40px;">HM630F DEC25 DEC27</div>
+        </div>
+        <div class="control-panel">
+            <div class="label-ctrl">Sealing Offset</div>
+            <div class="adjuster-row">
+                <button class="btn-adjust" onclick="adjustSealing(-4)">◀</button>
+                <div id="v-seal" class="param-val">30</div>
+                <button class="btn-adjust" onclick="adjustSealing(4)">▶</button>
+            </div>
+            <div class="btn-group">
+                <button class="btn-rotate" onclick="toggleRotate('container-1', 'desc-1')">Rotate 180°</button>
+                <button class="btn-reset" onclick="resetSealing()">Reset Default</button>
+            </div>
+        </div>
+        <div class="info-box"><div id="desc-1" class="desc-text">◀ <span>Kurangi:</span> Seal atas MENYEMPIT <br> ▶ <span>Tambah:</span> Seal bawah MELEBAR</div></div>
+    </div>
+
+    <div class="training-section">
+        <img src="https://raw.githubusercontent.com/coptah1-max/Ilapak/main/2.jpg" alt="Mesin Ilapak 2" class="machine-photo">
+        <div id="container-2" class="sachet-container">
+            <div class="sealing sealing-top"></div><div class="sealing sealing-bottom"></div>
+            <div class="sealing sealing-side sealing-left"></div><div class="sealing sealing-side sealing-right"></div>
+            
+            <div id="redaksi-top" class="content-wrapper">
+                <div class="brand-section"><h1 class="brand-name">KOMIX</h1><span class="brand-label">SIRUP OBAT BATUK</span></div>
+                <div class="description-area">
+                    <span class="section-title">KOMPOSISI:</span> Setiap sachet mengandung: Guaifenesin 100 mg, Dextromethorphan HBr 15 mg, Chlorphenamine Maleate 2 mg. Bahan tambahan: Sucrose, CMC Sodium, Starch, Polyoxyl, Sodium Citrate, Citric Acid, Sodium Benzoate, Pewarna Caramel, Perisa Artifisial, Saccharine Sodium.<br>
+                    <span class="section-title">CARA KERJA OBAT:</span> Antitusif, antihistamin dan ekspektoran.<br>
+                    <span class="section-title">INDIKASI:</span> Meredakan batuk.<br>
+                    <span class="section-title">DOSIS:</span> Dewasa 3x sehari 1-2 sachet.<br>
+                    <span class="section-title">PERINGATAN:</span> Hati-hati penderita gangguan hati/ginjal. Jangan mengendarai mesin.<br>
+                    <span class="section-title">EFEK SAMPING:</span> Mengantuk, mulut kering.<br>
+                    <span class="section-title">KONTRAINDIKASI:</span> Hipersensitif komponen obat.<br>
+                    <div style="margin-top:2px"><b>SIMPAN DI BAWAH 30&deg;C</b></div>
+                </div>
+                <div class="footer-elements">
+                    <div class="barcode-area"><div class="barcode-lines"></div><div class="barcode-num">8 993058 300500</div></div>
+                    <div class="icons-side-group"><div class="blue-dot"></div><div class="netto-text">NETTO 7mL</div><div class="warning-box">AWAS! OBAT KERAS</div></div>
+                </div>
+            </div>
+
+            <div id="redaksi-move" class="content-wrapper">
+                <div class="brand-section"><h1 class="brand-name">KOMIX</h1><span class="brand-label">SIRUP OBAT BATUK</span></div>
+                <div class="description-area">
+                    <span class="section-title">KOMPOSISI:</span> Setiap sachet mengandung: Guaifenesin 100 mg, Dextromethorphan HBr 15 mg, Chlorphenamine Maleate 2 mg. Bahan tambahan: Sucrose, CMC Sodium, Starch, Polyoxyl, Sodium Citrate, Citric Acid, Sodium Benzoate, Pewarna Caramel, Perisa Artifisial, Saccharine Sodium.<br>
+                    <span class="section-title">CARA KERJA OBAT:</span> Antitusif, antihistamin dan ekspektoran.<br>
+                    <span class="section-title">INDIKASI:</span> Meredakan batuk.<br>
+                    <span class="section-title">DOSIS:</span> Dewasa 3x sehari 1-2 sachet.<br>
+                    <span class="section-title">PERINGATAN:</span> Hati-hati penderita gangguan hati/ginjal. Jangan mengendarai mesin.<br>
+                    <span class="section-title">EFEK SAMPING:</span> Mengantuk, mulut kering.<br>
+                    <span class="section-title">KONTRAINDIKASI:</span> Hipersensitif komponen obat.<br>
+                    <div style="margin-top:2px"><b>SIMPAN DI BAWAH 30&deg;C</b></div>
+                </div>
+                <div class="footer-elements">
+                    <div class="barcode-area"><div class="barcode-lines"></div><div class="barcode-num">8 993058 300500</div></div>
+                    <div class="icons-side-group"><div class="blue-dot"></div><div class="netto-text">NETTO 7mL</div><div class="warning-box">AWAS! OBAT KERAS</div></div>
+                </div>
+            </div>
+
+            <div id="redaksi-clone" class="content-wrapper">
+                <div class="brand-section"><h1 class="brand-name">KOMIX</h1><span class="brand-label">SIRUP OBAT BATUK</span></div>
+                <div class="description-area">
+                    <span class="section-title">KOMPOSISI:</span> Setiap sachet mengandung: Guaifenesin 100 mg, Dextromethorphan HBr 15 mg, Chlorphenamine Maleate 2 mg. Bahan tambahan: Sucrose, CMC Sodium, Starch, Polyoxyl, Sodium Citrate, Citric Acid, Sodium Benzoate, Pewarna Caramel, Perisa Artifisial, Saccharine Sodium.<br>
+                    <span class="section-title">CARA KERJA OBAT:</span> Antitusif, antihistamin dan ekspektoran.<br>
+                    <span class="section-title">INDIKASI:</span> Meredakan batuk.<br>
+                    <span class="section-title">DOSIS:</span> Dewasa 3x sehari 1-2 sachet.<br>
+                    <span class="section-title">PERINGATAN:</span> Hati-hati penderita gangguan hati/ginjal. Jangan mengendarai mesin.<br>
+                    <span class="section-title">EFEK SAMPING:</span> Mengantuk, mulut kering.<br>
+                    <span class="section-title">KONTRAINDIKASI:</span> Hipersensitif komponen obat.<br>
+                    <div style="margin-top:2px"><b>SIMPAN DI BAWAH 30&deg;C</b></div>
+                </div>
+                <div class="footer-elements">
+                    <div class="barcode-area"><div class="barcode-lines"></div><div class="barcode-num">8 993058 300500</div></div>
+                    <div class="icons-side-group"><div class="blue-dot"></div><div class="netto-text">NETTO 7mL</div><div class="warning-box">AWAS! OBAT KERAS</div></div>
+                </div>
+            </div>
+            <div class="batch-code" style="bottom: 40px;">HM630F DEC25 DEC27</div>
+        </div>
+        <div class="control-panel">
+            <div class="label-ctrl">Redaksi Vertikal</div>
+            <div class="adjuster-row">
+                <button class="btn-adjust" onclick="adjustRedaksi(-2)">◀</button>
+                <div id="v-redaksi" class="param-val">50</div>
+                <button class="btn-adjust" onclick="adjustRedaksi(2)">▶</button>
+            </div>
+            <div class="btn-group">
+                <button class="btn-rotate" onclick="toggleRotate('container-2', 'desc-2')">Rotate 180°</button>
+                <button class="btn-reset" onclick="resetRedaksi()">Reset Default</button>
+            </div>
+        </div>
+        <div class="info-box"><div id="desc-2" class="desc-text">◀ <span>Kurangi:</span> Redaksi TURUN <br> ▶ <span>Tambah:</span> Redaksi NAIK</div></div>
+    </div>
+
+    <div class="training-section">
+        <img src="https://raw.githubusercontent.com/coptah1-max/Ilapak/main/3.jpg" alt="Mesin Ilapak 3" class="machine-photo">
+        <div id="container-3" class="sachet-container">
+            <div class="sealing sealing-top"></div><div class="sealing sealing-bottom"></div>
+            <div class="sealing sealing-side sealing-left"></div><div class="sealing sealing-side sealing-right"></div>
+            <div class="content-wrapper" style="top: 50%">
+                <div class="brand-section"><h1 class="brand-name">KOMIX</h1><span class="brand-label">SIRUP OBAT BATUK</span></div>
+                <div class="description-area">
+                    <span class="section-title">KOMPOSISI:</span> Setiap sachet mengandung: Guaifenesin 100 mg, Dextromethorphan HBr 15 mg, Chlorphenamine Maleate 2 mg. Bahan tambahan: Sucrose, CMC Sodium, Starch, Polyoxyl, Sodium Citrate, Citric Acid, Sodium Benzoate, Pewarna Caramel, Perisa Artifisial, Saccharine Sodium.<br>
+                    <span class="section-title">CARA KERJA OBAT:</span> Antitusif, antihistamin dan ekspektoran.<br>
+                    <span class="section-title">INDIKASI:</span> Meredakan batuk.<br>
+                    <span class="section-title">DOSIS:</span> Dewasa 3x sehari 1-2 sachet.<br>
+                    <span class="section-title">PERINGATAN:</span> Hati-hati penderita gangguan hati/ginjal. Jangan mengendarai mesin.<br>
+                    <span class="section-title">EFEK SAMPING:</span> Mengantuk, mulut kering.<br>
+                    <span class="section-title">KONTRAINDIKASI:</span> Hipersensitif komponen obat.<br>
+                    <div style="margin-top:2px"><b>SIMPAN DI BAWAH 30&deg;C</b></div>
+                </div>
+                <div class="footer-elements">
+                    <div class="barcode-area"><div class="barcode-lines"></div><div class="barcode-num">8 993058 300500</div></div>
+                    <div class="icons-side-group"><div class="blue-dot"></div><div class="netto-text">NETTO 7mL</div><div class="warning-box">AWAS! OBAT KERAS</div></div>
+                </div>
+            </div>
+            <div id="batch-move" class="batch-code" style="bottom: 40px;">HM630F DEC25 DEC27</div>
+        </div>
+        <div class="control-panel">
+            <div class="label-ctrl">Batch Position</div>
+            <div class="adjuster-row">
+                <button class="btn-adjust" onclick="adjustBatch(-2)">◀</button>
+                <div id="v-batch" class="param-val">40</div>
+                <button class="btn-adjust" onclick="adjustBatch(2)">▶</button>
+            </div>
+            <div class="btn-group">
+                <button class="btn-rotate" onclick="toggleRotate('container-3', 'desc-3')">Rotate 180°</button>
+                <button class="btn-reset" onclick="resetBatch()">Reset Default</button>
+            </div>
+        </div>
+        <div class="info-box"><div id="desc-3" class="desc-text">◀ <span>Kurangi:</span> Exp Date NAIK <br> ▶ <span>Tambah:</span> Exp Date TURUN</div></div>
+    </div>
+
+    <script>
+        let sSeal = 30;
+        let sRedaksi = 50; 
+        let sBatch = 40; 
+        const sachetHeight = 460;
+
+        function toggleRotate(contId, descId) {
+            const el = document.getElementById(contId);
+            el.classList.toggle('flipped');
+            const isFlipped = el.classList.contains('flipped');
+            const descEl = document.getElementById(descId);
+
+            if (contId === 'container-1') {
+                descEl.innerHTML = isFlipped ? '◀ <span>Kurangi:</span> Seal bawah MENYEMPIT <br> ▶ <span>Tambah:</span> Seal atas MELEBAR' : '◀ <span>Kurangi:</span> Seal atas MENYEMPIT <br> ▶ <span>Tambah:</span> Seal bawah MELEBAR';
+            } else if (contId === 'container-2') {
+                descEl.innerHTML = isFlipped ? '◀ <span>Kurangi:</span> Redaksi NAIK <br> ▶ <span>Tambah:</span> Redaksi TURUN' : '◀ <span>Kurangi:</span> Redaksi TURUN <br> ▶ <span>Tambah:</span> Redaksi NAIK';
+            } else if (contId === 'container-3') {
+                descEl.innerHTML = isFlipped ? '◀ <span>Kurangi:</span> Exp Date TURUN <br> ▶ <span>Tambah:</span> Exp Date NAIK' : '◀ <span>Kurangi:</span> Exp Date NAIK <br> ▶ <span>Tambah:</span> Exp Date TURUN';
+            }
+        }
+
+        function updateSealingUI() {
+            document.getElementById('v-seal').innerText = sSeal;
+            const jawSize = 60;
+            const topEl = document.getElementById('s1-top');
+            const botEl = document.getElementById('s1-bottom');
+            if (sSeal >= 0 && sSeal <= jawSize) {
+                topEl.style.top = "0"; topEl.style.height = (jawSize - sSeal) + "px"; 
+                botEl.style.bottom = "0"; botEl.style.height = sSeal + "px"; 
+            } else if (sSeal > jawSize) {
+                let offset = sSeal - jawSize;
+                botEl.style.bottom = offset + "px"; botEl.style.height = jawSize + "px";
+                topEl.style.height = "0";
+            } else {
+                let offset = Math.abs(sSeal);
+                topEl.style.top = offset + "px"; topEl.style.height = jawSize + "px";
+                botEl.style.height = "0";
+            }
+        }
+        function adjustSealing(v) { sSeal += v; updateSealingUI(); }
+        function resetSealing() { sSeal = 30; updateSealingUI(); }
+
+        function updateRedaksiUI() {
+            document.getElementById('v-redaksi').innerText = sRedaksi;
+            // Modulo Matematika: ((n % m) + m) % m agar angka negatif jadi positif (0-99)
+            let posPercent = ((sRedaksi % 100) + 100) % 100;
+            
+            // Gerakkan 3 elemen (Atas, Tengah, Bawah) supaya fluid ke segala arah
+            document.getElementById('redaksi-top').style.top = (0 - posPercent) + '%';
+            document.getElementById('redaksi-move').style.top = (100 - posPercent) + '%';
+            document.getElementById('redaksi-clone').style.top = (200 - posPercent) + '%';
+        }
+        function adjustRedaksi(v) { sRedaksi += v; updateRedaksiUI(); }
+        function resetRedaksi() { sRedaksi = 50; updateRedaksiUI(); }
+
+        function updateBatchUI() {
+            document.getElementById('v-batch').innerText = sBatch;
+            let visualPos = 40 - (sBatch - 40); 
+            let snakePos = ((visualPos % sachetHeight) + sachetHeight) % sachetHeight;
+            document.getElementById('batch-move').style.bottom = snakePos + "px";
+        }
+        function adjustBatch(v) { sBatch += v; updateBatchUI(); }
+        function resetBatch() { sBatch = 40; updateBatchUI(); }
+
+        updateSealingUI(); updateRedaksiUI(); updateBatchUI();
+    </script>
+</body>
+</html>
+
