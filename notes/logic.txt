@@ -1,3 +1,5 @@
+<body>
+<p>
 "Gw mau bikin project laravel 11, project ini buat operator produksi, intinya fokusnya ke kebutuhan operator untuk laporan keluhan,
 
 
@@ -10,6 +12,8 @@ Di screen ini ada 2 fitur, kotak text boxt dengan lebar 4 space text untuk input
 Lalu di bawahnya ada opsi untuk insert gambar, munculin 1 icon aja tapi untuk file picker nya bisa choose banyak dan maksimal 10 foto
 
 2. admin_panel.php
+
+
 
 
 Nah file ini khusus untuk admin untuk melihat daftar riwayat inputan karyawan (file ini di hide) jadi jangan di tambah di home untuk direct ke file ini karena hanya admin yang tau,
@@ -30,8 +34,10 @@ Nah jadi total kan ada 4 file utama yang ku minta, tapi karena ini laravel jadi 
 Tolong buatkan dan kirim lengkap file nya
 
 
+1c5db-09709 837fc-4db2e 0019a-5d7bc 54d35-3cc97 8c2e0-6f3c1 e8eeb-a3e7f b9f81-874cc 0a082-c7622 4984d-64a47 304d4-b28fe aa0d9-57549 7126a-f8e73 ee40d-59a77 4c630-ffca2 27736-99967 a2b1b-948fa
 
-Halo! Sebagai Staff Digitalisasi, membuat sistem pelaporan yang streamlined untuk operator memang krusial. Kita akan menggunakan Laravel 11 dengan pendekatan yang minimalis namun fungsional.
+
+, membuat sistem pelaporan yang streamlined untuk operator memang krusial. Kita akan menggunakan Laravel 11 dengan pendekatan yang minimalis namun fungsional.
 Karena Laravel 11 sudah tidak menggunakan Http/Controllers/Controller.php secara default (langsung di folder Controllers), strukturnya akan sangat bersih.
 Berikut adalah detail filenya:
 1. Konfigurasi Database (.env)
@@ -205,3 +211,6 @@ Langkah Penting Terakhir:
  * Pastikan folder storage/app/public/reports tersedia atau akan dibuat otomatis saat upload.
 "
 
+
+</body>
+</p>
