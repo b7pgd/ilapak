@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barcode Generator Pro Max</title>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            padding: 50px; 
+            background: #f4f4f9; 
+        }
+        .card { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
+            text-align: center;
+            width: 650px; 
+        }
+        h2 { color: #333; margin-bottom: 20px; }
+        
+        .input-wrapper { 
+            margin-bottom: 15px; 
+            display: flex; 
+            gap: 10px; 
+            justify-content: center; 
+            align-items: center;
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        input.userInput, input.titleInput { 
+            padding: 10px; 
+            border: 2px solid #ddd; 
+            border-radius: 6px; 
+            outline: none;
+        }
+        input.userInput { width: 35%; }
+        input.titleInput { width: 25%; display: none; } 
+
+        .opt-group { display: flex; gap: 8px; font-size: 11px; font-weight: bold; color: #555; }
+        .show-label { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+        .show-label input { cursor: pointer; width: 16px; height: 16px; }
+        
+        .btn-action { 
+            font-size: 24px; 
+            font-weight: bold;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-plus { background: #28a745; }
+        .btn-minus { background: #ff4d4d; }
+        
+        button.main-btn { 
+            padding: 12px 25px; 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: bold;
+            width: 95%;
+            margin-top: 10px;
+            font-size: 16px;
+        }
+        .btn-pdf { background: #dc3545; }
+
+        #print-area { 
+            margin-top: 30px; 
+            display: flex; 
+            flex-wrap: wrap; 
+            width: 210mm; 
+            background: white;
+            padding: 10mm;
+            justify-content: flex-start;
+        }
+        .barcode-box { 
+            width: 45%; 
+            margin: 10px;
+            text-align: center;
+            border: 1px dashed #ccc;
+            padding: 15px 10px;
+        }
+
+        /* Sinkronisasi ukuran teks judul dengan teks barcode */
+        .barcode-title {
+            font-size: 18px; /* Disamakan dengan default fontSize JsBarcode */ // font atas
+            font-weight: normal; /* Normal supaya senada dengan teks bawah */
+            margin-bottom: 2px;
+            font-family: monospace; /* Monospace biasanya dipake barcode buat kejelasan */
+            color: #000;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>Barcode Generator</h2>
+        
+        <div id="input-container">
+            <div class="input-wrapper">
+                <input type="text" class="userInput" placeholder="Isi Barcode...">
+                <input type="text" class="titleInput" placeholder="Judul Atas...">
+                
+                <div class="opt-group">
+                    <label class="show-label">
+                        <input type="checkbox" class="showText" checked> Teks
+                    </label>
+                    <label class="show-label">
+                        <input type="checkbox" class="showTitle" onchange="toggleTitle(this)"> Judul
+                    </label>
+                </div>
+
+                <button class="btn-action btn-plus" onclick="addInput()">+</button>
+            </div>
+        </div>
+
+        <button class="main-btn" onclick="generateBarcodes()">Generate Barcode</button>
+        <button class="main-btn btn-pdf" onclick="downloadPDF()">Download PDF</button>
+
+        <div id="print-area"></div>
+    </div>
+
+    <script>
+        function toggleTitle(cb) {
+            const wrapper = cb.closest('.input-wrapper');
+            const titleInput = wrapper.querySelector('.titleInput');
+            titleInput.style.display = cb.checked ? 'block' : 'none';
+        }
+
+        function addInput() {
+            const container = document.getElementById('input-container');
+            const div = document.createElement('div');
+            div.className = 'input-wrapper';
+            div.innerHTML = `
+                <input type="text" class="userInput" placeholder="Isi Barcode...">
+                <input type="text" class="titleInput" placeholder="Judul Atas...">
+                <div class="opt-group">
+                    <label class="show-label">
+                        <input type="checkbox" class="showText" checked> Teks
+                    </label>
+                    <label class="show-label">
+                        <input type="checkbox" class="showTitle" onchange="toggleTitle(this)"> Judul
+                    </label>
+                </div>
+                <button class="btn-action btn-minus" onclick="this.parentElement.remove()">-</button>
+            `;
+            container.appendChild(div);
+        }
+
+        function generateBarcodes() {
+            const wrappers = document.querySelectorAll('.input-wrapper');
+            const printArea = document.getElementById('print-area');
+            printArea.innerHTML = ''; 
+
+            wrappers.forEach((wrapper, index) => {
+                const val = wrapper.querySelector('.userInput').value.trim();
+                const titleVal = wrapper.querySelector('.titleInput').value.trim();
+                const isShowText = wrapper.querySelector('.showText').checked;
+                const isShowTitle = wrapper.querySelector('.showTitle').checked;
+
+                if (val) {
+                    const box = document.createElement('div');
+                    box.className = 'barcode-box';
+                    
+                    if (isShowTitle && titleVal) {
+                        const titleDiv = document.createElement('div');
+                        titleDiv.className = 'barcode-title';
+                        titleDiv.innerText = titleVal;
+                        box.appendChild(titleDiv);
+                    }
+
+                    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                    svg.id = "barcode-" + index;
+                    box.appendChild(svg);
+                    printArea.appendChild(box);
+
+                    JsBarcode("#barcode-" + index, val, {
+                        format: "CODE128",
+                        lineColor: "#000",
+                        width: 2,
+                        height: 80,
+                        displayValue: isShowText,
+                        fontSize: 18, // Ukuran teks bawah
+                        font: "monospace" // Jenis font disamakan dengan judul
+                    });
+                }
+            });
+        }
+
+        async function downloadPDF() {
+            const { jsPDF } = window.jspdf;
+            const element = document.getElementById('print-area');
+            if (element.children.length === 0) {
+                alert("Generate dulu, Bang!");
+                return;
+            }
+            const canvas = await html2canvas(element, { scale: 2 });
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const imgProps = pdf.getImageProperties(imgData);
+            const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            pdf.save("barcode-pro.pdf");
+        }
+    </script>
+
+</body>
+</html>
