@@ -1,0 +1,57 @@
+Wah, itu tandanya timbangan lo lagi "ngambek" karena merasa akurasinya sudah nggak sesuai standar, Bang. Notif **External Calibration Failed** itu biasanya muncul karena ada gangguan pas timbangan lagi nyoba nyocokin berat aslinya sama batu timbang (load) yang lo taruh.
+
+Ibaratnya, dia minta disuapin beban 200 gram, tapi lo kasih 190 gram atau mejanya goyang, ya dia gagal.
+
+Berikut adalah penyebab utama dan cara ngilangin si "merah-merah" itu:
+
+---
+
+### 1. Kenapa Merah-Merah Itu Muncul? (Status Icon)
+
+Di Mettler Toledo (terutama seri MS, ML, atau ME), kotak merah atau simbol timbangan warna merah di pojok atas itu namanya **StatusLight** atau **Service Indicator**.
+
+* **Artinya:** Timbangan mendeteksi bahwa dia sudah melewati batas waktu kalibrasi atau ada error sensor.
+* **Kenapa Failed?** Pas lo kalibrasi, mungkin lo nggak pake batu timbang (anak timbangan) yang **presisi/standar**, atau piringan timbangnya kesenggol pas proses jalan.
+
+---
+
+### 2. Cara Benerin "Calibration Failed" (Langkah Eksekusi)
+
+Jangan panik, coba ulangi kalibrasinya dengan cara yang bener:
+
+1. **Bersihin Piringan:** Pastiin nggak ada debu atau sisa barang di atas timbangan. Harus bener-bener kosong.
+2. **Tutup Kaca:** Kalau ada pelindung kaca, tutup rapat. Angin AC bisa bikin kalibrasi gagal.
+3. **Siapkan Batu Timbang (Weight):** Timbangan bakal minta beban spesifik (misal: 100g atau 200g). Pastiin batu timbangnya bersih, jangan pegang pake tangan kosong (pake pinset atau sarung tangan), karena minyak dari tangan bisa nambah berat batu itu.
+4. **Masuk Menu:** * Tekan dan tahan tombol **Cal** (atau lewat Menu > Advanced > Calibration).
+* Pilih **External Cal**.
+* Ikuti instruksi di layar. Pas dia minta *"Place weight 200g"*, taruh pelan-pelan di tengah.
+* Tunggu sampai layar bilang *"Remove weight"*. Jangan sentuh apapun sampe dia balik ke `0.000`.
+
+
+
+---
+
+### 3. Cara Ngilangin Notif Merah (Reset Status)
+
+Kalau kalibrasi sudah sukses tapi merah-merahnya masih ada, coba "reset" peringatannya:
+
+* **Lakukan Internal Calibration:** Banyak tipe Mettler punya fitur **FACT** (Fully Automatic Calibration Technology).
+* Cari tombol **Cal** atau menu **Adjust/Internal Cal**.
+* Biarkan dia kalibrasi sendiri pake beban internal di dalem mesinnya. Kalau ini sukses, biasanya warna merahnya langsung jadi hijau.
+
+
+* **Cek Level (Waterpass):** Kalau timbangan miring, si merah itu nggak bakal ilang. Putar kaki timbangan sampe gelembung airnya masuk ke dalem lingkaran hitam.
+
+---
+
+### 4. Kalau Masih Gagal Terus?
+
+Kalau tetep muncul "Failed", cek hal sepele ini:
+
+* **Vibrasi:** Apakah timbangan lo di atas meja yang deket mesin bergetar? Kalau iya, pindahin.
+* **Batu Timbang Salah:** Kalau dia minta 100 gram tapi lo kasih 100 gram "abal-abal" (bukan standar F1/E2), dia bakal tau dan lapor "Failed".
+* **Load Cell Error:** Kalau lo pernah naruh barang terlalu berat (dihentak), sensor dalemnya mungkin kegeser.
+
+**Coba deh Bang, lo inget nggak pas "Failed" itu lo lagi naruh batu timbang nggak?** Terus tipenya apa? Kalau lo kasih tau seri timbangannya (ada di depan/belakang), gue bisa kasih urutan tombol yang pas banget buat nembus menu *Service*-nya biar merahnya ilang.
+
+Mau gue bantu cariin video tutorialnya atau kode reset manualnya?
