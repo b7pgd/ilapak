@@ -14,25 +14,27 @@
   let autoNextPage = false;
   let speaking = false;
   let currentUtterance = null;
+  let voicesReady = false;
 
   // =========================
-  // WAIT FOR BODY (IMPORTANT FIX)
+  // WAIT BODY SAFE
   // =========================
-  if (!document.body) {
+  function waitBody(cb) {
+    if (document.body) return cb();
     const t = setInterval(() => {
       if (document.body) {
         clearInterval(t);
-        init();
+        cb();
       }
     }, 50);
-  } else {
-    init();
   }
+
+  waitBody(init);
 
   function init() {
 
     // =========================
-    // CREATE PANEL WRAPPER
+    // PANEL
     // =========================
     const panel = document.createElement("div");
 
@@ -63,7 +65,7 @@
           <button id="b7-close">✕</button>
         </div>
 
-        <div id="b7-status">Ready</div>
+        <div id="b7-status">Loading voice...</div>
       </div>
     `;
 
@@ -76,7 +78,6 @@
         position: fixed;
         top: 20px;
         left: 20px;
-        right: auto;
         z-index: 999999;
         width: 280px;
         background: #111;
@@ -114,69 +115,117 @@
     const header = document.getElementById("b7-header");
 
     // =========================
-    // DRAG FIXED
+    // DRAG FIX
     // =========================
-    let isDragging = false;
-    let offsetX = 0, offsetY = 0;
+    let drag = false;
+    let dx = 0, dy = 0;
 
-    header.addEventListener("mousedown", (e) => {
-      isDragging = true;
-      offsetX = e.clientX - root.getBoundingClientRect().left;
-      offsetY = e.clientY - root.getBoundingClientRect().top;
-    });
+    header.addEventListener("touchstart", startDrag, { passive: true });
+    header.addEventListener("mousedown", startDrag);
 
-    document.addEventListener("mousemove", (e) => {
-      if (!isDragging) return;
-      root.style.left = `${e.clientX - offsetX}px`;
-      root.style.top = `${e.clientY - offsetY}px`;
-    });
+    function startDrag(e) {
+      drag = true;
+      const x = e.touches ? e.touches[0].clientX : e.clientX;
+      const y = e.touches ? e.touches[0].clientY : e.clientY;
 
-    document.addEventListener("mouseup", () => {
-      isDragging = false;
-    });
+      const rect = root.getBoundingClientRect();
+      dx = x - rect.left;
+      dy = y - rect.top;
+    }
+
+    document.addEventListener("touchmove", moveDrag, { passive: true });
+    document.addEventListener("mousemove", moveDrag);
+
+    function moveDrag(e) {
+      if (!drag) return;
+
+      const x = e.touches ? e.touches[0].clientX : e.clientX;
+      const y = e.touches ? e.touches[0].clientY : e.clientY;
+
+      root.style.left = `${x - dx}px`;
+      root.style.top = `${y - dy}px`;
+    }
+
+    document.addEventListener("touchend", () => drag = false);
+    document.addEventListener("mouseup", () => drag = false);
 
     // =========================
-    // TEXT EXTRACTION
+    // TEXT
     // =========================
     function extractText() {
-      const article = document.querySelector("article");
-      return article ? article.innerText : document.body.innerText;
+      const a = document.querySelector("article");
+      return a ? a.innerText : document.body.innerText;
     }
 
     // =========================
-    // SPEECH FIX
+    // VOICE FIX (IMPORTANT VIA BROWSER)
+    // =========================
+    function loadVoices() {
+      const v = speechSynthesis.getVoices();
+
+      if (!v || v.length === 0) {
+        setTimeout(loadVoices, 300);
+        return;
+      }
+
+      currentVoice =
+        v.find(x => x.lang.includes("en")) || v[0];
+
+      voicesReady = true;
+      setStatus("Voice ready");
+    }
+
+    loadVoices();
+    speechSynthesis.onvoiceschanged = loadVoices;
+
+    // =========================
+    // UNLOCK AUDIO (VIA FIX)
+    // =========================
+    function unlockSpeech() {
+      const u = new SpeechSynthesisUtterance(" ");
+      u.volume = 0;
+      speechSynthesis.speak(u);
+      speechSynthesis.cancel();
+    }
+
+    document.addEventListener("click", unlockSpeech, { once: true });
+
+    // =========================
+    // SPEAK FIX (CORE)
     // =========================
     function speakText() {
       stopSpeech();
 
       const text = extractText();
 
-      if (!text || text.trim().length === 0) {
+      if (!text || text.trim().length < 5) {
         setStatus("No text found");
         return;
       }
 
-      currentUtterance = new SpeechSynthesisUtterance(text);
+      const u = new SpeechSynthesisUtterance(text);
 
-      currentUtterance.rate = currentRate;
+      u.rate = currentRate;
 
-      if (currentVoice) {
-        currentUtterance.voice = currentVoice;
-      }
+      if (currentVoice) u.voice = currentVoice;
 
-      currentUtterance.onstart = () => {
-        speaking = true;
-        setStatus("Reading...");
+      u.onerror = (e) => {
+        console.log("speech error", e);
+        setStatus("Speech error");
       };
 
-      currentUtterance.onend = () => {
-        speaking = false;
-        setStatus("Finished");
-
+      u.onstart = () => setStatus("Reading...");
+      u.onend = () => {
+        setStatus("Done");
         if (autoNextPage) goNextPage();
       };
 
-      speechSynthesis.speak(currentUtterance);
+      speechSynthesis.cancel();
+
+      // VIA BROWSER FIX: delay speak
+      setTimeout(() => {
+        speechSynthesis.speak(u);
+      }, 150);
     }
 
     function pauseSpeech() {
@@ -195,48 +244,43 @@
     }
 
     // =========================
-    // AUTO NEXT PAGE
+    // NEXT PAGE
     // =========================
     function goNextPage() {
-      setStatus("Searching next page...");
+      const keys = ["next", "selanjutnya", ">", "›", "→"];
 
-      const keywords = ["next", "selanjutnya", ">", "›", "→"];
+      const els = document.querySelectorAll("a, button");
 
-      const buttons = document.querySelectorAll("button, a");
+      for (const el of els) {
+        const t = (el.innerText || "").toLowerCase().trim();
+        if (keys.includes(t)) {
+          setStatus("Next page...");
+          el.click();
 
-      for (const b of buttons) {
-        const t = (b.innerText || "").toLowerCase().trim();
-
-        if (keywords.includes(t)) {
-          setStatus("Next page found");
-          b.click();
-
-          setTimeout(() => speakText(), 2000);
+          setTimeout(speakText, 2000);
           return;
         }
       }
 
-      setStatus("Next page not found");
+      setStatus("No next page");
     }
 
     // =========================
-    // SUMMARY SIMPLE
+    // SUMMARY
     // =========================
     function summarizeText() {
-      const text = extractText().slice(0, 3000);
-
-      const summary = text
-        .split(".")
-        .slice(0, 5)
-        .join(".");
-
-      alert(summary || "No content");
+      const t = extractText().slice(0, 3000);
+      alert(t.split(".").slice(0, 5).join("."));
     }
 
     // =========================
     // EVENTS
     // =========================
-    document.getElementById("b7-play").onclick = speakText;
+    document.getElementById("b7-play").onclick = () => {
+      if (!voicesReady) setStatus("Loading voice...");
+      speakText();
+    };
+
     document.getElementById("b7-pause").onclick = pauseSpeech;
 
     document.getElementById("b7-stop").onclick = () => {
@@ -264,33 +308,8 @@
 
     document.getElementById("b7-minimize").onclick = () => {
       const box = document.getElementById("b7-reader-panel");
-
-      if (box.style.height === "40px") {
-        box.style.height = "auto";
-        box.style.overflow = "visible";
-      } else {
-        box.style.height = "40px";
-        box.style.overflow = "hidden";
-      }
+      box.style.display = box.style.display === "none" ? "block" : "none";
     };
-
-    // =========================
-    // VOICE LOADER FIX (CRITICAL)
-    // =========================
-    function loadVoices() {
-      const voices = speechSynthesis.getVoices();
-
-      if (voices && voices.length) {
-        currentVoice =
-          voices.find(v => v.lang.includes("en")) || voices[0];
-
-        setStatus("Voice ready");
-      }
-    }
-
-    loadVoices();
-
-    speechSynthesis.onvoiceschanged = loadVoices;
   }
 
 })();
