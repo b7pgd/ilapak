@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Standar Berat Jenis</title>
+    <style>
+        :root {
+            --primary-blue: #0056b3;
+            --light-blue: #e6f0fa;
+            --dark-blue: #002d62;
+            --white: #ffffff;
+            --gray-bg: #f8f9fa;
+            --border-color: #dee2e6;
+            --text-dark: #333333;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--gray-bg);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--dark-blue), var(--primary-blue));
+            color: var(--white);
+            width: 100%;
+            padding: 25px 20px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            padding: 20px;
+        }
+
+        .search-wrapper {
+            position: relative;
+            margin-bottom: 25px;
+            background: var(--white);
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .search-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--dark-blue);
+            margin-bottom: 8px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            outline: none;
+            transition: all 0.3s ease;
+            background-color: var(--gray-bg);
+        }
+
+        .search-input:focus {
+            border-color: var(--primary-blue);
+            background-color: var(--white);
+            box-shadow: 0 0 0 4px rgba(0, 86, 179, 0.15);
+        }
+
+        .table-wrapper {
+            background: var(--white);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 15px;
+        }
+
+        th {
+            background-color: var(--light-blue);
+            color: var(--dark-blue);
+            font-weight: 700;
+            padding: 14px 16px;
+            border-bottom: 2px solid var(--border-color);
+            text-transform: uppercase;
+            font-size: 13px;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 500;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:nth-child(even) {
+            background-color: rgba(230, 240, 250, 0.3);
+        }
+
+        tr:hover {
+            background-color: rgba(0, 86, 179, 0.05);
+        }
+
+        .no-data {
+            display: none;
+            text-align: center;
+            padding: 30px;
+            color: #777;
+            font-weight: bold;
+            background: var(--white);
+            border-radius: 12px;
+            border: 1px dashed var(--border-color);
+        }
+
+        /* Badge Density Style - Diperbarui agar lebih tebal dan berwarna hitam */
+        .density-range {
+            background: #e1f0ff;
+            color: #000000;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .product-code {
+            font-weight: 700;
+            color: var(--dark-blue);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Standar Berat Jenis</h1>
+    </header>
+
+    <div class="container">
+        <div class="search-wrapper">
+            <label for="searchProduct" class="search-label">Cari Kode Produk</label>
+            <input 
+                type="text" 
+                id="searchProduct" 
+                class="search-input" 
+                placeholder="Ketik kode produk (contoh: LKM)..." 
+                list="productSuggestions"
+                autocomplete="off"
+            >
+            <datalist id="productSuggestions">
+                <option value="LBMA2">
+                <option value="LKXO1">
+                <option value="LKXO2">
+                <option value="LKXL1">
+                <option value="LKXK1">
+                <option value="LKXJ1">
+                <option value="LKXP1">
+                <option value="LKXN1">
+                <option value="LBXT1">
+                <option value="LEJS1">
+                <option value="LEHD1">
+                <option value="LETS1">
+                <option value="LPGR1">
+                <option value="LPRG1">
+                <option value="LPRG2">
+                <option value="LGRG1">
+                <option value="LWPG1">
+                <option value="LWAP1">
+                <option value="LKJT1">
+                <option value="LKPT1">
+                <option value="LNKO1">
+                <option value="LKNT1">
+                <option value="LNKK1">
+                <option value="LCLZC">
+                <option value="LKMC1">
+                <option value="LKKSB">
+            </datalist>
+        </div>
+
+        <div class="table-wrapper" id="tableContainer">
+            <table id="productTable">
+                <thead>
+                    <tr>
+                        <th>Kode Produk</th>
+                        <th>Density</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td class="product-code">LBMA2</td><td><span class="density-range">1.1500 - 1.3500</span></td></tr>
+                    <tr><td class="product-code">LKXO1</td><td><span class="density-range">1.1400 - 1.1800</span></td></tr>
+                    <tr><td class="product-code">LKXO2</td><td><span class="density-range">1.1600 - 1.2600</span></td></tr>
+                    <tr><td class="product-code">LKXL1</td><td><span class="density-range">1.2000 - 1.2600</span></td></tr>
+                    <tr><td class="product-code">LKXK1</td><td><span class="density-range">1.2200 - 1.2800</span></td></tr>
+                    <tr><td class="product-code">LKXJ1</td><td><span class="density-range">1.1800 - 1.2800</span></td></tr>
+                    <tr><td class="product-code">LKXP1</td><td><span class="density-range">1.1800 - 1.2800</span></td></tr>
+                    <tr><td class="product-code">LKXN1</td><td><span class="density-range">1.1800 - 1.2800</span></td></tr>
+                    <tr><td class="product-code">LBXT1</td><td><span class="density-range">1.1800 - 1.3000</span></td></tr>
+                    <tr><td class="product-code">LEJS1</td><td><span class="density-range">1.1500 - 1.3500</span></td></tr>
+                    <tr><td class="product-code">LEHD1</td><td><span class="density-range">1.1000 - 1.2000</span></td></tr>
+                    <tr><td class="product-code">LETS1</td><td><span class="density-range">1.1000 - 1.2000</span></td></tr>
+                    <tr><td class="product-code">LPGR1</td><td><span class="density-range">1.1700 - 1.2200</span></td></tr>
+                    <tr><td class="product-code">LPRG1</td><td><span class="density-range">1.1700 - 1.2200</span></td></tr>
+                    <tr><td class="product-code">LPRG2</td><td><span class="density-range">1.0500 - 1.1100</span></td></tr>
+                    <tr><td class="product-code">LGRG1</td><td><span class="density-range">1.1500 - 1.3500</span></td></tr>
+                    <tr><td class="product-code">LWPG1</td><td><span class="density-range">1.0600 - 1.1000</span></td></tr>
+                    <tr><td class="product-code">LWAP1</td><td><span class="density-range">1.1200 - 1.2200</span></td></tr>
+                    <tr><td class="product-code">LKJT1</td><td><span class="density-range">1.0600 - 1.0900</span></td></tr>
+                    <tr><td class="product-code">LKPT1</td><td><span class="density-range">1.0600 - 1.1100</span></td></tr>
+                    <tr><td class="product-code">LNKO1</td><td><span class="density-range">1.1500 - 1.2500</span></td></tr>
+                    <tr><td class="product-code">LKNT1</td><td><span class="density-range">1.0500 - 1.1000</span></td></tr>
+                    <tr><td class="product-code">LNKK1</td><td><span class="density-range">1.1500 - 1.1900</span></td></tr>
+                    <tr><td class="product-code">LCLZC</td><td><span class="density-range">1.1000 - 1.2000</span></td></tr>
+                    <tr><td class="product-code">LKMC1</td><td><span class="density-range">1.0610 - 1.0800</span></td></tr>
+                    <tr><td class="product-code">LKKSB</td><td><span class="density-range">1.1900 - 1.2400</span></td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div id="noDataMessage" class="no-data">Kode produk tidak ditemukan.</div>
+    </div>
+
+    <script>
+        const searchInput = document.getElementById('searchProduct');
+        const tableContainer = document.getElementById('tableContainer');
+        const noDataMessage = document.getElementById('noDataMessage');
+        const tableRows = document.querySelectorAll('#productTable tbody tr');
+
+        searchInput.addEventListener('input', function() {
+            const filterValue = this.value.toUpperCase().trim();
+            let hasVisibleRow = false;
+
+            tableRows.forEach(row => {
+                const productCodeCell = row.querySelector('.product-code');
+                if (productCodeCell) {
+                    const textValue = productCodeCell.textContent || productCodeCell.innerText;
+                    
+                    // Filter row jika mengandung teks pencarian
+                    if (textValue.toUpperCase().indexOf(filterValue) > -1) {
+                        row.style.display = "";
+                        hasVisibleRow = true;
+                    } else {
+                        row.style.display = "none";
+                    }
+                }
+            });
+
+            // Tampilkan pesan kosong jika tidak ada kode produk yang cocok
+            if (hasVisibleRow) {
+                tableContainer.style.display = "";
+                noDataMessage.style.display = "none";
+            } else {
+                tableContainer.style.display = "none";
+                noDataMessage.style.display = "block";
+            }
+        });
+    </script>
+</body>
+</html>
+
