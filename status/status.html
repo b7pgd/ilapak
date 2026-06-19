@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cek Status Bulk</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Kustomisasi scrollbar untuk kotak autocomplete */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
+
+    <header class="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-md sticky top-0 z-40">
+        <div class="max-w-5xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+            <div class="flex items-center gap-3">
+                <div class="bg-white/10 p-2.5 rounded-xl backdrop-blur-sm">
+                    <i class="fa-solid fa-layer-group text-2xl text-blue-100"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight uppercase">Cek Status Bulk</h1>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <span id="loading-spinner" class="text-xs text-blue-200 flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full backdrop-blur-sm transition-opacity duration-300 pointer-events-none opacity-0">
+                    <i class="fa-solid fa-circle-notch animate-spin text-blue-300"></i> Sinkronisasi Sheets...
+                </span>
+                <div class="text-xs bg-white/10 px-3 py-1.5 rounded-full backdrop-blur-sm text-blue-100 flex items-center gap-2">
+                    <i class="fa-solid fa-sync fa-spin text-blue-300"></i>
+                    <span>Auto-refresh aktif (30s)</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-4 py-4 space-y-4">
+
+        <section class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 sm:p-6 transition-all hover:shadow-md">
+            <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <i class="fa-solid fa-magnifying-glass text-blue-500"></i> Cari Produk / Item Bulk
+            </h2>
+            <div class="relative">
+                <div class="flex shadow-sm rounded-xl overflow-hidden border border-slate-200 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+                    <div class="bg-slate-50 px-4 flex items-center text-slate-400 border-r border-slate-200">
+                        <i class="fa-solid fa-barcode text-lg"></i>
+                    </div>
+                    <input 
+                        type="text" 
+                        id="search-input" 
+                        placeholder="Ketik Kode Produk atau Nama Produk (misal: LKJT1, Komix)..." 
+                        class="w-full px-4 py-3.5 bg-white text-slate-900 placeholder-slate-400 outline-none text-base"
+                        autocomplete="off"
+                    >
+                    <button id="clear-search" class="px-4 text-slate-400 hover:text-slate-600 hidden transition-colors">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </button>
+                </div>
+
+                <div id="autocomplete-box" class="absolute left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-200 z-50 hidden max-h-60 overflow-y-auto custom-scrollbar">
+                    </div>
+            </div>
+
+            <div id="search-result-container" class="mt-5 hidden">
+                <div class="border-t border-slate-100 pt-5">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md">Hasil Pencarian Terpilih</span>
+                        <button id="close-result" class="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1">
+                            Tutup <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                    <div id="search-result-card"></div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <div id="latest-data-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="bg-white p-5 rounded-2xl border border-slate-100 animate-pulse space-y-3">
+                    <div class="h-4 bg-slate-200 rounded w-1/3"></div>
+                    <div class="h-6 bg-slate-200 rounded w-3/4"></div>
+                    <div class="space-y-2 pt-2">
+                        <div class="h-4 bg-slate-200 rounded w-full"></div>
+                        <div class="h-4 bg-slate-200 rounded w-5/6"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="status.js"></script>
+</body>
+</html>
