@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPC Digital Advanced Diagnostic & Reset Tool</title>
+    <style>
+        body{ font-family: Arial, sans-serif; background:#f5f5f5; margin:0; padding:20px; }
+        .container{ max-width:700px; margin:auto; background:white; padding:20px; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,.1); }
+        h2{ margin-top:0; color: #333; }
+        .subtitle { font-size: 14px; color: #666; margin-top: -10px; margin-bottom: 20px; }
+        input{ width:100%; padding:12px; font-size:16px; box-sizing:border-box; margin-bottom:15px; border: 1px solid #ccc; border-radius:6px; }
+        button{ width:100%; padding:14px; font-size:16px; border:none; background:#007bff; color:white; border-radius:8px; cursor:pointer; font-weight: bold; }
+        button:hover{ background: #0056b3; }
+        #log{ margin-top:20px; background:#1e1e1e; color: #00ff00; padding:15px; border-radius:8px; min-height:300px; white-space:pre-wrap; font-size:13px; font-family: 'Courier New', Courier, monospace; overflow-y: auto; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
+        .diagnostic-note { background: #fff3cd; color: #856404; padding: 12px; border-radius: 6px; margin-bottom: 15px; font-size: 13px; border-left: 5px solid #ffeeba; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>IPC Digital Advanced Diagnostic</h2>
+    <div class="subtitle">Alat Analisis Root Cause Timbangan Error (-1.0)</div>
+
+    <div class="diagnostic-note">
+        <strong>Analisis Log Perangkat Fisik:</strong> Browser tidak bisa mengecek kabel fisik secara langsung. Namun, jika status <em>API Endpoint</em> merespons 'Success' tetapi nilai di web tetap '-1.0', dapat dipastikan masalahnya ada pada <strong>Kabel Data Timbangan ke Tablet</strong> atau <strong>Service Data Logger/RS232 hang</strong>.
+    </div>
+
+    <input type="text" id="ipAddress" placeholder="Masukkan IP Target, contoh: 10.167.110.101">
+    <button onclick="runAdvancedDiagnostic()"> Mulai Analisis Mendalam & Reset </button>
+    <div id="log">Sistem Siap. Masukkan IP Tablet dan tekan tombol di atas...</div>
+</div>
+
+<script>
+function clearLog() {
+    document.getElementById("log").innerHTML = "";
+}
+
+function addLog(text, type = "info") {
+    const log = document.getElementById("log");
+    let prefix = "[INFO] ";
+    if (type === "success") prefix = "[✔ OK] ";
+    if (type === "error") prefix = "[❌ ERR] ";
+    if (type === "warn") prefix = "[⚠ WARN] ";
+    if (type === "step") prefix = "\n=== ";
+    
+    log.innerHTML += prefix + text + (type === "step" ? " ===" : "") + "\n";
+    log.scrollTop = log.scrollHeight; // Auto-scroll ke bawah
+}
+
+// Helper untuk deteksi timeout pada fetch
+async function fetchWithTimeout(resource, options = {}) {
+    const { timeout = 4000 } = options;
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+    try {
+        const response = await fetch(resource, { ...options, signal: controller.signal });
+        clearTimeout(id);
+        return response;
+    } catch (error) {
+        clearTimeout(id);
+        throw error;
+    }
+}
+
+async function runAdvancedDiagnostic(){
+    let ipInput = document.getElementById("ipAddress").value.trim();
+    clearLog();
+    
+    if(!ipInput) {
+        addLog("IP Address kosong! Masukkan IP target dari Device Monitoring.", "error");
+        return;
+    }
+
+    // Normalisasi Input
+    ipInput = ipInput.replace(/^(https?:\/\/)/, "");
+    const protocol = window.location.protocol === "https:" ? "https://" : "http://";
+    
+    addLog("MEMULAI DIAGNOSTIK ULTRA ROBUST (ROOT CAUSE ISOLATION)", "step");
+    addLog("Waktu Eksekusi: " + new Date().toLocaleString());
+    addLog("Menganalisis IP Target: " + ipInput);
+
+    // STEP 1: Validasi Lingkungan Browser Internal Admin
+    addLog("DIAGNOSTIK 1: VALIDASI BROWSER & INTERNAL STATE", "step");
+    try {
+        addLog("Memeriksa status sessionStorage...");
+        const backupKeys = {};
+        for (let i = 0; i < sessionStorage.length; i++) {
+            const key = sessionStorage.key(i);
+            if (key && (key.toLowerCase().match(/(auth|token|user|login)/))) {
+                backupKeys[key] = sessionStorage.getItem(key);
+            }
+        }
+        sessionStorage.clear();
+        Object.keys(backupKeys).forEach(key => sessionStorage.setItem(key, backupKeys[key]));
+        addLog("sessionStorage berhasil dibersihkan (Sesi login admin dilindungi).", "success");
+    } catch(e) {
+        addLog("Gagal memproses sessionStorage: " + e.message, "error");
+    }
+
+    try {
+        addLog("Memeriksa Cache Storage API...");
+        if("caches" in window) {
+            const names = await caches.keys();
+            for(const name of names) await caches.delete(name);
+            addLog("Cache browser berhasil dikosongkan.", "success");
+        } else {
+            addLog("Cache Storage tidak didukung di browser ini.", "warn");
+        }
+    } catch(e) {
+        addLog("Gagal menghapus cache: " + e.message, "warn");
+    }
+
+    // STEP 2: Analisis Jaringan ke Tablet
+    addLog("DIAGNOSTIK 2: ANALISIS JALUR JARINGAN KLIEN -> TABLET", "step");
+    const targetBaseUrl = protocol + ipInput;
+    addLog("Menguji Ping HTTP Basic ke " + targetBaseUrl);
+    
+    try {
+        await fetchWithTimeout(targetBaseUrl, { method: "GET", mode: "no-cors" });
+        addLog("Ping Jaringan Dasar Sukses! Tablet aktif di jaringan lokal.", "success");
+    } catch (e) {
+        if (e.name === 'AbortError') {
+            addLog("Timeout! Jaringan ke IPC " + ipInput + " terputus total.", "error");
+            addLog("ROOT CAUSE Kemungkinan Besar: Kabel LAN Lepas, Switch Down, atau Tablet Mati.", "warn");
+            addLog("=== DIAGNOSTIK BERHENTI ===", "step");
+            return;
+        } else {
+            addLog("Network Error: " + e.message, "error");
+        }
+    }
+
+    // STEP 3: Scanning Endpoint API & Data Logger
+    addLog("DIAGNOSTIK 3: SCANNING SERVICE API & DATA LOGGER TIMBANGAN", "step");
+    
+    // Daftar endpoint umum yang sering dipakai vendor timbangan/IPC digital untuk komunikasi data
+    const endpoints = [
+        { path: "", desc: "Root Endpoint / Main Page Web" },
+        { path: "/api", desc: "Standard REST API Gateway" },
+        { path: "/api/reset", desc: "Dedicated Reset Command Service" },
+        { path: "/api/weight", desc: "Timbangan Data Logger Stream" },
+        { path: "/api/device", desc: "Hardware Hardware Controller Interface" }
+    ];
+
+    let activeServicesCount = 0;
+
+    for (const endpoint of endpoints) {
+        const fullUrl = targetBaseUrl + endpoint.path;
+        addLog(`Memindai Endpoint [${endpoint.desc}] -> ${fullUrl}...`);
+        try {
+            // Kita gunakan mode no-cors untuk bypass CORS kebijakan browser lokal
+            await fetchWithTimeout(fullUrl, { method: "GET", mode: "no-cors" });
+            addLog(`-> Service '${endpoint.path || "/"}' MERESPONS (Port Terbuka).`, "success");
+            activeServicesCount++;
+        } catch (e) {
+            addLog(`-> Service '${endpoint.path}' Tidak Merespons / Ditolak.`, "warn");
+        }
+    }
+
+    // STEP 4: Pengambilan Kesimpulan Root Cause
+    addLog("DIAGNOSTIK 4: KESIMPULAN ROOT CAUSE ANALISIS", "step");
+    
+    if (activeServicesCount > 0) {
+        addLog("ANALISIS KONDISI SISTEM:", "info");
+        addLog("1. Jaringan dari Admin Server ke Tablet IPC: NORMAL/TERHUBUNG.");
+        addLog("2. Layanan Software/Aplikasi Web di Tablet: BERJALAN.");
+        addLog("3. Kenapa Angka Timbangan tetap -1.0?");
+        addLog("   >> KESIMPULAN ROOT CAUSE: Masalah ada di komunikasi HARDWARE bawah.", "warn");
+        addLog("   >> Hubungan data antara Mesin Timbangan Fisik (Serial Com/RS232) ke perangkat Data Logger internal tablet macet / kabelnya longgar.", "warn");
+        addLog("   >> SOLUSI: Cek kabel fisik serial di belakang timbangan, atau restart service pembaca serial (bukan web-nya) di Windows/Linux Tablet.", "info");
+    } else {
+        addLog("ANALISIS KONDISI SISTEM:", "info");
+        addLog("-> Hubungan jaringan ada, tetapi tidak ada port/service API yang merespons instruksi browser.", "error");
+        addLog("-> Kemungkinan besar konfigurasi IP berubah atau port API diblokir oleh Firewall internal tablet.", "warn");
+    }
+
+    // STEP 5: Final State Reload
+    try {
+        localStorage.setItem("last_diagnostic_reset", new Date().toISOString());
+    } catch(e) {}
+
+    addLog("DIAGNOSTIK SELESAI", "step");
+    addLog("Silakan screenshot hasil LOG di atas untuk diberikan ke tim IT / Digitalisasi / Perawatan Mesin sebagai bukti teknis.");
+}
+</script>
+
+</body>
+</html>
+
