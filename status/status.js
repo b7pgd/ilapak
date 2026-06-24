@@ -153,7 +153,7 @@ function processCSVData(csvText) {
     }
 
     // AMBIL HANYA 15 DATA TERAKHIR DARI ARRAY (Untuk Dashboard & Pencarian Terbatas)
-    productsData = parsedRows.slice(-30);
+    productsData = parsedRows.slice(-50);
 
     // Perbarui Tampilan Dashboard Utama
     renderLatestData();
