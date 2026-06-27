@@ -167,13 +167,10 @@ async function copyOutput(){
         document.getElementById("output").value;
 
     if(!text){
-        alert("No result to copy");
         return;
     }
 
     await navigator.clipboard.writeText(text);
-
-    alert("Copied!");
 }
 
 function clearAll(){
@@ -204,3 +201,4 @@ function updateStats(){
 
 </body>
 </html>
+
