@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Generator</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f0f4f8;
+            color: #1e293b;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px; /* Diperlebar biar mantap */
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            margin-top: 10px;
+        }
+
+        h2 {
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            color: #1d4ed8;
+            text-align: center;
+        }
+
+        /* Header di atas textbox untuk menampung tombol clear di kanan */
+        .textarea-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .textarea-header label {
+            font-weight: 6px;
+            font-size: 0.9rem;
+            color: #475569;
+        }
+
+        .clear-btn {
+            background-color: #ef4444;
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        .clear-btn:hover {
+            background-color: #dc2626;
+        }
+
+        /* Textbox Utama Gede dan Lebar */
+        .notes-textarea {
+            width: 100%;
+            height: 420px; /* Dibikin jauh lebih tinggi dan gede */
+            background-color: #ffffff;
+            border: 1px solid #cbd5e1;
+            color: #0f172a;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            resize: vertical;
+            outline: none;
+            margin-bottom: 15px;
+        }
+
+        .notes-textarea:focus, .instruction-input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+        }
+
+        /* Input Kedua (Instruksi Hardcoded) */
+        .instruction-group {
+            margin-bottom: 20px;
+        }
+
+        .instruction-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.85rem;
+            color: #475569;
+            font-weight: 600;
+        }
+
+        .instruction-input {
+            width: 100%;
+            background-color: #ffffff;
+            border: 1px solid #cbd5e1;
+            color: #0f172a;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        /* Button Copy/Copas Biru Polos */
+        .copy-btn {
+            width: 100%;
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .copy-btn:hover {
+            background-color: #1d4ed8;
+        }
+
+        .copy-btn:active {
+            background-color: #1e40af;
+        }
+
+        /* Toast Notification */
+        .toast {
+            visibility: hidden;
+            min-width: 200px;
+            background-color: #1e293b;
+            color: #ffffff;
+            text-align: center;
+            border-radius: 4px;
+            padding: 10px;
+            position: fixed;
+            z-index: 10;
+            bottom: 30px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .toast.show {
+            visibility: visible;
+            animation: fadein 0.3s, fadeout 0.3s 2.2s;
+        }
+
+        @keyframes fadein {
+            from {bottom: 0; opacity: 0;}
+            to {bottom: 30px; opacity: 1;}
+        }
+
+        @keyframes fadeout {
+            from {bottom: 30px; opacity: 1;}
+            to {bottom: 0; opacity: 0;}
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Text Editor</h2>
+        
+        <div class="textarea-header">
+            <label for="notesBox">Notes</label>
+            <button class="clear-btn" id="clearBtn" title="Clear Notes">Clear</button>
+        </div>
+        
+        <textarea class="notes-textarea" id="notesBox" placeholder="Tulis notes di sini..."></textarea>
+
+        <div class="instruction-group">
+            <label for="instructionBox">Instruksi Tambahan:</label>
+            <input type="text" class="instruction-input" id="instructionBox" value="Sesuaikan/perbaiki, jangan ubah logic yg tidak berhubungan, kirim lengkap 1 file">
+        </div>
+
+        <button class="copy-btn" id="copyBtn">Copy Combined Text</button>
+    </div>
+
+    <div class="toast" id="toastBox">Copied to clipboard!</div>
+
+    <script>
+        const notesBox = document.getElementById('notesBox');
+        const instructionBox = document.getElementById('instructionBox');
+        const clearBtn = document.getElementById('clearBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const toastBox = document.getElementById('toastBox');
+
+        // Fitur Clear Textbox Utama
+        clearBtn.addEventListener('click', () => {
+            notesBox.value = '';
+            notesBox.focus();
+        });
+
+        // Fungsi Fallback Copy (Pasti berhasil di lingkungan non-HTTPS / Lokal HP)
+        function fallbackCopyText(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            
+            // Hindari scrolling ke bawah halaman saat element di-append
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.position = "fixed";
+            textArea.style.opacity = "0";
+
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showToast();
+                } else {
+                    alert('Gagal menyalin teks, silahkan seleksi manual.');
+                }
+            } catch (err) {
+                console.error('Fallback error:', err);
+                alert('Gagal menyalin teks, silahkan seleksi manual.');
+            }
+
+            document.body.removeChild(textArea);
+        }
+
+        // Fungsi menampilkan pop-up sukses copy
+        function showToast() {
+            toastBox.classList.add('show');
+            setTimeout(() => {
+                toastBox.classList.remove('show');
+            }, 2500);
+        }
+
+        // Fitur Gabung & Copy Otomatis
+        copyBtn.addEventListener('click', () => {
+            const notesText = notesBox.value.trim();
+            const instructionText = instructionBox.value.trim();
+
+            let combinedText = '';
+            if (notesText !== '') {
+                combinedText = notesText + '\n\n' + instructionText;
+            } else {
+                combinedText = instructionText;
+            }
+
+            // Coba pakai cara modern dulu, kalau gagal langsung sikat pakai fallback
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(combinedText)
+                    .then(() => {
+                        showToast();
+                    })
+                    .catch(() => {
+                        fallbackCopyText(combinedText);
+                    });
+            } else {
+                // Langsung gunakan fallback untuk non-HTTPS / Local file browser
+                fallbackCopyText(combinedText);
+            }
+        });
+    </script>
+
+</body>
+</html>
