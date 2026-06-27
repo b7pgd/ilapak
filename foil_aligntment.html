@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulasi Training Ilapak - Komix Ramping Fix</title>
+    <style>
+        :root {
+            --sachet-orange: #f39221;
+            --sachet-yellow: #fff200;
+            --komix-green: #008543;
+            --jahe-brown: #661a11;
+            
+            /* CSS FETCH dari sachet kode pertama */
+            --sachet-orange-back: #d18d5f;
+            --komix-green-back: #008450;
+        }
+
+        body {
+            background-color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            font-family: 'Arial Narrow', Arial, sans-serif;
+            margin: 0;
+        }
+
+        .training-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            padding: 40px 0;
+            border-bottom: 5px solid #ccc;
+        }
+
+        .machine-photo {
+            width: 290px;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 10px;
+            border: 2px solid #333;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .sachet-container {
+            width: 290px; 
+            height: 460px; 
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            perspective: 1000px;
+        }
+
+        .sachet-inner {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .flipped { transform: rotateY(180deg); }
+
+        .sachet-front, .sachet-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            /* Warna Dasar Aluminum Foil */
+            background: linear-gradient(135deg, #bfbfbf 0%, #e1e1e1 50%, #b3b3b3 100%);
+            backface-visibility: hidden;
+            overflow: hidden;
+            border: 1px solid #c97e29;
+        }
+
+        .sachet-back {
+            transform: rotateY(180deg);
+            border: 1px solid #a3653d;
+        }
+
+        /* ================= SECTOR: TAMPAK DEPAN ================= */
+        .foil-front-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, var(--sachet-orange) 0%, var(--sachet-yellow) 45%, var(--sachet-orange) 100%);
+            z-index: 1;
+            transition: transform 0.1s linear;
+            overflow: hidden; /* MEMOTONG SHADOW YANG NYATOL */
+        }
+
+        .foil-front-bg::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 110px;
+            height: 100%;
+            background-image: radial-gradient(rgba(243, 146, 33, 0.4) 1.5px, transparent 1.5px);
+            background-size: 5px 5px;
+            z-index: 2;
+        }
+
+        .wave-overlay {
+            position: absolute;
+            top: 60px;
+            left: -50px;
+            width: 400px;
+            height: 200px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.1) 65%, transparent 100%);
+            border-radius: 0 0 100% 100% / 0 0 60% 60%;
+            transform: rotate(-12deg);
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        .top-header-sachet {
+            position: absolute;
+            top: 40px;
+            left: 30px;
+            right: 30px;
+            border-top: 2px solid rgba(255,255,255,0.9);
+            padding-top: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 15;
+        }
+
+        .sirup-text-top {
+            font-size: 12px;
+            font-weight: bold;
+            color: #fff;
+            letter-spacing: 1px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
+        }
+
+        .halal-badge-top {
+            position: absolute;
+            left: 0;
+            top: 5px;
+            border: 1px solid #000;
+            font-size: 7px;
+            padding: 1px 3px;
+            font-weight: bold;
+            border-radius: 3px;
+            line-height: 1;
+            background: rgba(255,255,255,0.4);
+            color: #000;
+        }
+
+        .content-wrapper {
+            position: absolute;
+            width: 400px; 
+            height: 320px; 
+            left: 55%;
+            top: 52%;
+            transform: translate(-50%, -50%) rotate(-90deg);
+            display: flex;
+            flex-direction: column;
+            padding: 10px 20px; 
+            box-sizing: border-box;
+            transition: none;
+            z-index: 5;
+        }
+
+        .brand-section { 
+            display: flex; 
+            align-items: flex-end; 
+            margin-bottom: 5px; 
+            position: relative;
+        }
+
+        .brand-name { 
+            font-size: 52px; 
+            color: var(--komix-green); 
+            font-weight: 900; 
+            margin: 80; 
+            line-height: 0.8; 
+            letter-spacing: -1px; 
+            -webkit-text-stroke: 1.5px white; 
+            filter: drop-shadow(1px 2px 2px rgba(0,0,0,0.2));
+        }
+
+        .description-area { 
+            font-size: 28px; 
+            line-height: 1.15; 
+            color: var(--komix-green); 
+            text-align: left;
+            font-weight: 900;
+            font-family: 'Arial Black', Gadget, sans-serif;
+            padding: 8px 12px;
+            margin-top: -25px;
+            margin-left: -23px;
+            background: rgba(255, 255, 255, 0.45);
+            border-radius: 6px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.6);
+            border-left: -118px solid rgba(255, 255, 255, 0.8);
+            text-shadow: 1px 1px 0px #fff;
+        }
+
+        .jahe-footer-section {
+            margin-top: 18px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            padding-left: 12px;
+            border-left: 3px solid transparent;
+        }
+
+        .jahe-title {
+            font-size: 15px;
+            font-weight: 900;
+            color: var(--jahe-brown);
+            margin: 0 0 2px 0;
+            letter-spacing: 0.5px;
+            text-shadow: 1px 1px 0px #fff;
+        }
+
+        .jahe-desc {
+            font-size: 8.5px;
+            font-weight: bold;
+            color: #333;
+            line-height: 1.1;
+            text-transform: uppercase;
+            max-width: 280px;
+        }
+
+        .jahe-meta-row {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 4px;
+            font-size: 8px;
+            font-weight: bold;
+            color: #444;
+        }
+
+        /* ================= SECTOR: TAMPAK BELAKANG ================= */
+        .foil-back-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--sachet-orange-back);
+            z-index: 1;
+            transition: transform 0.1s linear;
+            overflow: hidden; /* MEMOTONG SHADOW YANG NYATOL */
+        }
+
+        .content-wrapper-back {
+            position: absolute;
+            width: 400px; 
+            height: 260px; 
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%) rotate(-90deg);
+            display: flex;
+            flex-direction: column;
+            padding: 5px 30px; 
+            box-sizing: border-box;
+            transition: none;
+        }
+
+        .brand-section-back { display: flex; align-items: flex-end; margin-bottom: 3px; }
+        .brand-name-back { font-size: 48px; color: var(--komix-green-back); font-weight: 900; margin: 0; line-height: 0.8; letter-spacing: -2px; -webkit-text-stroke: 0.5px white; }
+        .brand-label-back { font-size: 9px; font-weight: bold; margin-bottom: 4px; margin-left: 8px; color: #000; }
+
+        .description-area-back { 
+            font-size: 7.8px; 
+            line-height: 1.1; 
+            color: #000; 
+            text-align: justify; 
+        }
+
+        .section-title-back { 
+            display: inline-block;
+            font-weight: bold; 
+            text-decoration: underline; 
+            margin-top: 1px;
+        }
+
+        .footer-elements-back { display: flex; align-items: flex-end; gap: 10px; margin-top: auto; padding-bottom: 5px; }
+        .barcode-area-back { background: white; padding: 1px 4px; text-align: center; }
+        .barcode-lines-back { width: 70px; height: 22px; background: repeating-linear-gradient(90deg, #000, #000 1.5px, #fff 1.5px, #fff 3.5px); }
+        .barcode-num-back { font-size: 7px; font-weight: bold; letter-spacing: 0.5px; color: #000; }
+
+        .icons-side-group-back { display: flex; align-items: center; gap: 8px; }
+        .blue-dot-back { width: 16px; height: 16px; background: #005dab; border-radius: 50%; border: 1px solid white; }
+        .netto-text-back { font-weight: bold; font-size: 11px; color: #000; }
+        .warning-box-back { border: 1px solid #000; padding: 1px 3px; font-size: 6px; text-align: center; width: 60px; background: rgba(255,255,255,0.2); font-weight: bold; line-height: 1; color: #000; }
+
+        .batch-code-back {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            font-size: 15px;
+            letter-spacing: 2px;
+            color: #1a1a1a;
+            z-index: 20;
+        }
+
+        .sealing {
+            background-image: linear-gradient(90deg, rgba(0,0,0,0.08) 1px, transparent 1px), 
+                              linear-gradient(0deg, rgba(0,0,0,0.08) 1px, transparent 1px);
+            background-size: 3px 3px;
+            background-color: rgba(220, 110, 20, 0.3);
+            position: absolute;
+            z-index: 10;
+        }
+        
+        .sealing-top { top: 0; left: 0; width: 100%; height: 30px; border-bottom: 1px solid rgba(0,0,0,0.15); }
+        .sealing-bottom { bottom: 0; left: 0; width: 100%; height: 30px; border-top: 1px solid rgba(0,0,0,0.15); }
+        .sealing-side { top: 0; height: 100%; width: 15px; }
+        .sealing-left { left: 0; }
+        .sealing-right { right: 0; }
+
+        .control-panel {
+            margin-top: 20px;
+            background: #333;
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column; 
+            align-items: center;
+            gap: 10px;
+            color: white;
+            min-width: 290px;
+        }
+        
+        .adjuster-row { display: flex; align-items: center; gap: 20px; justify-content: center; }
+        .btn-group { display: flex; gap: 10px; margin-top: 5px; }
+        .btn-adjust { background: #555; color: white; border: none; padding: 10px 20px; font-size: 20px; cursor: pointer; border-radius: 5px; }
+        .btn-reset { background: #b33939; color: white; border: none; padding: 8px 15px; font-size: 11px; cursor: pointer; border-radius: 4px; text-transform: uppercase; font-weight: bold; }
+        .btn-rotate { background: #2980b9; color: white; border: none; padding: 8px 15px; font-size: 11px; cursor: pointer; border-radius: 4px; text-transform: uppercase; font-weight: bold; }
+
+        .param-val { font-family: monospace; font-size: 24px; color: #0f0; min-width: 50px; text-align: center; }
+        .label-ctrl { font-size: 14px; text-transform: uppercase; font-weight: bold; color: #fff; }
+        
+        .info-box {
+            margin-top: 15px;
+            background: #fff;
+            padding: 12px;
+            border-left: 5px solid #b33939;
+            width: 290px;
+            box-sizing: border-box;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .desc-text { font-size: 14px; color: #222; text-align: left; line-height: 1.6; font-weight: bold; }
+        .desc-text span { color: #b33939; }
+    </style>
+</head>
+<body>
+
+    <div class="training-section">
+        <img src="https://raw.githubusercontent.com/coptah1-max/Ilapak/main/4.jpg" alt="Mesin Ilapak 11" class="machine-photo">
+        
+        <div class="sachet-container">
+            <div id="sachet-card" class="sachet-inner">
+                
+                <div class="sachet-front">
+                    <div class="sealing sealing-top"></div>
+                    <div class="sealing sealing-bottom"></div>
+                    <div class="sealing sealing-side sealing-left"></div>
+                    <div class="sealing sealing-side sealing-right"></div>
+                    
+                    <div id="foil-front" class="foil-front-bg">
+                        <div class="wave-overlay"></div>
+                        <div class="top-header-sachet">
+                            <div class="halal-badge-top">HALAL</div>
+                            <span class="sirup-text-top">SIRUP OBAT BATUK</span>
+                        </div>
+                        <div class="content-wrapper">
+                            <div class="brand-section"><h1 class="brand-name">KOMIX</h1></div>
+                            <div class="description-area">
+                                Dextromethorphan HBr,<br>
+                                Guaifenesin,<br>
+                                Chlorphenamine Maleate
+                            </div>
+                            <div class="jahe-footer-section">
+                                <h2 class="jahe-title">RASA JAHE</h2>
+                                <div class="jahe-desc">Meredakan Batuk & Menghangatkan Tenggorokan</div>
+                                <div class="jahe-meta-row">
+                                    <span>HET Rp. 2000</span>
+                                    <span>No. Reg. DTL9202805837A1</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="sachet-back">
+                    <div class="sealing sealing-top"></div>
+                    <div class="sealing sealing-bottom"></div>
+                    <div class="sealing sealing-side sealing-left"></div>
+                    <div class="sealing sealing-side sealing-right"></div>
+                    
+                    <div id="foil-back" class="foil-back-bg">
+                        <div class="content-wrapper-back">
+                            <div class="brand-section-back"><h1 class="brand-name-back">KOMIX</h1><span class="brand-label-back">SIRUP OBAT BATUK</span></div>
+                            <div class="description-area-back">
+                                <span class="section-title-back">KOMPOSISI:</span> Setiap sachet mengandung: Guaifenesin 100 mg, Dextromethorphan HBr 15 mg, Chlorphenamine Maleate 2 mg. Bahan tambahan: Sucrose, CMC Sodium, Starch, Polyoxyl, Sodium Citrate, Citric Acid, Sodium Benzoate, Pewarna Caramel, Perisa Artifisial, Saccharine Sodium.<br>
+                                <span class="section-title-back">CARA KERJA OBAT:</span> Antitusif, antihistamin dan ekspektoran.<br>
+                                <span class="section-title-back">INDIKASI:</span> Meredakan batuk.<br>
+                                <span class="section-title-back">DOSIS:</span> Dewasa 3x sehari 1-2 sachet.<br>
+                                <span class="section-title-back">PERINGATAN:</span> Hati-hati penderita gangguan hati/ginjal. Jangan mengendarai mesin.<br>
+                                <span class="section-title-back">EFEK SAMPING:</span> Mengantuk, mulut kering.<br>
+                                <span class="section-title-back">KONTRAINDIKASI:</span> Hipersensitif komponen obat.<br>
+                                <div style="margin-top:2px"><b>SIMPAN DI BAWAH 30&deg;C</b></div>
+                            </div>
+                            <div class="footer-elements-back">
+                                <div class="barcode-area-back"><div class="barcode-lines-back"></div><div class="barcode-num-back">8 993058 300500</div></div>
+                                <div class="icons-side-group-back"><div class="blue-dot-back"></div><div class="netto-text-back">NETTO 7mL</div><div class="warning-box-back">AWAS! OBAT KERAS</div></div>
+                            </div>
+                        </div>
+                        <div class="batch-code-back" style="bottom: 40px;">HM630F DEC25 DEC27</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="control-panel">
+            <div class="label-ctrl">Foil Alignment</div>
+            <div class="adjuster-row">
+                <button class="btn-adjust" onclick="adjustFoil(-2)">◀</button>
+                <div id="v-foil" class="param-val">0</div>
+                <button class="btn-adjust" onclick="adjustFoil(2)">▶</button>
+            </div>
+            <div class="btn-group">
+                <button id="rotate-btn" class="btn-rotate" onclick="toggleRotate('sachet-card', 'desc-1')">Flip To Back</button>
+                <button class="btn-reset" onclick="resetFoil()">Reset Default</button>
+            </div>
+        </div>
+        <div class="info-box"><div id="desc-1" class="desc-text">◀ <span>Geser Kiri:</span> Foil depan ke kanan, foil belakang ke kiri <br> ▶ <span>Geser Kanan:</span> Foil depan ke kiri, foil belakang ke kanan</div></div>
+    </div>
+
+    <script>
+        let sFoil = 0;
+
+        function toggleRotate(contId, descId) {
+            const el = document.getElementById(contId);
+            el.classList.toggle('flipped');
+            const isFlipped = el.classList.contains('flipped');
+            const descEl = document.getElementById(descId);
+            const btnEl = document.getElementById('rotate-btn');
+
+            btnEl.innerText = isFlipped ? "Flip To Front" : "Flip To Back";
+
+            if (isFlipped) {
+                descEl.innerHTML = '◀ <span>Geser Kiri:</span> Foil depan ke kiri, foil belakang ke kanan <br> ▶ <span>Geser Kanan:</span> Foil depan ke kanan, foil belakang ke kiri';
+            } else {
+                descEl.innerHTML = '◀ <span>Geser Kiri:</span> Foil depan ke kanan, foil belakang ke kiri <br> ▶ <span>Geser Kanan:</span> Foil depan ke kiri, foil belakang ke kanan';
+            }
+        }
+
+        function updateFoilUI() {
+            document.getElementById('v-foil').innerText = sFoil;
+            const foilFront = document.getElementById('foil-front');
+            const foilBack = document.getElementById('foil-back');
+            
+            foilFront.style.transform = `translateX(${sFoil}px)`;
+            foilBack.style.transform = `translateX(${sFoil}px)`;
+        }
+        
+        function adjustFoil(v) { sFoil -= v; updateFoilUI(); }
+        function resetFoil() { sFoil = 0; updateFoilUI(); }
+
+        updateFoilUI();
+    </script>
+</body>
+</html>
+

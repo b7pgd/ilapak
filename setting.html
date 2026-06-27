@@ -156,6 +156,16 @@
 </head>
 <body>
 
+<iframe src="foil_aligntment.html" id="foil-iframe" style="width: 100%; border: none; display: block; margin: 0 auto;" scrolling="no"></iframe>
+
+<script>
+    const foilIframe = document.getElementById('foil-iframe');
+    foilIframe.onload = function() {
+        foilIframe.style.height = foilIframe.contentWindow.document.body.scrollHeight + 'px';
+    };
+</script>
+
+
     <div class="training-section">
         <img src="https://raw.githubusercontent.com/coptah1-max/Ilapak/main/1.jpg" alt="Mesin Ilapak 1" class="machine-photo">
         <div id="container-1" class="sachet-container">
@@ -356,10 +366,8 @@
 
         function updateRedaksiUI() {
             document.getElementById('v-redaksi').innerText = sRedaksi;
-            // Modulo Matematika: ((n % m) + m) % m agar angka negatif jadi positif (0-99)
             let posPercent = ((sRedaksi % 100) + 100) % 100;
             
-            // Gerakkan 3 elemen (Atas, Tengah, Bawah) supaya fluid ke segala arah
             document.getElementById('redaksi-top').style.top = (0 - posPercent) + '%';
             document.getElementById('redaksi-move').style.top = (100 - posPercent) + '%';
             document.getElementById('redaksi-clone').style.top = (200 - posPercent) + '%';
@@ -377,6 +385,15 @@
         function resetBatch() { sBatch = 40; updateBatchUI(); }
 
         updateSealingUI(); updateRedaksiUI(); updateBatchUI();
+    </script>
+
+    <iframe src="distance.html" id="distance-iframe" style="width: 100%; border: none; display: block; margin: 0 auto;" scrolling="no"></iframe>
+
+    <script>
+        const distanceIframe = document.getElementById('distance-iframe');
+        distanceIframe.onload = function() {
+            distanceIframe.style.height = distanceIframe.contentWindow.document.body.scrollHeight + 'px';
+        };
     </script>
 </body>
 </html>
