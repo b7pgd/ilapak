@@ -219,8 +219,10 @@
 
         .btn-group { 
             display: flex; 
+            flex-direction: column;
             justify-content: center;
             margin-top: 10px; 
+            gap: 8px;
         }
 
         .btn-reset { 
@@ -232,6 +234,19 @@
             cursor: pointer; 
             border-radius: 4px; 
             text-transform: uppercase; 
+            font-weight: bold;
+            width: 100%;
+        }
+
+        .btn-reverse {
+            background: #2980b9;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            font-size: 11px;
+            cursor: pointer;
+            border-radius: 4px;
+            text-transform: uppercase;
             font-weight: bold;
             width: 100%;
         }
@@ -331,6 +346,7 @@
             </div>
             <div class="btn-group">
                 <button class="btn-reset" onclick="resetTraverse()">Reset Default</button>
+                <button class="btn-reverse" id="btn-toggle-logic" onclick="toggleLogic()">Switch Reverse Logic</button>
             </div>
         </div>
 
@@ -348,29 +364,61 @@
     <script>
         const forwardInput = document.getElementById("forward");
         const reverseInput = document.getElementById("reverse");
+        const descBox = document.getElementById("desc-3");
+        const btnToggleLogic = document.getElementById("btn-toggle-logic");
         
-        // Element batch code terpisah untuk masing-masing laur sachet
         const batchForward = document.getElementById("batch-forward");
         const batchReverse = document.getElementById("batch-reverse");
+
+        // State default (false = normal logic, true = reversed logic)
+        let isLogicReversed = false;
 
         function updateBatchUI() {
             let f = parseFloat(forwardInput.value) || 0;
             let r = parseFloat(reverseInput.value) || 0;
 
-            // Pergeseran Jalur Forward (Sachet Atas)
-            // Sesuai original logic: F naik -> hasil negatif (Kiri)
-            let shiftForward = (24 - f) * 5;
-            batchForward.style.transform = `translateX(calc(-50% + ${shiftForward}px))`;
+            let shiftForward, shiftReverse;
 
-            // Pergeseran Jalur Reverse (Sachet Bawah)
-            // Sesuai karakteristik balik arah mesin: R naik -> hasil positif (Kanan)
-            let shiftReverse = (r - 34) * 5;
+            if (!isLogicReversed) {
+                // LOGIC ASLI (Normal Mode)
+                shiftForward = (24 - f) * 5;
+                shiftReverse = (r - 34) * 5;
+
+                descBox.innerHTML = `Formula Simulasi Mesin:<br>
+                    • <span>Forward naik(+2)</span> → Nomer Batch Atas ke KIRI<br>
+                    • <span>Forward turun(-2)</span> → Nomer Batch Atas ke KANAN<br>
+                    • <span>Reverse naik(+2)</span> → Nomer Batch Bawah ke KANAN<br>
+                    • <span>Reverse turun(-2)</span> → Nomer Batch Bawah ke KIRI`;
+                btnToggleLogic.style.background = "#2980b9";
+                btnToggleLogic.innerText = "Switch Reverse Logic";
+            } else {
+                // LOGIC BERLAWANAN (Inverted Mode)
+                shiftForward = (f - 24) * 5;
+                shiftReverse = (34 - r) * 5;
+
+                descBox.innerHTML = `Formula Simulasi Mesin (REVERSED MODE):<br>
+                    • <span>Forward naik(+2)</span> → Nomer Batch Atas ke KANAN<br>
+                    • <span>Forward turun(-2)</span> → Nomer Batch Atas ke KIRI<br>
+                    • <span>Reverse naik(+2)</span> → Nomer Batch Bawah ke KIRI<br>
+                    • <span>Reverse turun(-2)</span> → Nomer Batch Bawah ke KANAN`;
+                btnToggleLogic.style.background = "#d35400";
+                btnToggleLogic.innerText = "Logic: REVERSED (Click to Normal)";
+            }
+
+            batchForward.style.transform = `translateX(calc(-50% + ${shiftForward}px))`;
             batchReverse.style.transform = `translateX(calc(-50% + ${shiftReverse}px))`;
+        }
+
+        function toggleLogic() {
+            isLogicReversed = !isLogicReversed;
+            updateBatchUI();
         }
 
         function resetTraverse() {
             forwardInput.value = 24;
             reverseInput.value = 34;
+            // Line di bawah ini dihapus agar status toggle logic tetap dipertahankan saat reset angka
+            // isLogicReversed = false; 
             updateBatchUI();
         }
 
