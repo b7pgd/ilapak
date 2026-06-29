@@ -39,6 +39,33 @@
             margin-bottom: 20px;
         }
 
+        /* Wrapper untuk menampung dua laur sachet */
+        .dual-sachet-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .sachet-label {
+            background: #333;
+            color: #fff;
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 3px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .sachet-lane {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
         .sachet-container {
             width: 290px; 
             height: 460px; 
@@ -227,27 +254,61 @@
 
     <div class="training-section">
         <img src="https://raw.githubusercontent.com/coptah1-max/Ilapak/main/5.jpg" alt="Mesin Ilapak 3" class="machine-photo">
-        <div id="container-3" class="sachet-container">
-            <div class="sealing sealing-top"></div><div class="sealing sealing-bottom"></div>
-            <div class="sealing sealing-side sealing-left"></div><div class="sealing sealing-side sealing-right"></div>
-            <div class="content-wrapper" style="top: 50%">
-                <div class="brand-section"><h1 class="brand-name">KOMIX</h1><span class="brand-label">SIRUP OBAT BATUK</span></div>
-                <div class="description-area">
-                    <span class="section-title">KOMPOSISI:</span> Setiap sachet mengandung: Guaifenesin 100 mg, Dextromethorphan HBr 15 mg, Chlorphenamine Maleate 2 mg. Bahan tambahan: Sucrose, CMC Sodium, Starch, Polyoxyl, Sodium Citrate, Citric Acid, Sodium Benzoate, Pewarna Caramel, Perisa Artifisial, Saccharine Sodium.<br>
-                    <span class="section-title">CARA KERJA OBAT:</span> Antitusif, antihistamin dan ekspektoran.<br>
-                    <span class="section-title">INDIKASI:</span> Meredakan batuk.<br>
-                    <span class="section-title">DOSIS:</span> Dewasa 3x sehari 1-2 sachet.<br>
-                    <span class="section-title">PERINGATAN:</span> Hati-hati penderita gangguan hati/ginjal. Jangan mengendarai mesin.<br>
-                    <span class="section-title">EFEK SAMPING:</span> Mengantuk, mulut kering.<br>
-                    <span class="section-title">KONTRAINDIKASI:</span> Hipersensitif komponen obat.<br>
-                    <div style="margin-top:2px"><b>SIMPAN DI BAWAH 30&deg;C</b></div>
-                </div>
-                <div class="footer-elements">
-                    <div class="barcode-area"><div class="barcode-lines"></div><div class="barcode-num">8 993058 300500</div></div>
-                    <div class="icons-side-group"><div class="blue-dot"></div><div class="netto-text">NETTO 7mL</div><div class="warning-box">AWAS! OBAT KERAS</div></div>
+        
+        <div class="dual-sachet-wrapper">
+            
+            <div class="sachet-lane">
+                <div class="sachet-label" style="background: #27ae60;">Sachet Atas (Forward Stroke)</div>
+                <div id="container-forward" class="sachet-container">
+                    <div class="sealing sealing-top"></div><div class="sealing sealing-bottom"></div>
+                    <div class="sealing sealing-side sealing-left"></div><div class="sealing sealing-side sealing-right"></div>
+                    <div class="content-wrapper" style="top: 50%">
+                        <div class="brand-section"><h1 class="brand-name">KOMIX</h1><span class="brand-label">SIRUP OBAT BATUK</span></div>
+                        <div class="description-area">
+                            <span class="section-title">KOMPOSISI:</span> Setiap sachet mengandung: Guaifenesin 100 mg, Dextromethorphan HBr 15 mg, Chlorphenamine Maleate 2 mg. Bahan tambahan: Sucrose, CMC Sodium, Starch, Polyoxyl, Sodium Citrate, Citric Acid, Sodium Benzoate, Pewarna Caramel, Perisa Artifisial, Saccharine Sodium.<br>
+                            <span class="section-title">CARA KERJA OBAT:</span> Antitusif, antihistamin dan ekspektoran.<br>
+                            <span class="section-title">INDIKASI:</span> Meredakan batuk.<br>
+                            <span class="section-title">DOSIS:</span> Dewasa 3x sehari 1-2 sachet.<br>
+                            <span class="section-title">PERINGATAN:</span> Hati-hati penderita gangguan hati/ginjal. Jangan mengendarai mesin.<br>
+                            <span class="section-title">EFEK SAMPING:</span> Mengantuk, mulut kering.<br>
+                            <span class="section-title">KONTRAINDIKASI:</span> Hipersensitif komponen obat.<br>
+                            <div style="margin-top:2px"><b>SIMPAN DI BAWAH 30&deg;C</b></div>
+                        </div>
+                        <div class="footer-elements">
+                            <div class="barcode-area"><div class="barcode-lines"></div><div class="barcode-num">8 993058 300500</div></div>
+                            <div class="icons-side-group"><div class="blue-dot"></div><div class="netto-text">NETTO 7mL</div><div class="warning-box">AWAS! OBAT KERAS</div></div>
+                        </div>
+                    </div>
+                    <div id="batch-forward" class="batch-code" style="bottom: 40px;">HM630F DEC25 DEC27</div>
                 </div>
             </div>
-            <div id="batch-move" class="batch-code" style="bottom: 40px;">HM630F DEC25 DEC27</div>
+
+            <div class="sachet-lane">
+                <div class="sachet-label" style="background: #2980b9;">Sachet Bawah (Reverse Stroke)</div>
+                <div id="container-reverse" class="sachet-container">
+                    <div class="sealing sealing-top"></div><div class="sealing sealing-bottom"></div>
+                    <div class="sealing sealing-side sealing-left"></div><div class="sealing sealing-side sealing-right"></div>
+                    <div class="content-wrapper" style="top: 50%">
+                        <div class="brand-section"><h1 class="brand-name">KOMIX</h1><span class="brand-label">SIRUP OBAT BATUK</span></div>
+                        <div class="description-area">
+                            <span class="section-title">KOMPOSISI:</span> Setiap sachet mengandung: Guaifenesin 100 mg, Dextromethorphan HBr 15 mg, Chlorphenamine Maleate 2 mg. Bahan tambahan: Sucrose, CMC Sodium, Starch, Polyoxyl, Sodium Citrate, Citric Acid, Sodium Benzoate, Pewarna Caramel, Perisa Artifisial, Saccharine Sodium.<br>
+                            <span class="section-title">CARA KERJA OBAT:</span> Antitusif, antihistamin dan ekspektoran.<br>
+                            <span class="section-title">INDIKASI:</span> Meredakan batuk.<br>
+                            <span class="section-title">DOSIS:</span> Dewasa 3x sehari 1-2 sachet.<br>
+                            <span class="section-title">PERINGATAN:</span> Hati-hati penderita gangguan hati/ginjal. Jangan mengendarai mesin.<br>
+                            <span class="section-title">EFEK SAMPING:</span> Mengantuk, mulut kering.<br>
+                            <span class="section-title">KONTRAINDIKASI:</span> Hipersensitif komponen obat.<br>
+                            <div style="margin-top:2px"><b>SIMPAN DI BAWAH 30&deg;C</b></div>
+                        </div>
+                        <div class="footer-elements">
+                            <div class="barcode-area"><div class="barcode-lines"></div><div class="barcode-num">8 993058 300500</div></div>
+                            <div class="icons-side-group"><div class="blue-dot"></div><div class="netto-text">NETTO 7mL</div><div class="warning-box">AWAS! OBAT KERAS</div></div>
+                        </div>
+                    </div>
+                    <div id="batch-reverse" class="batch-code" style="bottom: 40px;">HM630F DEC25 DEC27</div>
+                </div>
+            </div>
+
         </div>
 
         <div class="control-panel">
@@ -275,9 +336,11 @@
 
         <div class="info-box">
             <div id="desc-3" class="desc-text">
-                Formula Simulasi:<br>
-                • <span>Forward naik(+2)</span> / <span>Reverse turun (-2) </span> → Nomer Batch ke KIRI<br>
-                • <span>Forward turun(-2)</span> / <span>Reverse naik(+2)</span> → Nomer Batch ke KANAN
+                Formula Simulasi Mesin:<br>
+                • <span>Forward naik(+2)</span> → Nomer Batch Atas ke KIRI<br>
+                • <span>Forward turun(-2)</span> → Nomer Batch Atas ke KANAN<br>
+                • <span>Reverse naik(+2)</span> → Nomer Batch Bawah ke KANAN<br>
+                • <span>Reverse turun(-2)</span> → Nomer Batch Bawah ke KIRI
             </div>
         </div>
     </div>
@@ -285,19 +348,24 @@
     <script>
         const forwardInput = document.getElementById("forward");
         const reverseInput = document.getElementById("reverse");
-        const batchMove = document.getElementById("batch-move");
+        
+        // Element batch code terpisah untuk masing-masing laur sachet
+        const batchForward = document.getElementById("batch-forward");
+        const batchReverse = document.getElementById("batch-reverse");
 
         function updateBatchUI() {
             let f = parseFloat(forwardInput.value) || 0;
             let r = parseFloat(reverseInput.value) || 0;
 
-            // Membalik arah logika sesuai perilaku aktual mesin:
-            // F naik (cth. 26) -> memicu nilai negatif (Geser Kiri)
-            // R turun (cth. 32) -> memicu nilai negatif (Geser Kiri)
-            let shift = ((24 - f) + (r - 34)) * 5;
+            // Pergeseran Jalur Forward (Sachet Atas)
+            // Sesuai original logic: F naik -> hasil negatif (Kiri)
+            let shiftForward = (24 - f) * 5;
+            batchForward.style.transform = `translateX(calc(-50% + ${shiftForward}px))`;
 
-            // Diaplikasikan ke koordinat kiri-kanan sachet pembungkus fisik
-            batchMove.style.transform = `translateX(calc(-50% + ${shift}px))`;
+            // Pergeseran Jalur Reverse (Sachet Bawah)
+            // Sesuai karakteristik balik arah mesin: R naik -> hasil positif (Kanan)
+            let shiftReverse = (r - 34) * 5;
+            batchReverse.style.transform = `translateX(calc(-50% + ${shiftReverse}px))`;
         }
 
         function resetTraverse() {
@@ -309,9 +377,8 @@
         forwardInput.addEventListener("input", updateBatchUI);
         reverseInput.addEventListener("input", updateBatchUI);
 
-        // Inisialisasi awal
+        // Inisialisasi awal saat load halaman
         updateBatchUI();
     </script>
 </body>
 </html>
-
