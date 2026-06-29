@@ -259,7 +259,7 @@
             height: 260px; 
             left: 50%;
             top: 50%;
-            transform: translate(-50%, -50%) rotate(-90deg);
+            transform: translate(-50%, -50%) rotate(90deg);
             display: flex;
             flex-direction: column;
             padding: 5px 30px; 
@@ -305,6 +305,7 @@
             letter-spacing: 2px;
             color: #1a1a1a;
             z-index: 20;
+            transform: rotate(180deg); /* MENJADIKAN NOMOR BATCH TERBALIK 180 DERAJAT */
         }
 
         .sealing {
@@ -404,6 +405,7 @@
                     <div class="sealing sealing-side sealing-right"></div>
                     
                     <div id="foil-back" class="foil-back-bg">
+                        <div class="batch-code-back" style="top: 40px;">HM630F DEC25 DEC27</div>
                         <div class="content-wrapper-back">
                             <div class="brand-section-back"><h1 class="brand-name-back">KOMIX</h1><span class="brand-label-back">SIRUP OBAT BATUK</span></div>
                             <div class="description-area-back">
@@ -421,7 +423,6 @@
                                 <div class="icons-side-group-back"><div class="blue-dot-back"></div><div class="netto-text-back">NETTO 7mL</div><div class="warning-box-back">AWAS! OBAT KERAS</div></div>
                             </div>
                         </div>
-                        <div class="batch-code-back" style="bottom: 40px;">HM630F DEC25 DEC27</div>
                     </div>
                 </div>
 
@@ -478,4 +479,3 @@
     </script>
 </body>
 </html>
-
