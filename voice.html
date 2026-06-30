@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice to Text</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-blue-50 min-h-screen flex flex-col justify-between antialiased">
+
+    <main class="flex-1 flex flex-col items-center justify-center p-4 w-full max-w-md mx-auto">
+        <div class="bg-white w-full rounded-2xl shadow-sm border border-blue-100 p-5 flex flex-col gap-4">
+            
+            <div class="text-center pb-2 border-b border-gray-100 flex justify-between items-center">
+                <button 
+                    id="btn-clear" 
+                    class="flex items-center justify-center p-2 bg-red-50 hover:bg-red-100 active:scale-95 text-red-600 rounded-xl transition-all text-sm font-medium">
+                    <i data-lucide="trash-2" class="w-4 h-4 mr-1"></i>
+                    Hapus
+                </button>
+                
+                <h1 class="text-xl font-bold text-blue-600 pr-12 flex-1 text-center">Voice to Text</h1>
+            </div>
+            
+            <div class="text-center -mt-2">
+                <p class="text-xs text-gray-400" id="status-text">Ketuk tombol mikrofon untuk mulai</p>
+            </div>
+
+            <div class="relative flex-1">
+                <textarea 
+                    id="output-text" 
+                    class="w-full h-64 p-4 text-gray-700 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white resize-none text-base placeholder-gray-400 function-transition"
+                    placeholder="Hasil dikte akan muncul di sini..."></textarea>
+            </div>
+
+            <div class="w-full">
+                <button 
+                    id="btn-copy" 
+                    class="w-full flex items-center justify-center gap-2 py-3 px-4 bg-blue-50 hover:bg-blue-100 active:scale-98 text-blue-600 font-medium rounded-xl transition-all text-sm">
+                    <i data-lucide="copy" class="w-4 h-4"></i>
+                    Salin teks
+                </button>
+            </div>
+
+            <div class="flex justify-center pt-2">
+                <button 
+                    id="btn-record" 
+                    class="w-16 h-16 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center shadow-lg shadow-blue-200 transition-all duration-300 outline-none focus:ring-4 focus:ring-blue-300 active:scale-95">
+                    <i id="icon-record" data-lucide="mic" class="w-7 h-7"></i>
+                </button>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="py-3 text-center text-xs text-gray-400">
+        Engine: Web Speech API (Native)
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        const btnRecord = document.getElementById('btn-record');
+        const iconRecord = document.getElementById('icon-record');
+        const btnClear = document.getElementById('btn-clear');
+        const btnCopy = document.getElementById('btn-copy');
+        const outputText = document.getElementById('output-text');
+        const statusText = document.getElementById('status-text');
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition = null;
+        let isListening = false;
+        let restartTimeout = null;
+
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.continuous = true; 
+            recognition.interimResults = false; 
+            recognition.lang = 'id-ID'; 
+
+            recognition.onstart = () => {
+                statusText.innerText = "Mendengarkan... Silakan berbicara";
+                statusText.classList.remove('text-gray-400', 'text-red-500');
+                statusText.classList.add('text-blue-600', 'font-medium');
+                
+                btnRecord.classList.remove('bg-blue-600', 'hover:bg-blue-700', 'shadow-blue-200');
+                btnRecord.classList.add('bg-red-500', 'hover:bg-red-600', 'shadow-red-200', 'animate-pulse');
+                iconRecord.setAttribute('data-lucide', 'mic-off');
+                lucide.createIcons();
+            };
+
+            recognition.onend = () => {
+                // Jika masih dalam status mendengarkan (berhenti otomatis oleh sistem Google)
+                if (isListening) {
+                    statusText.innerText = "Menghubungkan ulang mikrofon...";
+                    clearTimeout(restartTimeout);
+                    restartTimeout = setTimeout(() => {
+                        if (isListening) {
+                            try {
+                                recognition.start();
+                            } catch (e) {
+                                console.log("Gagal auto-restart:", e);
+                            }
+                        }
+                    }, 400); // Kecepatan reconnect ditingkatkan agar responsif
+                    return;
+                }
+
+                // Jika dimatikan secara sadar/manual oleh user
+                statusText.innerText = "Ketuk tombol mikrofon untuk mulai";
+                statusText.classList.remove('text-blue-600', 'text-red-500', 'font-medium');
+                statusText.classList.add('text-gray-400');
+                
+                btnRecord.classList.remove('bg-red-500', 'hover:bg-red-600', 'shadow-red-200', 'animate-pulse');
+                btnRecord.classList.add('bg-blue-600', 'hover:bg-blue-700', 'shadow-blue-200');
+                iconRecord.setAttribute('data-lucide', 'mic');
+                lucide.createIcons();
+            };
+
+            recognition.onresult = (event) => {
+                let finalTranscript = '';
+
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        finalTranscript += event.results[i][0].transcript + ' ';
+                    }
+                }
+
+                if (finalTranscript) {
+                    outputText.value += finalTranscript;
+                    outputText.scrollTop = outputText.scrollHeight;
+                }
+            };
+
+            recognition.onerror = (event) => {
+                console.error("Speech recognition error:", event.error);
+                if (event.error === 'not-allowed') {
+                    statusText.innerText = "Akses mikrofon ditolak! Periksa izin browser.";
+                    statusText.classList.remove('text-blue-600');
+                    statusText.classList.add('text-red-500', 'font-medium');
+                    isListening = false;
+                    recognition.abort();
+                }
+            };
+
+        } else {
+            statusText.innerText = "Browser tidak mendukung Web Speech API";
+            btnRecord.disabled = true;
+            btnRecord.classList.add('bg-gray-300', 'cursor-not-allowed');
+        }
+
+        // Kontrol klik tombol rekam yang diperbaiki secara instan
+        btnRecord.addEventListener('click', () => {
+            if (!recognition) return;
+
+            if (isListening) {
+                isListening = false; 
+                clearTimeout(restartTimeout);
+                recognition.abort(); // Menggunakan abort() agar engine langsung mati total seketika tanpa antrean async
+            } else {
+                isListening = true;  
+                try {
+                    recognition.start();
+                } catch(e) {
+                    console.log("Engine sudah berjalan:", e);
+                }
+            }
+        });
+
+        btnClear.addEventListener('click', () => {
+            outputText.value = '';
+        });
+
+        btnCopy.addEventListener('click', () => {
+            if (outputText.value.trim() === "") return;
+            
+            navigator.clipboard.writeText(outputText.value)
+                .then(() => {
+                    const originalContent = btnCopy.innerHTML;
+                    btnCopy.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i> Tersalin`;
+                    btnCopy.classList.remove('bg-blue-50', 'text-blue-600');
+                    btnCopy.classList.add('bg-green-50', 'text-green-600');
+                    lucide.createIcons();
+
+                    setTimeout(() => {
+                        btnCopy.innerHTML = originalContent;
+                        btnCopy.classList.remove('bg-green-50', 'text-green-600');
+                        btnCopy.classList.add('bg-blue-50', 'text-blue-600');
+                        lucide.createIcons();
+                    }, 1500);
+                })
+                .catch(err => {
+                    console.error('Gagal menyalin teks: ', err);
+                });
+        });
+    </script>
+</body>
+</html>
