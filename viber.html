@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ VIBER ENGINE v2.5 - FULL CLIENT SIDE</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-main: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --code-bg: #0f172a;
+            --code-text: #38bdf8;
+        }
+
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-main);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+        }
+
+
+        .app-wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+
+        h2 {
+            color: var(--primary);
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+            margin-top: 0;
+            font-size: 24px;
+        }
+
+
+        .setup-box {
+            background: var(--bg-card);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            border: 1px dashed var(--primary);
+        }
+
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+
+        .file-box {
+            background: var(--bg-card);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+
+        .file-box h3 {
+            margin-top: 0;
+            font-size: 16px;
+            color: var(--text-main);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+        }
+
+
+        .output-box {
+            background: var(--bg-card);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+        }
+
+
+        ul { list-style: none; padding: 0; margin: 0; }
+
+
+        li {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+            font-family: monospace;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--text-main);
+        }
+
+
+        li:hover { background: #f1f5f9; color: var(--primary); }
+
+
+        .active { background: #dbeafe !important; color: var(--primary) !important; font-weight: bold; }
+
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+
+        button {
+            background: #16a34a;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+
+        button:hover { background: #15803d; }
+        button:disabled { background: var(--text-muted); cursor: not-allowed; }
+
+
+        textarea {
+            flex: 1;
+            background: var(--code-bg);
+            color: var(--code-text);
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 13px;
+            padding: 15px;
+            border: 1px solid var(--code-bg);
+            border-radius: 6px;
+            resize: none;
+            min-height: 400px;
+            margin-top: 10px;
+            line-height: 1.5;
+        }
+
+
+        .path-banner {
+            color: #d97706;
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-family: monospace;
+            font-size: 13px;
+        }
+
+
+        .file-input-btn {
+            background: var(--primary);
+            padding: 10px 15px;
+            color: white;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            display: inline-block;
+            transition: background 0.2s;
+        }
+
+
+        .file-input-btn:hover { background: var(--primary-hover); }
+        input[type="file"] { display: none; }
+
+
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .setup-box { flex-direction: column; align-items: flex-start; }
+            textarea { min-height: 300px; }
+        }
+    </style>
+</head>
+<body>
+
+
+    <div class="app-wrapper">
+        <h2>⚡ VIBER ANCHOR MAP EXTRACTOR (PRO TOKEN SAVER)</h2>
+
+
+        <div class="setup-box">
+            <div><strong>Step 1: Pilih Folder Project Lo:</strong></div>
+            <label class="file-input-btn">
+                📂 PILIH FOLDER PROJECT
+                <input type="file" id="folderPicker" webkitdirectory directory multiple>
+            </label>
+            <div id="statusText" style="color: var(--text-muted); font-size: 14px;">Belum ada folder yang dipilih</div>
+        </div>
+
+
+        <div class="container">
+            <div class="file-box">
+                <h3>Daftar File Project (<span id="fileCount">0</span>)</h3>
+                <ul id="fileList">
+                    <li style="color: var(--text-muted); cursor: default; background: none;">Silakan pilih folder terlebih dahulu...</li>
+                </ul>
+            </div>
+
+
+            <div class="output-box">
+                <div class="btn-group">
+                    <button id="btnExtract" onclick="extractSkeleton()" disabled>⚡ EXTRACT SKELETON WITH LINE ANCHORS</button>
+                    <button id="btnCopy" onclick="copyToClipboard()" style="background: #4f46e5;">📋 COPY OUTPUT</button>
+                </div>
+                <div class="path-banner" id="pathBanner" style="margin-top: 15px;">Pilih file dari daftar di atas...</div>
+                <textarea id="outputArea" readonly placeholder="Hasil peta jangkar murni hemat token dengan nomor baris otomatis akan muncul di sini..."></textarea>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        let projectFiles = {};
+        let selectedFileKey = null;
+
+
+        document.getElementById('folderPicker').addEventListener('change', function(e) {
+            const files = e.target.files;
+            if (files.length === 0) return;
+
+
+            projectFiles = {};
+            const fileListUI = document.getElementById('fileList');
+            fileListUI.innerHTML = '';
+
+
+            let counted = 0;
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const path = file.webkitRelativePath;
+
+
+                if (path.includes('/.git/') ||
+                    path.includes('/node_modules/') ||
+                    path.includes('/.idea/') ||
+                    path.includes('/uploads/') ||
+                    path.includes('/assets/')) {
+                    continue;
+                }
+
+
+                if (file.name.endsWith('.go') || file.name.endsWith('.js') || file.name.endsWith('.php') || file.name.endsWith('.html') || file.name.endsWith('.json') || file.name.endsWith('.env') || file.name.endsWith('.css')) {
+                    projectFiles[path] = file;
+
+
+                    const li = document.createElement('li');
+                    li.textContent = path;
+                    li.title = path;
+                    li.onclick = function() { selectFile(this, path); };
+                    fileListUI.appendChild(li);
+                    counted++;
+                }
+            }
+
+
+            document.getElementById('statusText').innerText = 'Berhasil memuat folder!';
+            document.getElementById('fileCount').innerText = counted;
+        });
+
+
+        function selectFile(element, fileKey) {
+            document.querySelectorAll('#fileList li').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+
+
+            selectedFileKey = fileKey;
+            document.getElementById('pathBanner').innerText = 'Target Relatif: /' + fileKey;
+            document.getElementById('btnExtract').disabled = false;
+        }
+
+
+        function extractSkeleton() {
+            if (!selectedFileKey || !projectFiles[selectedFileKey]) return;
+
+
+            const file = projectFiles[selectedFileKey];
+            const reader = new FileReader();
+
+
+            reader.onload = function(e) {
+                const rawCode = e.target.result;
+                const lines = rawCode.split('\n');
+                let finalResultArray = [];
+                finalResultArray.push("Target File: /" + selectedFileKey);
+
+
+                // --- FLOW BACKEND PARSER (GO) ---
+                if (file.name.endsWith('.go')) {
+                    let inImport = false;
+                    let braceCount = 0;
+                    let inFunction = false;
+                    let funcStartLine = 0;
+                    let funcSignature = "";
+
+
+                    for (let i = 0; i < lines.length; i++) {
+                        let lineNum = i + 1;
+                        let line = lines[i];
+                        let trimmed = line.trim();
+
+
+                        if (trimmed.startsWith('package ')) {
+                            finalResultArray.push("// Baris " + lineNum + "\n" + line);
+                            continue;
+                        }
+                        if (trimmed.startsWith('import (')) {
+                            inImport = true;
+                            finalResultArray.push("\n// Baris " + lineNum + "\n" + line);
+                            continue;
+                        }
+                        if (inImport) {
+                            finalResultArray.push(line);
+                            if (trimmed === ')') {
+                                inImport = false;
+                                finalResultArray.push("// ... structural details hidden ...");
+                            }
+                            continue;
+                        }
+
+
+                        if (trimmed.startsWith('func ') && !inFunction) {
+                            inFunction = true;
+                            funcStartLine = lineNum;
+                            funcSignature = line;
+
+
+                            braceCount += (line.match(/\u007B/g) || []).length;
+                            braceCount -= (line.match(/\u007D/g) || []).length;
+
+
+                            if (braceCount === 0 && line.includes('\u007B')) {
+                                let cleanSignature = funcSignature.trim().replace(/\s*\{$/, "");
+                                finalResultArray.push("// Baris " + funcStartLine + "\n" + cleanSignature + " \u007B\n\t// ... body hidden ...\n\u007D");
+                                inFunction = false;
+                            }
+                            continue;
+                        }
+
+
+                        if (inFunction) {
+                            braceCount += (line.match(/\u007B/g) || []).length;
+                            braceCount -= (line.match(/\u007D/g) || []).length;
+
+
+                            if (braceCount === 0) {
+                                let cleanSignature = funcSignature.trim().replace(/\s*\{$/, "");
+                                finalResultArray.push("// Baris " + funcStartLine + "-" + lineNum + "\n" + cleanSignature + " \u007B\n\t// ... body hidden ...\n\u007D");
+                                inFunction = false;
+                            }
+                        }
+                    }
+                    document.getElementById('outputArea').value = finalResultArray.join('\n');
+                    return;
+                }
+
+
+                // --- FLOW FRONTEND PARSER (HTML / SMART SKELETON v2) ---
+                if (file.name.endsWith('.html')) {
+                    let inBlock = null;
+                    let blockStartLine = 0;
+
+
+                    for (let i = 0; i < lines.length; i++) {
+                        let lineNum = i + 1;
+                        let line = lines[i];
+                        let trimmed = line.trim();
+
+
+                        if (trimmed.startsWith('\u003Cstyle\u003E') || trimmed.startsWith('\u003Cstyle ')) {
+                            inBlock = 'style';
+                            blockStartLine = lineNum;
+                            finalResultArray.push("// Baris " + lineNum + ": \u003Cstyle\u003E (Mulai Blok CSS)");
+                            continue;
+                        }
+                        if (trimmed.startsWith('\u003Cscript\u003E') || trimmed.startsWith('\u003Cscript ')) {
+                            inBlock = 'script';
+                            blockStartLine = lineNum;
+                            finalResultArray.push("// Baris " + lineNum + ": \u003Cscript\u003E (Mulai Blok JS)");
+                            continue;
+                        }
+
+
+                        if (inBlock === 'style' && trimmed.startsWith('\u003C/style\u003E')) {
+                            finalResultArray.push("// Baris " + blockStartLine + "-" + lineNum + " [CSS SKELETON GENERATED]");
+                            finalResultArray.push("// Baris " + lineNum + ": \u003C/style\u003E");
+                            inBlock = null;
+                            continue;
+                        }
+                        if (inBlock === 'script' && trimmed.startsWith('\u003C/script\u003E')) {
+                            finalResultArray.push("// Baris " + blockStartLine + "-" + lineNum + " [JS SCRIPT SKELETON GENERATED]");
+                            finalResultArray.push("// Baris " + lineNum + ": \u003C/script\u003E");
+                            inBlock = null;
+                            continue;
+                        }
+
+
+                        if (inBlock === 'style') {
+                            if (trimmed.includes('\u007B')) {
+                                let selector = trimmed.split('\u007B')[0].trim();
+                                finalResultArray.push("  // Baris " + lineNum + ": " + selector + " \u007B ... properti kosmetik disembunyikan ... \u007D");
+                            }
+                            continue;
+                        }
+
+
+                        if (inBlock === 'script') {
+                            let arrowStr = '\u003D\u003E';
+                            if (trimmed.startsWith('function ') || trimmed.includes('.addEventListener(') || trimmed.includes(' \u003D function(') || (trimmed.startsWith('let ') && trimmed.includes(arrowStr)) || (trimmed.startsWith('const ') && trimmed.includes(arrowStr))) {
+                                finalResultArray.push("  // Baris " + lineNum + ": " + trimmed + " \u003D\u003E [Isi logika disembunyikan]");
+                            }
+                            continue;
+                        }
+
+
+                        if (!inBlock) {
+                            finalResultArray.push("// Baris " + lineNum + ": " + line);
+                        }
+                    }
+                    document.getElementById('outputArea').value = finalResultArray.join('\n');
+                    return;
+                }
+
+
+                // --- FLOW SEPARATED JS / CSS FILE TRACING ---
+                if (file.name.endsWith('.js')) {
+                    for (let i = 0; i < lines.length; i++) {
+                        let lineNum = i + 1;
+                        let line = lines[i];
+                        let trimmed = line.trim();
+                        let arrowStr = '\u003D\u003E';
+                        if (trimmed.startsWith('function ') || trimmed.includes('.addEventListener(') || trimmed.includes(' \u003D function(') || (trimmed.startsWith('let ') && trimmed.includes(arrowStr)) || (trimmed.startsWith('const ') && trimmed.includes(arrowStr))) {
+                            finalResultArray.push("// Baris " + lineNum + ": " + trimmed + " \u003D\u003E [Isi logika disembunyikan]");
+                        }
+                    }
+                    document.getElementById('outputArea').value = finalResultArray.join('\n');
+                    return;
+                }
+
+
+                if (file.name.endsWith('.css')) {
+                    for (let i = 0; i < lines.length; i++) {
+                        let lineNum = i + 1;
+                        let line = lines[i];
+                        let trimmed = line.trim();
+                        if (trimmed.includes('\u007B')) {
+                            let selector = trimmed.split('\u007B')[0].trim();
+                            finalResultArray.push("// Baris " + lineNum + ": " + selector + " \u007B ... properti kosmetik disembunyikan ... \u007D");
+                        }
+                    }
+                    document.getElementById('outputArea').value = finalResultArray.join('\n');
+                    return;
+                }
+
+
+                // --- FLOW BACKUP (PHP, JSON, ENV, DLL) ---
+                finalResultArray.push("// Baris 1-" + lines.length);
+                finalResultArray.push(rawCode);
+                document.getElementById('outputArea').value = finalResultArray.join('\n');
+            };
+
+
+            reader.readAsText(file);
+        }
+
+
+        function copyToClipboard() {
+            const copyText = document.getElementById("outputArea");
+            if (!copyText.value) return;
+
+
+            copyText.select();
+            copyText.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(copyText.value);
+
+
+            const btn = document.getElementById('btnCopy');
+            const originalText = btn.innerText;
+            btn.innerText = '✅ COPIED!';
+            btn.style.background = '#22c55e';
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.style.background = '#4f46e5';
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
+
+
+
