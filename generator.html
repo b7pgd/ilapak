@@ -54,16 +54,33 @@
             color: #475569;
         }
 
-        .clear-btn {
-            background-color: #ef4444;
+        /* Group tombol Paste & Clear */
+        .btn-group {
+            display: flex;
+            gap: 6px;
+        }
+
+        .action-btn {
             color: white;
             border: none;
-            padding: 4px 10px;
+            padding: 4px 12px;
             border-radius: 4px;
             cursor: pointer;
             font-size: 0.75rem;
             font-weight: bold;
             transition: background 0.2s;
+        }
+
+        .paste-btn {
+            background-color: #2563eb;
+        }
+
+        .paste-btn:hover {
+            background-color: #1d4ed8;
+        }
+
+        .clear-btn {
+            background-color: #ef4444;
         }
 
         .clear-btn:hover {
@@ -119,8 +136,11 @@
         <h2>HTML Frontend Tester</h2>
         
         <div class="textarea-header">
-            <label for="htmlBox">Paste Kode HTML/CSS/JS Lo Di Sini:</label>
-            <button class="clear-btn" id="clearBtn" title="Clear Code">Clear</button>
+            <label for="htmlBox">Input Code:</label>
+            <div class="btn-group">
+                <button class="action-btn paste-btn" id="pasteBtn" title="Paste Code">Paste</button>
+                <button class="action-btn clear-btn" id="clearBtn" title="Clear Code">Clear</button>
+            </div>
         </div>
         <textarea class="html-textarea" id="htmlBox" placeholder="<!DOCTYPE html>&#10;<html>&#10;<body>&#10;  <h1>Hello World</h1>&#10;</body>&#10;</html>"></textarea>
 
@@ -130,8 +150,25 @@
     <script>
         // DOM Elements
         const htmlBox = document.getElementById('htmlBox');
+        const pasteBtn = document.getElementById('pasteBtn');
         const clearBtn = document.getElementById('clearBtn');
         const testBtn = document.getElementById('testBtn');
+
+        // Fitur Paste dari Clipboard
+        pasteBtn.addEventListener('click', () => {
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.readText()
+                    .then(text => {
+                        htmlBox.value = text;
+                        htmlBox.focus();
+                    })
+                    .catch(err => {
+                        alert('Gagal membaca clipboard otomatis. Pastikan izin browser aktif.');
+                    });
+            } else {
+                alert('Fitur auto-paste membutuhkan koneksi aman (HTTPS) atau dijalankan di localhost.');
+            }
+        });
 
         // Fitur Clear Textbox Utama
         clearBtn.addEventListener('click', () => {
