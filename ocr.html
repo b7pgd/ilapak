@@ -22,7 +22,6 @@
         /* Output: Teks Hitam */
         #output { 
             white-space: pre-wrap; 
-            margin-top: 20px; 
             background: #f8f9fa; 
             color: #1a1a1a; 
             padding: 15px; 
@@ -60,6 +59,44 @@
             font-size: 11px;
             margin-top: 5px;
         }
+
+        /* Header di atas textbox menampung label kiri dan tombol aksi di kanan */
+        .textarea-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 25px;
+            margin-bottom: 6px;
+        }
+
+        .textarea-header label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #475569;
+        }
+
+        /* Group tombol Copy & Clear */
+        .btn-group {
+            display: flex;
+            gap: 4px;
+        }
+
+        .action-btn {
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        .btn-copy { background-color: #2563eb; }
+        .btn-copy:hover { background-color: #1d4ed8; }
+
+        .btn-clear { background-color: #ef4444; }
+        .btn-clear:hover { background-color: #dc2626; }
     </style>
 </head>
 <body>
@@ -74,6 +111,14 @@
     <div id="status">Pilih foto untuk memulai</div>
     <button id="scanBtn" disabled>MULAI SCAN</button>
     
+    <!-- Action Toolbar di atas Textbox -->
+    <div class="textarea-header">
+        <label>Hasil Scan:</label>
+        <div class="btn-group">
+            <button class="action-btn btn-copy" id="copyBtn">Copy</button>
+            <button class="action-btn btn-clear" id="clearBtn">Clear</button>
+        </div>
+    </div>
     <div id="output">Hasil scan teks akan muncul di sini...</div>
 </div>
 
@@ -85,7 +130,47 @@
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
 
+    // Tombol Aksi Baru
+    const copyBtn = document.getElementById('copyBtn');
+    const clearBtn = document.getElementById('clearBtn');
+
     const API_KEY = 'K81551206988957';
+
+    // Fitur Clear Textbox Output
+    clearBtn.onclick = () => {
+        output.textContent = '';
+    };
+
+    // Fitur Copy Output dengan Fallback aman
+    copyBtn.onclick = () => {
+        const textToCopy = output.textContent;
+        if (!textToCopy || textToCopy === "Hasil scan teks akan muncul di sini..." || textToCopy === "Menganalisa gambar...") return;
+
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(textToCopy)
+                .then(() => alert('Teks berhasil disalin!'))
+                .catch(() => fallbackCopyText(textToCopy));
+        } else {
+            fallbackCopyText(textToCopy);
+        }
+    };
+
+    function fallbackCopyText(text) {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed";
+        textArea.style.opacity = "0";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            alert('Teks berhasil disalin!');
+        } catch (err) {
+            alert('Gagal menyalin teks.');
+        }
+        document.body.removeChild(textArea);
+    }
 
     fileInput.onchange = (e) => {
         const file = e.target.files[0];
@@ -185,4 +270,3 @@
 
 </body>
 </html>
-
