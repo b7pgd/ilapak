@@ -40,7 +40,7 @@
             text-align: center;
         }
 
-        /* Header di atas textbox untuk menampung tombol clear di kanan */
+        /* Header di atas setiap field penampung label dan tombol aksi */
         .textarea-header {
             display: flex;
             justify-content: space-between;
@@ -49,13 +49,19 @@
         }
 
         .textarea-header label {
-            font-weight: 6px;
+            font-weight: 600;
             font-size: 0.9rem;
             color: #475569;
         }
 
-        .clear-btn {
-            background-color: #ef4444;
+        /* Group tombol Copy, Paste, Clear di kanan */
+        .btn-group {
+            display: flex;
+            gap: 4px;
+        }
+
+        /* Ukuran tombol disamakan dengan tombol clear lama */
+        .action-btn {
             color: white;
             border: none;
             padding: 4px 10px;
@@ -66,7 +72,24 @@
             transition: background 0.2s;
         }
 
-        .clear-btn:hover {
+        .btn-copy {
+            background-color: #2563eb;
+        }
+        .btn-copy:hover {
+            background-color: #1d4ed8;
+        }
+
+        .btn-paste {
+            background-color: #0b8457;
+        }
+        .btn-paste:hover {
+            background-color: #096b46;
+        }
+
+        .btn-clear {
+            background-color: #ef4444;
+        }
+        .btn-clear:hover {
             background-color: #dc2626;
         }
 
@@ -108,14 +131,6 @@
         /* Input Kedua (Instruksi Hardcoded) */
         .instruction-group {
             margin-bottom: 20px;
-        }
-
-        .instruction-group label {
-            display: block;
-            margin-bottom: 6px;
-            font-size: 0.85rem;
-            color: #475569;
-            font-weight: 600;
         }
 
         .instruction-input {
@@ -189,19 +204,38 @@
     <div class="container">
         <h2>Text Editor</h2>
         
+        <!-- Field 1: Tambahan Konteks -->
         <div class="textarea-header">
             <label for="extraBox">Tambahan Konteks (Kosong)</label>
+            <div class="btn-group">
+                <button class="action-btn btn-copy" onclick="copySingle('extraBox')">Copy</button>
+                <button class="action-btn btn-paste" onclick="pasteSingle('extraBox')">Paste</button>
+                <button class="action-btn btn-clear" onclick="clearSingle('extraBox')">Clear</button>
+            </div>
         </div>
         <textarea class="extra-textarea" id="extraBox" placeholder="Tulis konteks tambahan di sini..."></textarea>
 
+        <!-- Field 2: Notes -->
         <div class="textarea-header">
             <label for="notesBox">Notes</label>
-            <button class="clear-btn" id="clearBtn" title="Clear Notes">Clear</button>
+            <div class="btn-group">
+                <button class="action-btn btn-copy" onclick="copySingle('notesBox')">Copy</button>
+                <button class="action-btn btn-paste" onclick="pasteSingle('notesBox')">Paste</button>
+                <button class="action-btn btn-clear" onclick="clearSingle('notesBox')">Clear</button>
+            </div>
         </div>
         <textarea class="notes-textarea" id="notesBox" placeholder="Tulis notes di sini..."></textarea>
 
+        <!-- Field 3: Instruksi Tambahan -->
         <div class="instruction-group">
-            <label for="instructionBox">Instruksi Tambahan:</label>
+            <div class="textarea-header">
+                <label for="instructionBox">Instruksi Tambahan:</label>
+                <div class="btn-group">
+                    <button class="action-btn btn-copy" onclick="copySingle('instructionBox')">Copy</button>
+                    <button class="action-btn btn-paste" onclick="pasteSingle('instructionBox')">Paste</button>
+                    <button class="action-btn btn-clear" onclick="clearSingle('instructionBox')">Clear</button>
+                </div>
+            </div>
             <input type="text" class="instruction-input" id="instructionBox" value="Sesuaikan/perbaiki, jangan ubah logic yg tidak berhubungan, kirim lengkap 1 file">
         </div>
 
@@ -214,22 +248,61 @@
         const notesBox = document.getElementById('notesBox');
         const extraBox = document.getElementById('extraBox');
         const instructionBox = document.getElementById('instructionBox');
-        const clearBtn = document.getElementById('clearBtn');
         const copyBtn = document.getElementById('copyBtn');
         const toastBox = document.getElementById('toastBox');
 
-        // Fitur Clear Textbox Utama (Notes)
-        clearBtn.addEventListener('click', () => {
-            notesBox.value = '';
-            notesBox.focus();
-        });
+        // Fungsi Global Aksi Clear per Field
+        function clearSingle(targetId) {
+            const target = document.getElementById(targetId);
+            target.value = '';
+            target.focus();
+        }
+
+        // Fungsi Global Aksi Copy per Field
+        function copySingle(targetId) {
+            const target = document.getElementById(targetId);
+            const textToCopy = target.value;
+            
+            if (!textToCopy.trim()) return;
+
+            executeCopy(textToCopy, "Copied text!");
+        }
+
+        // Fungsi Global Aksi Paste per Field (Support HTTPS & Modern Device Browser)
+        function pasteSingle(targetId) {
+            const target = document.getElementById(targetId);
+            
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.readText()
+                    .then(text => {
+                        target.value = text;
+                        target.focus();
+                    })
+                    .catch(err => {
+                        console.error('Failed to read clipboard: ', err);
+                        alert('Gagal membaca clipboard otomatis. Izinkan akses clipboard di browser Anda atau gunakan paste manual HP.');
+                    });
+            } else {
+                alert('Fitur auto-paste membutuhkan koneksi HTTPS / Local Server aman. Gunakan fitur bawaan keyboard perangkat Anda.');
+            }
+        }
+
+        // Core execution copy engine dengan fallback
+        function executeCopy(text, successMessage) {
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text)
+                    .then(() => showToast(successMessage))
+                    .catch(() => fallbackCopyText(text, successMessage));
+            } else {
+                fallbackCopyText(text, successMessage);
+            }
+        }
 
         // Fungsi Fallback Copy (Pasti berhasil di lingkungan non-HTTPS / Lokal HP)
-        function fallbackCopyText(text) {
+        function fallbackCopyText(text, successMessage) {
             const textArea = document.createElement("textarea");
             textArea.value = text;
             
-            // Hindari scrolling ke bawah halaman saat element di-append
             textArea.style.top = "0";
             textArea.style.left = "0";
             textArea.style.position = "fixed";
@@ -242,7 +315,7 @@
             try {
                 const successful = document.execCommand('copy');
                 if (successful) {
-                    showToast();
+                    showToast(successMessage);
                 } else {
                     alert('Gagal menyalin teks, silahkan seleksi manual.');
                 }
@@ -254,8 +327,9 @@
             document.body.removeChild(textArea);
         }
 
-        // Fungsi menampilkan pop-up sukses copy
-        function showToast() {
+        // Fungsi menampilkan pop-up sukses copy dengan kustomisasi pesan text
+        function showToast(message = "Copied to clipboard!") {
+            toastBox.textContent = message;
             toastBox.classList.add('show');
             setTimeout(() => {
                 toastBox.classList.remove('show');
@@ -270,31 +344,18 @@
 
             let parts = [];
             
-            if (extraText !== '') {
-                parts.push(extraText);
-            }
-            if (notesText !== '') {
-                parts.push(notesText);
-            }
-            if (instructionText !== '') {
-                parts.push(instructionText);
-            }
+            if (extraText !== '') parts.push(extraText);
+            if (notesText !== '') parts.push(notesText);
+            if (instructionText !== '') parts.push(instructionText);
 
             const combinedText = parts.join('\n\n');
 
-            // Coba pakai cara modern dulu, kalau gagal langsung sikat pakai fallback
-            if (navigator.clipboard && window.isSecureContext) {
-                navigator.clipboard.writeText(combinedText)
-                    .then(() => {
-                        showToast();
-                    })
-                    .catch(() => {
-                        fallbackCopyText(combinedText);
-                    });
-            } else {
-                // Langsung gunakan fallback untuk non-HTTPS / Local file browser
-                fallbackCopyText(combinedText);
+            if (!combinedText.trim()) {
+                alert('Tidak ada teks untuk digabungkan!');
+                return;
             }
+
+            executeCopy(combinedText, "Copied Combined Text!");
         });
     </script>
 
