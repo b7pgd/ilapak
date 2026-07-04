@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⚡ VIBER ENGINE v2.5 - FULL CLIENT SIDE</title>
+    <title>âš¡ VIBER ENGINE v2.5 - FULL CLIENT SIDE</title>
     <style>
         :root {
             --primary: #2563eb;
@@ -104,10 +104,14 @@
             overflow: hidden;
             text-overflow: ellipsis;
             color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
 
         li:hover { background: #f1f5f9; color: var(--primary); }
+        li input[type="checkbox"] { cursor: pointer; transform: scale(1.1); }
 
 
         .active { background: #dbeafe !important; color: var(--primary) !important; font-weight: bold; }
@@ -188,13 +192,13 @@
 
 
     <div class="app-wrapper">
-        <h2>⚡ VIBER ANCHOR MAP EXTRACTOR (PRO TOKEN SAVER)</h2>
+        <h2>âš¡ VIBER ANCHOR MAP EXTRACTOR (PRO TOKEN SAVER)</h2>
 
 
         <div class="setup-box">
             <div><strong>Step 1: Pilih Folder Project Lo:</strong></div>
             <label class="file-input-btn">
-                📂 PILIH FOLDER PROJECT
+                ðŸ“‚ PILIH FOLDER PROJECT
                 <input type="file" id="folderPicker" webkitdirectory directory multiple>
             </label>
             <div id="statusText" style="color: var(--text-muted); font-size: 14px;">Belum ada folder yang dipilih</div>
@@ -203,7 +207,7 @@
 
         <div class="container">
             <div class="file-box">
-                <h3>Daftar File Project (<span id="fileCount">0</span>)</h3>
+                <h3>Daftar File Project (<span id="fileCount">0</span>) [Selected: <span id="selectedCount">0</span>]</h3>
                 <ul id="fileList">
                     <li style="color: var(--text-muted); cursor: default; background: none;">Silakan pilih folder terlebih dahulu...</li>
                 </ul>
@@ -212,8 +216,9 @@
 
             <div class="output-box">
                 <div class="btn-group">
-                    <button id="btnExtract" onclick="extractSkeleton()" disabled>⚡ EXTRACT SKELETON WITH LINE ANCHORS</button>
-                    <button id="btnCopy" onclick="copyToClipboard()" style="background: #4f46e5;">📋 COPY OUTPUT</button>
+                    <button id="btnExtract" onclick="extractSkeleton()" disabled>âš¡ EXTRACT SKELETON WITH LINE ANCHORS</button>
+                    <button id="btnExtractExact" onclick="extractExactFull()" style="background: #ea580c;" disabled>ðŸ”¥ EXTRACT EXACT FULL CONTENT</button>
+                    <button id="btnCopy" onclick="copyToClipboard()" style="background: #4f46e5;">ðŸ“‹ COPY OUTPUT</button>
                 </div>
                 <div class="path-banner" id="pathBanner" style="margin-top: 15px;">Pilih file dari daftar di atas...</div>
                 <textarea id="outputArea" readonly placeholder="Hasil peta jangkar murni hemat token dengan nomor baris otomatis akan muncul di sini..."></textarea>
@@ -224,7 +229,7 @@
 
     <script>
         let projectFiles = {};
-        let selectedFileKey = null;
+        let selectedFileKeys = [];
 
 
         document.getElementById('folderPicker').addEventListener('change', function(e) {
@@ -233,6 +238,8 @@
 
 
             projectFiles = {};
+            selectedFileKeys = [];
+            updateActionButtons();
             const fileListUI = document.getElementById('fileList');
             fileListUI.innerHTML = '';
 
@@ -257,9 +264,24 @@
 
 
                     const li = document.createElement('li');
-                    li.textContent = path;
+                    
+                    const chk = document.createElement('input');
+                    chk.type = 'checkbox';
+                    chk.value = path;
+                    chk.onclick = function(e) { e.stopPropagation(); toggleFileSelect(this.checked, path); };
+
+                    const label = document.createElement('span');
+                    label.textContent = path;
+
+                    li.appendChild(chk);
+                    li.appendChild(label);
                     li.title = path;
-                    li.onclick = function() { selectFile(this, path); };
+                    li.onclick = function() { 
+                        const checkbox = this.querySelector('input[type="checkbox"]');
+                        checkbox.checked = !checkbox.checked;
+                        toggleFileSelect(checkbox.checked, path);
+                    };
+
                     fileListUI.appendChild(li);
                     counted++;
                 }
@@ -271,208 +293,265 @@
         });
 
 
-        function selectFile(element, fileKey) {
-            document.querySelectorAll('#fileList li').forEach(el => el.classList.remove('active'));
-            element.classList.add('active');
+        function toggleFileSelect(isChecked, fileKey) {
+            const listItems = document.querySelectorAll('#fileList li');
+            let targetLi = null;
+            for (let li of listItems) {
+                if (li.title === fileKey) {
+                    targetLi = li;
+                    break;
+                }
+            }
 
+            if (isChecked) {
+                if (!selectedFileKeys.includes(fileKey)) {
+                    selectedFileKeys.push(fileKey);
+                }
+                if (targetLi) targetLi.classList.add('active');
+            } else {
+                selectedFileKeys = selectedFileKeys.filter(k => k !== fileKey);
+                if (targetLi) targetLi.classList.remove('active');
+            }
 
-            selectedFileKey = fileKey;
-            document.getElementById('pathBanner').innerText = 'Target Relatif: /' + fileKey;
-            document.getElementById('btnExtract').disabled = false;
+            document.getElementById('selectedCount').innerText = selectedFileKeys.length;
+
+            if (selectedFileKeys.length > 0) {
+                document.getElementById('pathBanner').innerText = `Target Aktif: ${selectedFileKeys.length} File terpilih`;
+            } else {
+                document.getElementById('pathBanner').innerText = 'Pilih file dari daftar di atas...';
+            }
+            updateActionButtons();
+        }
+
+        function updateActionButtons() {
+            const hasSelection = selectedFileKeys.length > 0;
+            document.getElementById('btnExtract').disabled = !hasSelection;
+            document.getElementById('btnExtractExact').disabled = !hasSelection;
         }
 
 
         function extractSkeleton() {
-            if (!selectedFileKey || !projectFiles[selectedFileKey]) return;
+            if (selectedFileKeys.length === 0) return;
+
+            let finalOutputArray = [];
+            let processedCount = 0;
+
+            selectedFileKeys.forEach(fileKey => {
+                const file = projectFiles[fileKey];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const rawCode = e.target.result;
+                    const lines = rawCode.split('\n');
+                    let finalResultArray = [];
+                    finalResultArray.push("Target File: /" + fileKey);
 
 
-            const file = projectFiles[selectedFileKey];
-            const reader = new FileReader();
+                    // --- FLOW BACKEND PARSER (GO) ---
+                    if (file.name.endsWith('.go')) {
+                        let inImport = false;
+                        let braceCount = 0;
+                        let inFunction = false;
+                        let funcStartLine = 0;
+                        let funcSignature = "";
 
 
-            reader.onload = function(e) {
-                const rawCode = e.target.result;
-                const lines = rawCode.split('\n');
-                let finalResultArray = [];
-                finalResultArray.push("Target File: /" + selectedFileKey);
+                        for (let i = 0; i < lines.length; i++) {
+                            let lineNum = i + 1;
+                            let line = lines[i];
+                            let trimmed = line.trim();
 
 
-                // --- FLOW BACKEND PARSER (GO) ---
-                if (file.name.endsWith('.go')) {
-                    let inImport = false;
-                    let braceCount = 0;
-                    let inFunction = false;
-                    let funcStartLine = 0;
-                    let funcSignature = "";
-
-
-                    for (let i = 0; i < lines.length; i++) {
-                        let lineNum = i + 1;
-                        let line = lines[i];
-                        let trimmed = line.trim();
-
-
-                        if (trimmed.startsWith('package ')) {
-                            finalResultArray.push("// Baris " + lineNum + "\n" + line);
-                            continue;
-                        }
-                        if (trimmed.startsWith('import (')) {
-                            inImport = true;
-                            finalResultArray.push("\n// Baris " + lineNum + "\n" + line);
-                            continue;
-                        }
-                        if (inImport) {
-                            finalResultArray.push(line);
-                            if (trimmed === ')') {
-                                inImport = false;
-                                finalResultArray.push("// ... structural details hidden ...");
+                            if (trimmed.startsWith('package ')) {
+                                finalResultArray.push("// Baris " + lineNum + "\n" + line);
+                                continue;
                             }
-                            continue;
-                        }
-
-
-                        if (trimmed.startsWith('func ') && !inFunction) {
-                            inFunction = true;
-                            funcStartLine = lineNum;
-                            funcSignature = line;
-
-
-                            braceCount += (line.match(/\u007B/g) || []).length;
-                            braceCount -= (line.match(/\u007D/g) || []).length;
-
-
-                            if (braceCount === 0 && line.includes('\u007B')) {
-                                let cleanSignature = funcSignature.trim().replace(/\s*\{$/, "");
-                                finalResultArray.push("// Baris " + funcStartLine + "\n" + cleanSignature + " \u007B\n\t// ... body hidden ...\n\u007D");
-                                inFunction = false;
+                            if (trimmed.startsWith('import (')) {
+                                inImport = true;
+                                finalResultArray.push("\n// Baris " + lineNum + "\n" + line);
+                                continue;
                             }
-                            continue;
-                        }
+                            if (inImport) {
+                                finalResultArray.push(line);
+                                if (trimmed === ')') {
+                                    inImport = false;
+                                    finalResultArray.push("// ... structural details hidden ...");
+                                }
+                                continue;
+                            }
 
 
-                        if (inFunction) {
-                            braceCount += (line.match(/\u007B/g) || []).length;
-                            braceCount -= (line.match(/\u007D/g) || []).length;
+                            if (trimmed.startsWith('func ') && !inFunction) {
+                                inFunction = true;
+                                funcStartLine = lineNum;
+                                funcSignature = line;
 
 
-                            if (braceCount === 0) {
-                                let cleanSignature = funcSignature.trim().replace(/\s*\{$/, "");
-                                finalResultArray.push("// Baris " + funcStartLine + "-" + lineNum + "\n" + cleanSignature + " \u007B\n\t// ... body hidden ...\n\u007D");
-                                inFunction = false;
+                                braceCount += (line.match(/\u007B/g) || []).length;
+                                braceCount -= (line.match(/\u007D/g) || []).length;
+
+
+                                if (braceCount === 0 && line.includes('\u007B')) {
+                                    let cleanSignature = funcSignature.trim().replace(/\s*\{$/, "");
+                                    finalResultArray.push("// Baris " + funcStartLine + "\n" + cleanSignature + " \u007B\n\t// ... body hidden ...\n\u007D");
+                                    inFunction = false;
+                                }
+                                continue;
+                            }
+
+
+                            if (inFunction) {
+                                braceCount += (line.match(/\u007B/g) || []).length;
+                                braceCount -= (line.match(/\u007D/g) || []).length;
+
+
+                                if (braceCount === 0) {
+                                    let cleanSignature = funcSignature.trim().replace(/\s*\{$/, "");
+                                    finalResultArray.push("// Baris " + funcStartLine + "-" + lineNum + "\n" + cleanSignature + " \u007B\n\t// ... body hidden ...\n\u007D");
+                                    inFunction = false;
+                                }
                             }
                         }
+                        finalOutputArray.push(finalResultArray.join('\n'));
                     }
-                    document.getElementById('outputArea').value = finalResultArray.join('\n');
-                    return;
-                }
 
 
-                // --- FLOW FRONTEND PARSER (HTML / SMART SKELETON v2) ---
-                if (file.name.endsWith('.html')) {
-                    let inBlock = null;
-                    let blockStartLine = 0;
+                    // --- FLOW FRONTEND PARSER (HTML / SMART SKELETON v2) ---
+                    else if (file.name.endsWith('.html')) {
+                        let inBlock = null;
+                        let blockStartLine = 0;
 
 
-                    for (let i = 0; i < lines.length; i++) {
-                        let lineNum = i + 1;
-                        let line = lines[i];
-                        let trimmed = line.trim();
+                        for (let i = 0; i < lines.length; i++) {
+                            let lineNum = i + 1;
+                            let line = lines[i];
+                            let trimmed = line.trim();
 
 
-                        if (trimmed.startsWith('\u003Cstyle\u003E') || trimmed.startsWith('\u003Cstyle ')) {
-                            inBlock = 'style';
-                            blockStartLine = lineNum;
-                            finalResultArray.push("// Baris " + lineNum + ": \u003Cstyle\u003E (Mulai Blok CSS)");
-                            continue;
-                        }
-                        if (trimmed.startsWith('\u003Cscript\u003E') || trimmed.startsWith('\u003Cscript ')) {
-                            inBlock = 'script';
-                            blockStartLine = lineNum;
-                            finalResultArray.push("// Baris " + lineNum + ": \u003Cscript\u003E (Mulai Blok JS)");
-                            continue;
-                        }
-
-
-                        if (inBlock === 'style' && trimmed.startsWith('\u003C/style\u003E')) {
-                            finalResultArray.push("// Baris " + blockStartLine + "-" + lineNum + " [CSS SKELETON GENERATED]");
-                            finalResultArray.push("// Baris " + lineNum + ": \u003C/style\u003E");
-                            inBlock = null;
-                            continue;
-                        }
-                        if (inBlock === 'script' && trimmed.startsWith('\u003C/script\u003E')) {
-                            finalResultArray.push("// Baris " + blockStartLine + "-" + lineNum + " [JS SCRIPT SKELETON GENERATED]");
-                            finalResultArray.push("// Baris " + lineNum + ": \u003C/script\u003E");
-                            inBlock = null;
-                            continue;
-                        }
-
-
-                        if (inBlock === 'style') {
-                            if (trimmed.includes('\u007B')) {
-                                let selector = trimmed.split('\u007B')[0].trim();
-                                finalResultArray.push("  // Baris " + lineNum + ": " + selector + " \u007B ... properti kosmetik disembunyikan ... \u007D");
+                            if (trimmed.startsWith('\u003Cstyle\u003E') || trimmed.startsWith('\u003Cstyle ')) {
+                                inBlock = 'style';
+                                blockStartLine = lineNum;
+                                finalResultArray.push("// Baris " + lineNum + ": \u003Cstyle\u003E (Mulai Blok CSS)");
+                                continue;
                             }
-                            continue;
+                            if (trimmed.startsWith('\u003Cscript\u003E') || trimmed.startsWith('\u003Cscript ')) {
+                                inBlock = 'script';
+                                blockStartLine = lineNum;
+                                finalResultArray.push("// Baris " + lineNum + ": \u003Cscript\u003E (Mulai Blok JS)");
+                                continue;
+                            }
+
+
+                            if (inBlock === 'style' && trimmed.startsWith('\u003C/style\u003E')) {
+                                finalResultArray.push("// Baris " + blockStartLine + "-" + lineNum + " [CSS SKELETON GENERATED]");
+                                finalResultArray.push("// Baris " + lineNum + ": \u003C/style\u003E");
+                                inBlock = null;
+                                continue;
+                            }
+                            if (inBlock === 'script' && trimmed.startsWith('\u003C/script\u003E')) {
+                                finalResultArray.push("// Baris " + blockStartLine + "-" + lineNum + " [JS SCRIPT SKELETON GENERATED]");
+                                finalResultArray.push("// Baris " + lineNum + ": \u003C/script\u003E");
+                                inBlock = null;
+                                continue;
+                            }
+
+
+                            if (inBlock === 'style') {
+                                if (trimmed.includes('\u007B')) {
+                                    let selector = trimmed.split('\u007B')[0].trim();
+                                    finalResultArray.push("  // Baris " + lineNum + ": " + selector + " \u007B ... properti kosmetik disembunyikan ... \u007D");
+                                }
+                                continue;
+                            }
+
+
+                            if (inBlock === 'script') {
+                                let arrowStr = '\u003D\u003E';
+                                if (trimmed.startsWith('function ') || trimmed.includes('.addEventListener(') || trimmed.includes(' \u003D function(') || (trimmed.startsWith('let ') && trimmed.includes(arrowStr)) || (trimmed.startsWith('const ') && trimmed.includes(arrowStr))) {
+                                    finalResultArray.push("  // Baris " + lineNum + ": " + trimmed + " \u003D\u003E [Isi logika disembunyikan]");
+                                }
+                                continue;
+                            }
+
+
+                            if (!inBlock) {
+                                finalResultArray.push("// Baris " + lineNum + ": " + line);
+                            }
                         }
+                        finalOutputArray.push(finalResultArray.join('\n'));
+                    }
 
 
-                        if (inBlock === 'script') {
+                    // --- FLOW SEPARATED JS / CSS FILE TRACING ---
+                    else if (file.name.endsWith('.js')) {
+                        for (let i = 0; i < lines.length; i++) {
+                            let lineNum = i + 1;
+                            let line = lines[i];
+                            let trimmed = line.trim();
                             let arrowStr = '\u003D\u003E';
                             if (trimmed.startsWith('function ') || trimmed.includes('.addEventListener(') || trimmed.includes(' \u003D function(') || (trimmed.startsWith('let ') && trimmed.includes(arrowStr)) || (trimmed.startsWith('const ') && trimmed.includes(arrowStr))) {
-                                finalResultArray.push("  // Baris " + lineNum + ": " + trimmed + " \u003D\u003E [Isi logika disembunyikan]");
+                                finalResultArray.push("// Baris " + lineNum + ": " + trimmed + " \u003D\u003E [Isi logika disembunyikan]");
                             }
-                            continue;
                         }
-
-
-                        if (!inBlock) {
-                            finalResultArray.push("// Baris " + lineNum + ": " + line);
-                        }
+                        finalOutputArray.push(finalResultArray.join('\n'));
                     }
-                    document.getElementById('outputArea').value = finalResultArray.join('\n');
-                    return;
-                }
 
 
-                // --- FLOW SEPARATED JS / CSS FILE TRACING ---
-                if (file.name.endsWith('.js')) {
-                    for (let i = 0; i < lines.length; i++) {
-                        let lineNum = i + 1;
-                        let line = lines[i];
-                        let trimmed = line.trim();
-                        let arrowStr = '\u003D\u003E';
-                        if (trimmed.startsWith('function ') || trimmed.includes('.addEventListener(') || trimmed.includes(' \u003D function(') || (trimmed.startsWith('let ') && trimmed.includes(arrowStr)) || (trimmed.startsWith('const ') && trimmed.includes(arrowStr))) {
-                            finalResultArray.push("// Baris " + lineNum + ": " + trimmed + " \u003D\u003E [Isi logika disembunyikan]");
+                    else if (file.name.endsWith('.css')) {
+                        for (let i = 0; i < lines.length; i++) {
+                            let lineNum = i + 1;
+                            let line = lines[i];
+                            let trimmed = line.trim();
+                            if (trimmed.includes('\u007B')) {
+                                let selector = trimmed.split('\u007B')[0].trim();
+                                finalResultArray.push("// Baris " + lineNum + ": " + selector + " \u007B ... properti kosmetik disembunyikan ... \u007D");
+                            }
                         }
+                        finalOutputArray.push(finalResultArray.join('\n'));
                     }
-                    document.getElementById('outputArea').value = finalResultArray.join('\n');
-                    return;
-                }
 
 
-                if (file.name.endsWith('.css')) {
-                    for (let i = 0; i < lines.length; i++) {
-                        let lineNum = i + 1;
-                        let line = lines[i];
-                        let trimmed = line.trim();
-                        if (trimmed.includes('\u007B')) {
-                            let selector = trimmed.split('\u007B')[0].trim();
-                            finalResultArray.push("// Baris " + lineNum + ": " + selector + " \u007B ... properti kosmetik disembunyikan ... \u007D");
-                        }
+                    // --- FLOW BACKUP (PHP, JSON, ENV, DLL) ---
+                    else {
+                        finalResultArray.push("// Baris 1-" + lines.length);
+                        finalResultArray.push(rawCode);
+                        finalOutputArray.push(finalResultArray.join('\n'));
                     }
-                    document.getElementById('outputArea').value = finalResultArray.join('\n');
-                    return;
-                }
+
+                    processedCount++;
+                    if (processedCount === selectedFileKeys.length) {
+                        document.getElementById('outputArea').value = finalOutputArray.join('\n\n=========================================\n\n');
+                    }
+                };
+                reader.readAsText(file);
+            });
+        }
 
 
-                // --- FLOW BACKUP (PHP, JSON, ENV, DLL) ---
-                finalResultArray.push("// Baris 1-" + lines.length);
-                finalResultArray.push(rawCode);
-                document.getElementById('outputArea').value = finalResultArray.join('\n');
-            };
+        function extractExactFull() {
+            if (selectedFileKeys.length === 0) return;
 
+            let finalOutputArray = [];
+            let processedCount = 0;
 
-            reader.readAsText(file);
+            selectedFileKeys.forEach(fileKey => {
+                const file = projectFiles[fileKey];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const rawCode = e.target.result;
+                    let fileResult = `// Target File: /${fileKey}\n// =========================================\n${rawCode}`;
+                    finalOutputArray.push(fileResult);
+
+                    processedCount++;
+                    if (processedCount === selectedFileKeys.length) {
+                        document.getElementById('outputArea').value = finalOutputArray.join('\n\n\n');
+                    }
+                };
+                reader.readAsText(file);
+            });
         }
 
 
@@ -488,7 +567,7 @@
 
             const btn = document.getElementById('btnCopy');
             const originalText = btn.innerText;
-            btn.innerText = '✅ COPIED!';
+            btn.innerText = 'âœ… COPIED!';
             btn.style.background = '#22c55e';
             setTimeout(() => {
                 btn.innerText = originalText;
@@ -498,6 +577,3 @@
     </script>
 </body>
 </html>
-
-
-
