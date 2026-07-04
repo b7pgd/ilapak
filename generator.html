@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML Frontend Tester</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f0f4f8;
+            color: #1e293b;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px; /* Lebar mantap desktop */
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            margin-top: 10px;
+        }
+
+        h2 {
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            color: #1d4ed8;
+            text-align: center;
+        }
+
+        /* Header di atas textbox menampung label kiri dan clear kanan */
+        .textarea-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .textarea-header label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #475569;
+        }
+
+        .clear-btn {
+            background-color: #ef4444;
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        .clear-btn:hover {
+            background-color: #dc2626;
+        }
+
+        /* Textbox HTML Tester Tema Putih Biru Sesuai Request */
+        .html-textarea {
+            width: 100%;
+            height: 420px; /* Tinggi disamakan dengan notes utama lama */
+            background-color: #ffffff;
+            border: 1px solid #cbd5e1;
+            color: #0f172a;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            resize: vertical;
+            outline: none;
+            margin-bottom: 15px;
+        }
+
+        .html-textarea:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+        }
+
+        /* Button HTML Tester Hijau Polos */
+        .test-btn {
+            width: 100%;
+            background-color: #16a34a;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .test-btn:hover {
+            background-color: #15803d;
+        }
+
+        .test-btn:active {
+            background-color: #166534;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>HTML Frontend Tester</h2>
+        
+        <div class="textarea-header">
+            <label for="htmlBox">Paste Kode HTML/CSS/JS Lo Di Sini:</label>
+            <button class="clear-btn" id="clearBtn" title="Clear Code">Clear</button>
+        </div>
+        <textarea class="html-textarea" id="htmlBox" placeholder="<!DOCTYPE html>&#10;<html>&#10;<body>&#10;  <h1>Hello World</h1>&#10;</body>&#10;</html>"></textarea>
+
+        <button class="test-btn" id="testBtn">Run & Test HTML</button>
+    </div>
+
+    <script>
+        // DOM Elements
+        const htmlBox = document.getElementById('htmlBox');
+        const clearBtn = document.getElementById('clearBtn');
+        const testBtn = document.getElementById('testBtn');
+
+        // Fitur Clear Textbox Utama
+        clearBtn.addEventListener('click', () => {
+            htmlBox.value = '';
+            htmlBox.focus();
+        });
+
+        // Fitur Direct rendering menggunakan skema Data URI (Fix layout menciut di mobile)
+        testBtn.addEventListener('click', () => {
+            let htmlCode = htmlBox.value;
+            if (!htmlCode.trim()) {
+                alert('Isi kode HTML dulu sebelum di-test!');
+                return;
+            }
+
+            // Pastikan tag viewport disuntikkan secara paksa ke output kode agar selalu responsive 1:1 di mobile
+            if (!htmlCode.includes('viewport')) {
+                const viewportMeta = '<meta name="viewport" content="width=device-width, initial-scale=1.0">';
+                if (htmlCode.includes('<head>')) {
+                    htmlCode = htmlCode.replace('<head>', `<head>\n    ${viewportMeta}`);
+                } else if (htmlCode.includes('<html>')) {
+                    htmlCode = htmlCode.replace('<html>', `<html>\n<head>\n    ${viewportMeta}\n</head>`);
+                } else {
+                    htmlCode = viewportMeta + '\n' + htmlCode;
+                }
+            }
+
+            try {
+                // Gunakan URL Blob atau Data URI Base64 agar browser mobile memperlakukan tab baru sebagai dokumen full screen mandiri
+                const blob = new Blob([htmlCode], { type: 'text/html;charset=utf-8' });
+                const blobUrl = URL.createObjectURL(blob);
+                
+                const newWindow = window.open(blobUrl, '_blank');
+                if (!newWindow) {
+                    alert('Gagal membuka jendela baru. Pastikan pop-up browser lu tidak di-block!');
+                }
+            } catch (e) {
+                // Fallback jika blob dilarang di environment tertentu
+                const encodedUri = 'data:text/html;charset=utf-8,' + encodeURIComponent(htmlCode);
+                const newWindow = window.open(encodedUri, '_blank');
+                if (!newWindow) {
+                    alert('Gagal membuka jendela baru. Pastikan pop-up browser lu tidak di-block!');
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>
