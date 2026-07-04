@@ -13,8 +13,8 @@
 }
 
 body{
-    background:#0f172a;
-    color:#e2e8f0;
+    background:#f0f4f8;
+    color:#1e293b;
     font-family:Segoe UI,Arial,sans-serif;
     padding:20px;
 }
@@ -26,6 +26,7 @@ body{
 
 h1{
     margin-bottom:15px;
+    color:#1d4ed8;
 }
 
 .toolbar{
@@ -35,35 +36,53 @@ h1{
     margin-bottom:15px;
 }
 
+/* Container khusus kolom tombol kiri */
+.action-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
 button{
     border:none;
     padding:12px 18px;
     border-radius:8px;
     cursor:pointer;
     font-weight:600;
+    transition: background 0.2s;
 }
 
 .clean{
+    background:#1a73e8;
+    color:white;
+}
+.clean:hover{ background:#1557b0; }
+
+.paste-btn{
+    background:#0b8457;
+    color:white;
+}
+.paste-btn:hover{ background:#096b46; }
+
+.copy{
     background:#2563eb;
     color:white;
 }
-
-.copy{
-    background:#16a34a;
-    color:white;
-}
+.copy:hover{ background:#1d4ed8; }
 
 .clear{
     background:#dc2626;
     color:white;
 }
+.clear:hover{ background:#b91c1c; }
 
 .stats{
     margin-left:auto;
     display:flex;
     align-items:center;
-    color:#94a3b8;
+    color:#64748b;
     font-size:14px;
+    font-weight: 600;
 }
 
 .grid{
@@ -76,20 +95,34 @@ textarea{
     width:100%;
     height:80vh;
     resize:none;
-    border:none;
+    border:1px solid #cbd5e1;
     outline:none;
     padding:16px;
     border-radius:12px;
-    background:#1e293b;
-    color:#f8fafc;
+    background:#ffffff;
+    color:#0f172a;
     font-family:Consolas,monospace;
     font-size:14px;
     line-height:1.5;
 }
 
+textarea:focus{
+    border-color:#2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+textarea[readonly]{
+    background:#f8fafc;
+}
+
 @media(max-width:900px){
     .grid{
         grid-template-columns:1fr;
+    }
+    /* Di mobile, susunan tombol group sejajar ke samping */
+    .action-group {
+        flex-direction: row;
+        gap: 10px;
     }
 }
 </style>
@@ -102,9 +135,16 @@ textarea{
 
 <div class="toolbar">
 
-<button class="clean" onclick="cleanText()">
-Clean Text
-</button>
+<!-- Group kolom untuk tombol Clean Text dan Paste di bawahnya -->
+<div class="action-group">
+    <button class="clean" onclick="cleanText()">
+    Clean Text
+    </button>
+    
+    <button class="paste-btn" onclick="pasteInput()">
+    Paste
+    </button>
+</div>
 
 <button class="copy" onclick="copyOutput()">
 Copy Result
@@ -161,6 +201,20 @@ function cleanText(){
     updateStats();
 }
 
+async function pasteInput(){
+    if(navigator.clipboard && window.isSecureContext){
+        try {
+            const text = await navigator.clipboard.readText();
+            document.getElementById("input").value = text;
+            updateStats();
+        } catch (err) {
+            alert('Gagal membaca clipboard. Izinkan akses clipboard browser.');
+        }
+    } else {
+        alert('Fitur paste otomatis membutuhkan koneksi aman (HTTPS).');
+    }
+}
+
 async function copyOutput(){
 
     const text =
@@ -201,4 +255,3 @@ function updateStats(){
 
 </body>
 </html>
-
