@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemini Table to PDF Converter</title>
-    <!-- html2pdf.js via CDN Premium -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <title>PDF Converter</title>
+    <!-- pdfmake via CDN Premium -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -99,12 +100,12 @@
         .btn-clear {
             background-color: #ef4444;
             color: white;
-            flex: 0 0 80px; /* Ukuran tombol clear lebih kecil */
+            flex: 0 0 80px;
         }
 
         .btn-clear:hover { background-color: #dc2626; }
 
-        /* Area Preview Hasil Paste (Sesuai Struktur Dom Gemini) */
+        /* Area Preview Hasil Paste */
         .preview-title {
             font-weight: 600;
             font-size: 0.9rem;
@@ -125,20 +126,39 @@
             text-align: left;
             font-size: 15px;
             line-height: 1.6;
+            overflow: visible !important;
+            height: auto !important;
+            max-height: none !important;
         }
 
-        /* STYLING SUPAYA STRUKTUR TABEL GEMINI RAPI DAN JELAS SAAT DI PASTE & PDF */
+        /* STYLING STRUKTUR DOKUMEN BIAR RAPI */
+        #pdf-content h1, #pdf-content h2, #pdf-content h3, #pdf-content h4 {
+            color: #1e293b;
+            margin-top: 18px;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+        #pdf-content h1 { font-size: 1.5rem; }
+        #pdf-content h2 { font-size: 1.3rem; }
+        #pdf-content h3 { font-size: 1.15rem; }
+        #pdf-content h4 { font-size: 1rem; }
+
         #pdf-content table {
             width: 100% !important;
             border-collapse: collapse !important;
             margin: 15px 0 !important;
             font-size: 14px !important;
+            table-layout: fixed;
+            word-break: break-word;
         }
 
         #pdf-content th, #pdf-content td {
             border: 1px solid #cbd5e1 !important;
             padding: 10px !important;
             text-align: left !important;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+            vertical-align: top;
         }
 
         #pdf-content th {
@@ -151,13 +171,20 @@
             background-color: #f8fafc !important;
         }
 
-        /* Indikator Code block Gemini jika terbawa */
         #pdf-content pre, #pdf-content code {
             background-color: #f1f5f9 !important;
             padding: 4px 8px !important;
             border-radius: 4px !important;
             font-family: Consolas, monospace !important;
             font-size: 13px !important;
+        }
+
+        #pdf-content p {
+            margin-bottom: 12px;
+        }
+
+        #pdf-content img, #pdf-content table {
+            max-width: 100% !important;
         }
 
         @media (max-width: 600px) {
@@ -174,25 +201,25 @@
 <body>
 
 <div class="container">
-    <h2>📄 Gemini HTML Table to PDF</h2>
-    <div class="sub-text instruction">Ubah salinan chat tabel Gemini langsung jadi dokumen cetak PDF</div>
+    <h2>📄 Clioboard to PDF</h2>
+    <div class="sub-text instruction">Ubah salinan chat langsung jadi dokumen cetak PDF</div>
     
     <div class="instruction-box">
         <strong>Cara Pakai:</strong><br>
-        1. Di chat Gemini, blok tabel / jawaban yang lu mau lalu tekan <strong>Copy</strong> biasa.<br>
-        2. Buka web ini, klik tombol <strong>"1. Ambil & Paste dari Gemini"</strong>.<br>
-        3. Struktur tabel asli akan muncul. Tinggal klik <strong>"2. Cetak ke PDF"</strong>!
+        1. Klik icon <strong>Copy</strong> bawaan atau blok teks jawaban.<br>
+        2. Klik tombol <strong>"1. Ambil & Paste"</strong>.<br>
+        3. Web akan otomatis mendeteksi format (HTML/Markdown) dan menyusun tabel secara rapi. Klik <strong>"2. Cetak ke PDF"</strong>!
     </div>
 
     <div class="toolbar">
-        <button class="btn btn-paste" id="pasteBtn">1. Ambil & Paste dari Gemini</button>
+        <button class="btn btn-paste" id="pasteBtn">1. Paste dari Clipboard</button>
         <button class="btn btn-pdf" id="pdfBtn" disabled>2. Cetak ke PDF</button>
         <button class="btn btn-clear" id="clearBtn">Clear</button>
     </div>
 
     <div class="preview-title">Preview Dokumen:</div>
     <div id="pdf-content">
-        <p style="color: #94a3b8; text-align: center; margin-top: 100px;">Hasil copy text HTML Gemini akan dirender di sini beserta struktur tabelnya...</p>
+        <p style="color: #94a3b8; text-align: center; margin-top: 100px;">Hasil copy text Gemini akan dirender di sini beserta struktur tabelnya...</p>
     </div>
 </div>
 
@@ -202,55 +229,290 @@
     const clearBtn = document.getElementById('clearBtn');
     const pdfContent = document.getElementById('pdf-content');
 
-    // Tangkap data Rich Text / HTML dari Clipboard
+    // Variabel global untuk menyimpan data teks mentah guna memudahkan mapping AST ke pdfmake
+    let rawClipboardContent = "";
+
+    // Fungsi normalisasi karakter Unicode yang tidak didukung oleh font bawaan pdfmake
+    function normalizeUnicode(text) {
+        return text
+            .replace(/→/g, "->")
+            .replace(/←/g, "<-")
+            .replace(/↓/g, "v")
+            .replace(/↑/g, "^")
+            .replace(/⇒/g, "=>")
+            .replace(/⇓/g, "v")
+            .replace(/➜/g, "->")
+            .replace(/▼/g, "v")
+            .replace(/▲/g, "^")
+            .replace(/│/g, "|")
+            .replace(/┃/g, "|")
+            .replace(/─/g, "-")
+            .replace(/━/g, "=")
+            .replace(/┌/g, "+")
+            .replace(/┐/g, "+")
+            .replace(/└/g, "+")
+            .replace(/┘/g, "+")
+            .replace(/├/g, "+")
+            .replace(/┤/g, "+")
+            .replace(/┬/g, "+")
+            .replace(/┴/g, "+")
+            .replace(/┼/g, "+");
+    }
+
+    function parseMarkdownToHTML(markdownText) {
+        const lines = markdownText.split('\n');
+        let htmlOutput = '';
+        let inTable = false;
+        let tableRows = [];
+
+        for (let i = 0; i < lines.length; i++) {
+            let line = lines[i].trim();
+
+            if (line.startsWith('#')) {
+                if (inTable) { htmlOutput += buildHTMLTable(tableRows); tableRows = []; inTable = false; }
+                
+                const match = line.match(/^(#{1,6})\s+(.*)$/);
+                if (match) {
+                    const level = match[1].length;
+                    const text = processInlineMarkdown(match[2]);
+                    htmlOutput += `<h${level}>${text}</h${level}>`;
+                    continue;
+                }
+            }
+
+            if (line.startsWith('|') && line.endsWith('|')) {
+                if (line.match(/^\|[\s:-|-]*\|$/)) {
+                    continue;
+                }
+                inTable = true;
+                const cells = line.split('|').map(c => c.trim()).filter((c, idx, arr) => idx > 0 && idx < arr.length - 1);
+                tableRows.push(cells);
+            } else {
+                if (inTable) {
+                    htmlOutput += buildHTMLTable(tableRows);
+                    tableRows = [];
+                    inTable = false;
+                }
+                if (line !== '') {
+                    htmlOutput += `<p>${processInlineMarkdown(line)}</p>`;
+                }
+            }
+        }
+        
+        if (inTable && tableRows.length > 0) {
+            htmlOutput += buildHTMLTable(tableRows);
+        }
+
+        return htmlOutput;
+    }
+
+    function processInlineMarkdown(text) {
+        return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    }
+
+    function buildHTMLTable(rows) {
+        if (rows.length === 0) return '';
+        let tableHtml = '<table><thead><tr>';
+        rows[0].forEach(cell => {
+            tableHtml += `<th>${processInlineMarkdown(cell)}</th>`;
+        });
+        tableHtml += '</tr></thead><tbody>';
+        
+        for (let r = 1; r < rows.length; r++) {
+            tableHtml += '<tr>';
+            rows[r].forEach(cell => {
+                tableHtml += `<td>${processInlineMarkdown(cell)}</td>`;
+            });
+            tableHtml += '</tr>';
+        }
+        tableHtml += '</tbody></table>';
+        return tableHtml;
+    }
+
+    // Fungsi pembantu untuk memproses teks inline (bold) ke format array object pdfmake
+    function parseInlineToPdfMake(text) {
+        const parts = [];
+        const regex = /\*\*(.*?)\*\*/g;
+        let lastIndex = 0;
+        let match;
+
+        while ((match = regex.exec(text)) !== null) {
+            if (match.index > lastIndex) {
+                parts.push({ text: text.substring(lastIndex, match.index) });
+            }
+            parts.push({ text: match[1], bold: true });
+            lastIndex = regex.lastIndex;
+        }
+
+        if (lastIndex < text.length) {
+            parts.push({ text: text.substring(lastIndex) });
+        }
+
+        return parts.length > 0 ? parts : [{ text: text }];
+    }
+
+    // Engine Konverter dari teks terstruktur Clipboard/Markdown langsung menjadi skema Document Definition pdfmake
+    function generatePdfMakeDefinition(markdownText) {
+        // Melakukan normalisasi karakter sebelum di-parse ke PDF definisi objek
+        const cleanMarkdown = normalizeUnicode(markdownText);
+        const lines = cleanMarkdown.split('\n');
+        const docContent = [];
+        let inTable = false;
+        let tableRows = [];
+
+        for (let i = 0; i < lines.length; i++) {
+            let line = lines[i].trim();
+
+            if (line.startsWith('#')) {
+                if (inTable) { 
+                    docContent.push(buildPdfMakeTable(tableRows)); 
+                    tableRows = []; 
+                    inTable = false; 
+                }
+                const match = line.match(/^(#{1,6})\s+(.*)$/);
+                if (match) {
+                    const level = match[1].length;
+                    const textContent = match[2];
+                    let fontSize = 14;
+                    if (level === 1) fontSize = 20;
+                    if (level === 2) fontSize = 18;
+                    if (level === 3) fontSize = 16;
+
+                    docContent.push({
+                        text: parseInlineToPdfMake(textContent),
+                        fontSize: fontSize,
+                        bold: true,
+                        margin: [0, 12, 0, 6]
+                    });
+                    continue;
+                }
+            }
+
+            if (line.startsWith('|') && line.endsWith('|')) {
+                if (line.match(/^\|[\s:-|-]*\|$/)) {
+                    continue;
+                }
+                inTable = true;
+                const cells = line.split('|').map(c => c.trim()).filter((c, idx, arr) => idx > 0 && idx < arr.length - 1);
+                tableRows.push(cells);
+            } else {
+                if (inTable) {
+                    docContent.push(buildPdfMakeTable(tableRows));
+                    tableRows = [];
+                    inTable = false;
+                }
+                if (line !== '') {
+                    docContent.push({
+                        text: parseInlineToPdfMake(line),
+                        fontSize: 10.5,
+                        lineHeight: 1.4,
+                        margin: [0, 0, 0, 8]
+                    });
+                }
+            }
+        }
+
+        if (inTable && tableRows.length > 0) {
+            docContent.push(buildPdfMakeTable(tableRows));
+        }
+
+        return {
+            content: docContent,
+            pageSize: 'A4',
+            pageMargins: [40, 40, 40, 40],
+            styles: {
+                tableHeader: {
+                    bold: true,
+                    fontSize: 10,
+                    color: '#1e293b',
+                    fillColor: '#f1f5f9'
+                }
+            }
+        };
+    }
+
+    function buildPdfMakeTable(rows) {
+        if (rows.length === 0) return {};
+        
+        const tableBody = [];
+        
+        // Buat baris header
+        const headerRow = rows[0].map(cell => {
+            return { text: parseInlineToPdfMake(cell), style: 'tableHeader', margin: [6, 6, 6, 6] };
+        });
+        tableBody.push(headerRow);
+
+        // Buat baris data body
+        for (let r = 1; r < rows.length; r++) {
+            const dataRow = rows[r].map(cell => {
+                return { text: parseInlineToPdfMake(cell), fontSize: 9.5, margin: [6, 6, 6, 6] };
+            });
+            tableBody.push(dataRow);
+        }
+
+        // Tentukan jumlah kolom secara dinamis dengan lebar merata (auto stretch)
+        const colCount = rows[0].length;
+        const colWidths = Array(colCount).fill('*');
+
+        return {
+            table: {
+                headerRows: 1,
+                widths: colWidths,
+                body: tableBody
+            },
+            margin: [0, 10, 0, 15],
+            layout: {
+                hLineWidth: function (i, node) { return 1; },
+                vLineWidth: function (i, node) { return 1; },
+                hLineColor: function (i, node) { return '#cbd5e1'; },
+                vLineColor: function (i, node) { return '#cbd5e1'; }
+            }
+        };
+    }
+
     pasteBtn.addEventListener('click', async () => {
         try {
-            if (!navigator.clipboard || !navigator.clipboard.read) {
-                alert('Browser lu belum support API Clipboard tingkat lanjut atau pastikan berjalan di protokol HTTPS.');
+            if (!navigator.clipboard) {
+                alert('Browser lu tidak mengizinkan akses Clipboard API.');
                 return;
             }
 
-            const clipboardItems = await navigator.clipboard.read();
-            for (const item of clipboardItems) {
-                // KUNCINYA DISINI: Kita paksa cari tipe 'text/html' bukan teks mentah biasa
-                if (item.types.includes('text/html')) {
-                    const blob = await item.getType('text/html');
-                    const htmlText = await blob.text();
-                    
-                    // Suntikkan HTML mentah asli Gemini ke div penampung
-                    pdfContent.innerHTML = htmlText;
-                    pdfBtn.disabled = false;
-                    return;
+            const plainText = await navigator.clipboard.readText();
+            rawClipboardContent = plainText; // Simpan cache string mentah untuk diolah engine pdfmake
+
+            if (plainText.trim()) {
+                if (plainText.includes('|') || plainText.includes('#')) {
+                    pdfContent.innerHTML = parseMarkdownToHTML(plainText);
+                } else {
+                    pdfContent.innerHTML = plainText.split('\n').map(line => line.trim() ? `<p>${processInlineMarkdown(line)}</p>` : '').join('');
                 }
+                pdfBtn.disabled = false;
+            } else {
+                alert('Clipboard kosong.');
             }
-            
-            alert('Gagal mendeteksi struktur HTML. Pastikan lu copy langsung dari gelembung chat Gemini (bukan dari text editor/notes).');
+
         } catch (err) {
             console.error(err);
-            alert('Akses clipboard ditolak. Harap izinkan pop-up izin clipboard di browser lu.');
+            alert('Gagal mengambil data clipboard.');
         }
     });
 
-    // Ekspor Konten Renderer ke format file PDF asli bawaan
     pdfBtn.addEventListener('click', () => {
-        const element = document.getElementById('pdf-content');
-        
-        // Konfigurasi konversi PDF agar bersih tanpa terpotong margin
-        const opt = {
-            margin:       [15, 15, 15, 15],
-            filename:     'Gemini_Analysis_Report.pdf',
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2, useCORS: true },
-            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
-
-        // Jalankan perintah library html2pdf
-        html2pdf().set(opt).from(element).save();
+        try {
+            // Bangun definisi dokumen pdfmake dari cache text plain
+            const docDefinition = generatePdfMakeDefinition(rawClipboardContent);
+            
+            // Eksekusi pembuatan dan download file PDF menggunakan pdfMake
+            pdfMake.createPdf(docDefinition).download('Gemini_Analysis_Report.pdf');
+        } catch (error) {
+            console.error(error);
+            alert('Terjadi kesalahan saat mengekspor menggunakan pdfmake.');
+        }
     });
 
-    // Reset Kondisi State Awal
     clearBtn.addEventListener('click', () => {
-        pdfContent.innerHTML = '<p style="color: #94a3b8; text-align: center; margin-top: 100px;">Hasil copy text HTML Gemini akan dirender di sini beserta struktur tabelnya...</p>';
+        pdfContent.innerHTML = '<p style="color: #94a3b8; text-align: center; margin-top: 100px;">Hasil copy text Gemini akan dirender di sini beserta struktur tabelnya...</p>';
+        rawClipboardContent = "";
         pdfBtn.disabled = true;
     });
 </script>
