@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Table to PDF Converter</title>
+    <!-- html2pdf.js via CDN Premium -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f0f4f8;
+            color: #1e293b;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #cbd5e1;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        h2 {
+            color: #1a73e8;
+            font-size: 1.4rem;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+
+        .instruction {
+            font-size: 13px;
+            color: #64748b;
+            text-align: center;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+
+        .instruction-box {
+            background: #e8f0fe;
+            border-left: 4px solid #1a73e8;
+            padding: 10px;
+            border-radius: 0 6px 6px 0;
+            margin-bottom: 25px;
+            font-size: 13px;
+            text-align: left;
+        }
+
+        /* Toolbar Aksi */
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            flex: 1;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-paste {
+            background-color: #1a73e8;
+            color: white;
+        }
+
+        .btn-paste:hover { background-color: #1557b0; }
+
+        .btn-pdf {
+            background-color: #0b8457;
+            color: white;
+        }
+
+        .btn-pdf:hover { background-color: #096b46; }
+        .btn-pdf:disabled { background-color: #cbd5e1; cursor: not-allowed; }
+
+        .btn-clear {
+            background-color: #ef4444;
+            color: white;
+            flex: 0 0 80px; /* Ukuran tombol clear lebih kecil */
+        }
+
+        .btn-clear:hover { background-color: #dc2626; }
+
+        /* Area Preview Hasil Paste (Sesuai Struktur Dom Gemini) */
+        .preview-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #475569;
+            margin-bottom: 6px;
+            text-align: left;
+        }
+
+        #pdf-content {
+            width: 100%;
+            min-height: 350px;
+            max-height: 60vh;
+            overflow-y: auto;
+            background-color: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: left;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        /* STYLING SUPAYA STRUKTUR TABEL GEMINI RAPI DAN JELAS SAAT DI PASTE & PDF */
+        #pdf-content table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            margin: 15px 0 !important;
+            font-size: 14px !important;
+        }
+
+        #pdf-content th, #pdf-content td {
+            border: 1px solid #cbd5e1 !important;
+            padding: 10px !important;
+            text-align: left !important;
+        }
+
+        #pdf-content th {
+            background-color: #f1f5f9 !important;
+            color: #1e293b !important;
+            font-weight: 600 !important;
+        }
+
+        #pdf-content tr:nth-child(even) {
+            background-color: #f8fafc !important;
+        }
+
+        /* Indikator Code block Gemini jika terbawa */
+        #pdf-content pre, #pdf-content code {
+            background-color: #f1f5f9 !important;
+            padding: 4px 8px !important;
+            border-radius: 4px !important;
+            font-family: Consolas, monospace !important;
+            font-size: 13px !important;
+        }
+
+        @media (max-width: 600px) {
+            .toolbar {
+                flex-direction: column;
+            }
+            .btn-clear {
+                flex: none;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>📄 Gemini HTML Table to PDF</h2>
+    <div class="sub-text instruction">Ubah salinan chat tabel Gemini langsung jadi dokumen cetak PDF</div>
+    
+    <div class="instruction-box">
+        <strong>Cara Pakai:</strong><br>
+        1. Di chat Gemini, blok tabel / jawaban yang lu mau lalu tekan <strong>Copy</strong> biasa.<br>
+        2. Buka web ini, klik tombol <strong>"1. Ambil & Paste dari Gemini"</strong>.<br>
+        3. Struktur tabel asli akan muncul. Tinggal klik <strong>"2. Cetak ke PDF"</strong>!
+    </div>
+
+    <div class="toolbar">
+        <button class="btn btn-paste" id="pasteBtn">1. Ambil & Paste dari Gemini</button>
+        <button class="btn btn-pdf" id="pdfBtn" disabled>2. Cetak ke PDF</button>
+        <button class="btn btn-clear" id="clearBtn">Clear</button>
+    </div>
+
+    <div class="preview-title">Preview Dokumen:</div>
+    <div id="pdf-content">
+        <p style="color: #94a3b8; text-align: center; margin-top: 100px;">Hasil copy text HTML Gemini akan dirender di sini beserta struktur tabelnya...</p>
+    </div>
+</div>
+
+<script>
+    const pasteBtn = document.getElementById('pasteBtn');
+    const pdfBtn = document.getElementById('pdfBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const pdfContent = document.getElementById('pdf-content');
+
+    // Tangkap data Rich Text / HTML dari Clipboard
+    pasteBtn.addEventListener('click', async () => {
+        try {
+            if (!navigator.clipboard || !navigator.clipboard.read) {
+                alert('Browser lu belum support API Clipboard tingkat lanjut atau pastikan berjalan di protokol HTTPS.');
+                return;
+            }
+
+            const clipboardItems = await navigator.clipboard.read();
+            for (const item of clipboardItems) {
+                // KUNCINYA DISINI: Kita paksa cari tipe 'text/html' bukan teks mentah biasa
+                if (item.types.includes('text/html')) {
+                    const blob = await item.getType('text/html');
+                    const htmlText = await blob.text();
+                    
+                    // Suntikkan HTML mentah asli Gemini ke div penampung
+                    pdfContent.innerHTML = htmlText;
+                    pdfBtn.disabled = false;
+                    return;
+                }
+            }
+            
+            alert('Gagal mendeteksi struktur HTML. Pastikan lu copy langsung dari gelembung chat Gemini (bukan dari text editor/notes).');
+        } catch (err) {
+            console.error(err);
+            alert('Akses clipboard ditolak. Harap izinkan pop-up izin clipboard di browser lu.');
+        }
+    });
+
+    // Ekspor Konten Renderer ke format file PDF asli bawaan
+    pdfBtn.addEventListener('click', () => {
+        const element = document.getElementById('pdf-content');
+        
+        // Konfigurasi konversi PDF agar bersih tanpa terpotong margin
+        const opt = {
+            margin:       [15, 15, 15, 15],
+            filename:     'Gemini_Analysis_Report.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        // Jalankan perintah library html2pdf
+        html2pdf().set(opt).from(element).save();
+    });
+
+    // Reset Kondisi State Awal
+    clearBtn.addEventListener('click', () => {
+        pdfContent.innerHTML = '<p style="color: #94a3b8; text-align: center; margin-top: 100px;">Hasil copy text HTML Gemini akan dirender di sini beserta struktur tabelnya...</p>';
+        pdfBtn.disabled = true;
+    });
+</script>
+
+</body>
+</html>
