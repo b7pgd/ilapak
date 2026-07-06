@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PPTX Text Cleaner Engine</title>
+    <style>
+        :root {
+            --bg-color: #fafafa;
+            --card-bg: #ffffff;
+            --text-main: #1a1a1a;
+            --text-muted: #666666;
+            --border-color: #e5e5e5;
+            --accent-color: #000000;
+            --accent-hover: #333333;
+            --radius: 8px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        header {
+            margin-bottom: 0.5rem;
+        }
+
+        header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+
+        .workspace {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .workspace {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .counter {
+            font-weight: normal;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        textarea {
+            width: 100%;
+            height: 400px;
+            resize: vertical;
+            border: 1px solid var(--border-color);
+            border-radius: calc(var(--radius) - 2px);
+            padding: 0.75rem;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: var(--text-main);
+            background-color: #fdfdfd;
+            outline: none;
+            font-family: inherit;
+        }
+
+        textarea:focus {
+            border-color: var(--accent-color);
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            align-items: center;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 1rem 1.25rem;
+        }
+
+        .toggle-group {
+            display: flex;
+            gap: 1.25rem;
+        }
+
+        .toggle-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .toggle-label input {
+            cursor: pointer;
+            accent-color: var(--accent-color);
+        }
+
+        .btn {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: background-color 0.15s ease;
+        }
+
+        .btn:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: #f5f5f5;
+        }
+
+        .action-area {
+            margin-left: auto;
+        }
+
+        @media (max-width: 600px) {
+            .controls {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            .action-area {
+                margin-left: 0;
+                width: 100%;
+            }
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--accent-color);
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.2s ease;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>PPTX Text Cleaner Engine</h1>
+        <p>Ubah teks berantakan hasil copy (PDF, OCR, Chat) menjadi clean plain text yang siap ditempel ke slide PowerPoint.</p>
+    </header>
+
+    <div class="controls">
+        <div class="toggle-group">
+            <label class="toggle-label">
+                <input type="checkbox" id="preserveBreaks"> Preserve line breaks asli
+            </label>
+            <label class="toggle-label">
+                <input type="checkbox" id="strictSingle"> Strict single paragraph mode
+            </label>
+        </div>
+        <div class="action-area">
+            <button class="btn" id="cleanBtn">CLEAN TEXT</button>
+        </div>
+    </div>
+
+    <div class="workspace">
+        <!-- Input Panel -->
+        <div class="panel">
+            <div class="panel-header">
+                <span>RAW TEXT INPUT</span>
+                <span class="counter" id="rawCounter">0 chars</span>
+            </div>
+            <textarea id="rawInput" placeholder="Paste teks berantakan kamu di sini..."></textarea>
+            <div>
+                <button class="btn btn-secondary" id="clearBtn" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">Clear Input</button>
+            </div>
+        </div>
+
+        <!-- Output Panel -->
+        <div class="panel">
+            <div class="panel-header">
+                <span>CLEANED PPT-READY TEXT</span>
+                <span class="counter" id="cleanCounter">0 chars</span>
+            </div>
+            <textarea id="cleanOutput" placeholder="Hasil text cleaning akan muncul di sini..." readonly></textarea>
+            <div>
+                <button class="btn" id="copyBtn" style="width: 100%;">COPY RESULT</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast">Copied to clipboard!</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const rawInput = document.getElementById('rawInput');
+        const cleanOutput = document.getElementById('cleanOutput');
+        const cleanBtn = document.getElementById('cleanBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const preserveBreaks = document.getElementById('preserveBreaks');
+        const strictSingle = document.getElementById('strictSingle');
+        const rawCounter = document.getElementById('rawCounter');
+        const cleanCounter = document.getElementById('cleanCounter');
+        const toast = document.getElementById('toast');
+
+        // Saling mengunci opsi toggle agar tidak bentrok
+        preserveBreaks.addEventListener('change', () => {
+            if (preserveBreaks.checked) strictSingle.checked = false;
+        });
+        strictSingle.addEventListener('change', () => {
+            if (strictSingle.checked) preserveBreaks.checked = false;
+        });
+
+        // Realtime Character Counter
+        rawInput.addEventListener('input', () => {
+            rawCounter.textContent = `${rawInput.value.length} chars`;
+        });
+
+        // Clear Trigger
+        clearBtn.addEventListener('click', () => {
+            rawInput.value = '';
+            cleanOutput.value = '';
+            rawCounter.textContent = '0 chars';
+            cleanCounter.textContent = '0 chars';
+            rawInput.focus();
+        });
+
+        // Copy Trigger
+        copyBtn.addEventListener('click', () => {
+            if (!cleanOutput.value) return;
+            cleanOutput.select();
+            document.execCommand('copy');
+            
+            // Show toast notification
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        });
+
+        // Core Cleaning Engine
+        cleanBtn.addEventListener('click', () => {
+            let text = rawInput.value;
+
+            if (!text.trim()) {
+                cleanOutput.value = '';
+                cleanCounter.textContent = '0 chars';
+                return;
+            }
+
+            // 1. Unicode Normalization & Zero-Width Space/Weird Character Removal
+            text = text.normalize('NFC');
+            text = text.replace(/[\u200B-\u200D\uFEFF]/g, ''); // Hapus zero-width space
+            text = text.replace(/\u00A0/g, ' '); // Ganti non-breaking space jadi spasi biasa
+            text = text.replace(/\t/g, ' '); // Ganti tab jadi spasi
+
+            // 2. Normalize Weird PDF Bullets Encoding
+            // Menangkap bullet point aneh dari hasil copy PDF (•, ∙, ‣, ⁃, dll)
+            text = text.replace(/[\u2022\u2023\u25E6\u2043\u2219]/g, '-');
+
+            // 3. Mode Processing Berdasarkan Pilihan Toggle
+            if (strictSingle.checked) {
+                // Semua baris dilebur jadi satu paragraf utuh tunggal
+                text = text.replace(/[\r\n]+/g, ' ');
+            } else if (!preserveBreaks.checked) {
+                // Smart Line Wrapping Fix (Default)
+                // Memisahkan teks berdasarkan baris asli untuk mendeteksi pembungkus paragraf
+                const lines = text.split(/\r?\n/);
+                let reconstructedText = '';
+                
+                for (let i = 0; i < lines.length; i++) {
+                    let currentLine = lines[i].trim();
+                    if (currentLine === '') {
+                        reconstructedText += '\n\n'; // Tandai sebagai pemisah paragraf asli
+                        continue;
+                    }
+
+                    // Jika baris berakhir dengan tanda baca akhir, simpan line break-nya
+                    // Jika tidak, gabungkan dengan baris berikutnya menggunakan spasi
+                    if (/[.!?:;\-•]$/.test(currentLine) || (lines[i+1] && lines[i+1].trim() === '')) {
+                        reconstructedText += currentLine + '\n';
+                    } else {
+                        reconstructedText += currentLine + ' ';
+                    }
+                }
+                text = reconstructedText;
+            } else {
+                // Preserve line breaks asli (Tiap baris hanya dibersihkan whitespace ujungnya)
+                text = text.split(/\r?\n/).map(line => line.trim()).join('\n');
+            }
+
+            // 4. Whitespace Clean Up (Multiple spaces -> single space)
+            text = text.replace(/[ ]+/g, ' ');
+
+            // 5. Clean Empty Line Excesses (Maksimal 1 line break kosong antar paragraf)
+            text = text.replace(/\n\s*\n\s*\n/g, '\n\n');
+            
+            // Trim Final Akhir Teks
+            text = text.trim();
+
+            // Render Output
+            cleanOutput.value = text;
+            cleanCounter.textContent = `${text.length} chars`;
+        });
+    });
+</script>
+
+</body>
+</html>
