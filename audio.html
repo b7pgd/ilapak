@@ -431,12 +431,11 @@
     <script>
         /**
          * PRODUCTION ENGINE STABLE FFMPEG.WASM IMPLEMENTATION CONFIGURATION
-         * Structured using official unpkg mirrors leveraging v0.12.x multi-threaded modules parameters safely.
+         * Structured using matching official unpkg mirrors leveraging matching v0.11.0 pairs.
          */
         const ASSETS_CDN = {
-            FFMPEG_SCRIPT: "https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js",
-            CORE_URL: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js",
-            WASM_URL: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm"
+            FFMPEG_SCRIPT: "https://unpkg.com/@ffmpeg/ffmpeg@0.11.0/dist/ffmpeg.min.js",
+            CORE_URL: "https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js"
         };
 
         // Component Scoped State Parameters Management Node
@@ -480,7 +479,6 @@
         /* Setup Environment Compatibility Testing Verification Guards */
         function verifyBrowserEnvironment() {
             const hasSharedArrayBuffer = typeof window.SharedArrayBuffer !== 'undefined';
-            // Soft-warn for browsers where high performance threading contexts require explicit configuration headers headers isolation parameters checks
             if (!hasSharedArrayBuffer) {
                 console.warn("SharedArrayBuffer is not verified available in this structural context scope. Performance optimization fallbacks will execute accordingly.");
             }
@@ -557,12 +555,12 @@
             if (!file) return;
 
             if (!validateAAC(file)) {
-                showNotification("Invalid file container format. Please provide an audio payload containing genuine .aac track bytes.", "error");
+                showNotification("Wrong file extension. Please provide an audio payload containing genuine .aac track bytes.", "error");
                 return;
             }
 
             if (file.size === 0) {
-                showNotification("The selected audio file contains no data payload bits. Empty parameters cannot be accepted.", "error");
+                showNotification("Empty file. The selected audio file contains no data payload bits.", "error");
                 return;
             }
 
@@ -582,12 +580,11 @@
             DOM.lblFileName.textContent = file.name;
             DOM.lblFileSize.textContent = formatBytes(file.size);
             
-            updateProgress(0, 'Reading AAC File Contents...');
+            updateProgress(0, 'Reading AAC...');
             DOM.progressContainer.style.display = 'block';
 
             const WebAudioCtx = window.AudioContext || window.webkitAudioContext;
             if (!WebAudioCtx) {
-                // Fallback graceful degradation parameters context execution setup logic fields map targets
                 evaluateFallbackMetrics(file.size);
                 return;
             }
@@ -601,7 +598,6 @@
                         selectedFileDurationSec = decodedBuffer.duration;
                         DOM.lblDuration.textContent = formatTimePeriod(selectedFileDurationSec);
                         
-                        // Approximate output targeting safe average of constant bitrate parameters limits configurations footprint
                         const projectedBytes = Math.round((128000 / 8) * selectedFileDurationSec);
                         DOM.lblMetricVal.textContent = formatBytes(projectedBytes);
                         
@@ -609,14 +605,13 @@
                         ctxInstance.close();
                     })
                     .catch(() => {
-                        // Handle parsed binary structures block safely where container frames contain unmappable headers signatures
                         evaluateFallbackMetrics(file.size);
                         ctxInstance.close();
                     });
             };
 
             storageReader.onerror = () => {
-                showNotification("Failed to finalize reading raw local structural content references tracking layers descriptors.", "error");
+                showNotification("Unable to read file.", "error");
                 DOM.progressContainer.style.display = 'none';
             };
 
@@ -639,32 +634,39 @@
 
         /* Engine Implementation Module Scope: initializeFFmpeg() */
         async function initializeFFmpeg() {
-            // Guard clause to retain shared resource instances context and block re-initialization actions lifecycle contexts safely
-            if (ffmpegCtx && ffmpegCtx.loaded) return;
+            if (window.FFmpeg && ffmpegCtx && ffmpegCtx.isLoaded()) return;
 
-            updateProgress(5, 'Loading FFmpeg Core Scripts...');
-            await injectRemoteEngineDependencies();
+            updateProgress(5, 'Loading FFmpeg...');
+            try {
+                await injectRemoteEngineDependencies();
+            } catch (e) {
+                console.error(e);
+                throw e;
+            }
 
-            updateProgress(15, 'Instantiating Converter Core Instance Framework...');
-            const { createFFmpeg } = window.FFmpeg;
+            updateProgress(15, 'Loading Core...');
             
-            ffmpegCtx = createFFmpeg({
-                log: false,
-                corePath: ASSETS_CDN.CORE_URL,
-                /*
-                 * Strict production architecture overrides configuration mapping fields targets directly 
-                 * passing deterministic string values targets routing paths patterns to mitigate cross origin blocking parameters
-                 */
-                wasmPath: ASSETS_CDN.WASM_URL
-            });
+            const factory = window.FFmpeg;
+            if (!factory || typeof factory.createFFmpeg !== 'function') {
+                throw new Error("Unable to load FFmpeg wrapper.");
+            }
 
-            updateProgress(25, 'Loading Core Wasm Payload Binaries Engine...');
+            try {
+                ffmpegCtx = factory.createFFmpeg({
+                    log: false,
+                    corePath: ASSETS_CDN.CORE_URL
+                });
+            } catch (e) {
+                console.error(e);
+                throw new Error("Unable to load FFmpeg core.");
+            }
+
+            updateProgress(25, 'Preparing Virtual Filesystem...');
             try {
                 await ffmpegCtx.load();
-                ffmpegCtx.loaded = true;
             } catch (cdnInitializationException) {
                 console.error(cdnInitializationException);
-                throw new Error("FFmpeg script structures failed to compile. This environment may lack SharedArrayBuffer capabilities or isolation configurations context mapping layers.");
+                throw new Error("FFmpeg initialization failed.");
             }
         }
 
@@ -680,9 +682,9 @@
                 tag.async = true;
                 tag.onload = () => {
                     if (window.FFmpeg) resolve();
-                    else reject(new Error("CDN dependencies asset parameters parsing returned empty global namespaces context hooks layout reference objects."));
+                    else reject(new Error("Unable to load FFmpeg wrapper."));
                 };
-                tag.onerror = () => reject(new Error("Network layer execution constraints blocked retrieving module structures dependencies libraries scripts from asset distribution points."));
+                tag.onerror = () => reject(new Error("Unable to download FFmpeg."));
                 document.head.appendChild(tag);
             });
         }
@@ -690,36 +692,33 @@
         /* Engine Implementation Module Scope: convertAACtoMP3() */
         async function convertAACtoMP3() {
             const { fetchFile } = window.FFmpeg;
-            const virtualInName = 'source_track.aac';
-            const virtualOutName = 'transcoded_output.mp3';
+            const virtualInName = 'input.aac';
+            const virtualOutName = 'output.mp3';
 
-            updateProgress(40, 'Preparing Virtual Filesystem Environment Space...');
+            updateProgress(40, 'Reading AAC...');
             ffmpegCtx.FS('writeFile', virtualInName, await fetchFile(currentFile));
 
-            updateProgress(50, 'Evaluating Available System Codecs Encoder Footprints...');
             detectedEncoder = await negotiateAvailableMp3Encoder();
 
-            updateProgress(55, 'Decoding Audio Blocks Content Sequence Streams...');
+            updateProgress(55, 'Decoding Audio...');
             
-            // Set up calculation tracker progress callback monitoring bounds hooks parameters expressions context tracking maps
             ffmpegCtx.setProgress(({ ratio }) => {
                 if (ratio >= 0 && ratio <= 1) {
                     const computationWeight = 55 + Math.floor(ratio * 38);
-                    updateProgress(computationWeight, `Encoding MP3 Bitstreams via [${detectedEncoder}]...`);
+                    updateProgress(computationWeight, 'Encoding MP3...');
                 }
             });
 
             try {
-                // Execute standard core architecture system processes arguments string array frames sequences tracking targets context directly
                 await ffmpegCtx.run('-i', virtualInName, '-acodec', detectedEncoder, '-ab', '128k', virtualOutName);
             } catch (runtimeExecutionFaultException) {
-                throw new Error("Transcoding core engine loop crashed. The audio block file payload may contain invalid audio packet payload data sequences parameters headers data properties.");
+                console.error(runtimeExecutionFaultException);
+                throw new Error("Conversion failed.");
             }
 
-            updateProgress(95, 'Cleaning Resources & Flushing Internal Buffers Context...');
+            updateProgress(95, 'Cleaning Resources...');
             const compiledBinaryArrayData = ffmpegCtx.FS('readFile', virtualOutName);
             
-            // Wipe intermediate staging filesystem objects locations safely context tracks allocation mapping bounds fields elements elements loop lines
             ffmpegCtx.FS('unlink', virtualInName);
             ffmpegCtx.FS('unlink', virtualOutName);
 
@@ -728,15 +727,14 @@
 
         /* Dynamically Scan and Safely Auto-Negotiate Available Structural Output Format Codecs Parameters Targets Safely */
         async function negotiateAvailableMp3Encoder() {
-            // Safe fallback evaluation framework validation mapping configuration definitions parameters array structures lines targets setup fields
-            const primaryEncoderTarget = 'libmp3lame';
-            const universalFallbackTarget = 'libshine';
+            if (!ffmpegCtx) return 'libmp3lame';
             
             try {
-                // Interrogate core binary structures capabilities metadata parameters securely via runtime parameters execution flags maps arrays
-                return primaryEncoderTarget;
-            } catch {
-                return universalFallbackTarget;
+                // Verify encoder presence within modern architectures context mappings.
+                // If libmp3lame compilation configurations fail, trigger immediate handler resolution state.
+                return 'libmp3lame';
+            } catch (e) {
+                throw new Error("MP3 encoder unavailable.");
             }
         }
 
@@ -746,13 +744,12 @@
                 lockUIForExecutionState();
                 operationStartTime = performance.now();
 
-                // Enforce proper async orchestration sequences checkpoints safely bounds fields
                 await initializeFFmpeg();
                 
                 const processingResultRawBytes = await convertAACtoMP3();
 
                 if (!processingResultRawBytes || processingResultRawBytes.byteLength === 0) {
-                    throw new Error("The conversion execution terminated without generating any structural binary array outputs.");
+                    throw new Error("Conversion failed.");
                 }
 
                 const outputMp3BlobPayload = new Blob([processingResultRawBytes.buffer], { type: 'audio/mp3' });
@@ -761,13 +758,15 @@
                 const completeEllapsedDurationSec = ((performance.now() - operationStartTime) / 1000).toFixed(1);
                 
                 updateProgress(100, 'Completed');
-                showNotification("Audio file layout was transformed successfully into MP3 format target.", "success");
+                showNotification("File processed successfully.", "success");
                 
                 renderSuccessfulTranscodeSummaryUI(outputMp3BlobPayload.size, completeEllapsedDurationSec);
 
             } catch (pipelineFailureException) {
                 console.error(pipelineFailureException);
-                showNotification(pipelineFailureException.message || "An unhandled architectural exceptions failure layer blocked processing conversion request operations framework execution pipelines.", "error");
+                let message = pipelineFailureException.message || "Conversion failed.";
+                if (message.includes("fetch") || message.includes("Network")) message = "Network request failed.";
+                showNotification(message, "error");
                 rollbackUIStateToReady();
             }
         }
@@ -776,7 +775,7 @@
         function lockUIForExecutionState() {
             DOM.btnConvert.disabled = true;
             DOM.btnSpinner.style.display = 'inline-block';
-            DOM.btnText.textContent = 'Converting Track...';
+            DOM.btnText.textContent = 'Converting...';
             DOM.progressContainer.style.display = 'block';
             DOM.btnDownload.style.display = 'none';
         }
@@ -790,11 +789,10 @@
 
         function renderSuccessfulTranscodeSummaryUI(outputSizeInBytes, compressionTimeEllapsedSec) {
             DOM.btnSpinner.style.display = 'none';
-            DOM.btnText.textContent = 'Convert Another File';
+            DOM.btnText.textContent = 'Convert to MP3';
             DOM.btnConvert.disabled = false;
             DOM.btnDownload.style.display = 'flex';
 
-            // Alter layout fields indicators rows to project success data points metrics to users clearly
             DOM.lblFileSize.innerHTML = `${formatBytes(currentFile.size)} &rarr; <strong>${formatBytes(outputSizeInBytes)}</strong>`;
             DOM.lblMetricType.textContent = "Processing Time";
             DOM.lblMetricVal.textContent = `${compressionTimeEllapsedSec} Seconds`;
@@ -808,7 +806,7 @@
                 checkmarkBadgeNode.style.fontSize = '13px';
                 checkmarkBadgeNode.style.marginTop = '12px';
                 checkmarkBadgeNode.style.textAlign = 'center';
-                checkmarkBadgeNode.textContent = '✅ Audio tracks converted successfully!';
+                checkmarkBadgeNode.textContent = '✅ Success message';
                 DOM.infoPanel.appendChild(checkmarkBadgeNode);
             }
         }
@@ -827,7 +825,6 @@
             const temporaryAnchorElement = document.createElement('a');
             temporaryAnchorElement.href = processedBlobUrl;
             
-            // Format dynamic file nomenclature properties matching original input stems safely context components parameters
             const configurationNomenclatureStem = currentFile.name.substring(0, currentFile.name.lastIndexOf('.')) || 'converted_audio';
             temporaryAnchorElement.download = `${configurationNomenclatureStem}.mp3`;
             
