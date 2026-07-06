@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio to TXT Converter</title>
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --primary-hover: #0056b3;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --border-color: #e0e0e0;
+            --success-color: #28a745;
+            --success-hover: #218838;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            width: 100%;
+            max-width: 600px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            padding: 25px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        header h1 {
+            color: var(--primary-color);
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .upload-section {
+            border: 2px dashed var(--primary-color);
+            padding: 25px;
+            border-radius: 8px;
+            text-align: center;
+            background-color: #f8faff;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .upload-section:hover {
+            background-color: #edf3ff;
+        }
+
+        .upload-section input[type="file"] {
+            display: none;
+        }
+
+        .upload-section label {
+            color: var(--primary-color);
+            font-weight: bold;
+            cursor: pointer;
+            display: block;
+        }
+
+        /* Progress Bar Styling */
+        .progress-container {
+            width: 100%;
+            background-color: #e9ecef;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 0%;
+            height: 12px;
+            background-color: var(--primary-color);
+            transition: width 0.2s ease;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .btn-convert {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-convert:hover:not(:disabled) {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-download {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-download:hover:not(:disabled) {
+            background-color: var(--success-hover);
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .status {
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #555;
+        }
+
+        .result-container {
+            position: relative;
+        }
+
+        textarea {
+            width: 100%;
+            height: 180px;
+            padding: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            resize: vertical;
+            font-size: 15px;
+            line-height: 1.5;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            border-color: var(--primary-color);
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+            header h1 {
+                font-size: 20px;
+            }
+            button {
+                font-size: 14px;
+                padding: 10px;
+            }
+        }
+    </style>
+    <script type="module">
+        import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
+        window.pipeline = pipeline;
+        env.allowLocalModels = false;
+    </script>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Audio to TXT Converter</h1>
+        <p>Pilih file suara dan konversi langsung ke bentuk teks secara cepat</p>
+    </header>
+
+    <div class="upload-section" onclick="document.getElementById('audioFile').click()">
+        <label id="uploadLabel">📁 Pilih File Audio (MP3, WAV, OGG, M4A, AAC, dll)</label>
+        <input type="file" id="audioFile" accept=".mp3,.wav,.ogg,.m4a,.aac,.amr,audio/*">
+    </div>
+
+    <div class="status" id="statusText">Status: Menginisialisasi sistem...</div>
+
+    <div class="progress-container" id="progressContainer">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div class="controls">
+        <button type="button" class="btn-convert" id="convertBtn" disabled>⚡ Convert ke Teks</button>
+        <button type="button" class="btn-download" id="downloadBtn" disabled>💾 Download (.txt)</button>
+    </div>
+
+    <div class="result-container">
+        <textarea id="resultTextarea" placeholder="Hasil teks transkripsi asli akan muncul di sini..." style="display: none;"></textarea>
+    </div>
+</div>
+
+<script>
+    const audioFile = document.getElementById('audioFile');
+    const uploadLabel = document.getElementById('uploadLabel');
+    const statusText = document.getElementById('statusText');
+    const convertBtn = document.getElementById('convertBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const resultTextarea = document.getElementById('resultTextarea');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressBar = document.getElementById('progressBar');
+
+    // State Variables
+    let selectedFile = null;
+    let transcriptResult = "";
+    const MAX_AUDIO_DURATION_SEC = 2 * 60 * 60; // 2 Jam
+
+    // Progress State Map untuk kalkulasi progress linear yang realistis
+    const STAGES = {
+        INIT: { pct: 0, text: "Menyiapkan data..." },
+        DECODING: { pct: 15, text: "Decoding audio track..." },
+        DOWNMIX: { pct: 35, text: "Mixing stereo ke mono..." },
+        TRANSCRIPTION_READY: { pct: 50, text: "Mengirim sinyal ke Engine AI Whisper..." },
+        PROCESSING: { pct: 85, text: "Mengekstrak teks dengan AI Whisper..." },
+        POST_PROCESSING: { pct: 95, text: "Post-processing sinkronisasi teks..." },
+        COMPLETED: { pct: 100, text: "Konversi Sukses!" }
+    };
+
+    // Load Whisper Model tunggal via cache browser
+    async function initModel() {
+        if (window.transcriber) return;
+        try {
+            statusText.textContent = "Status: Mengunduh Engine AI Whisper (Hanya sekali)...";
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '30%';
+            
+            window.transcriber = await window.pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny');
+            
+            progressBar.style.width = '100%';
+            statusText.textContent = "Status: Engine Siap. Silakan pilih file audio.";
+            setTimeout(() => {
+                progressContainer.style.display = 'none';
+                progressBar.style.width = '0%';
+            }, 1000);
+        } catch (error) {
+            console.error(error);
+            statusText.textContent = "Status: Gagal memuat engine AI. Pastikan koneksi internet aktif saat pertama membuka.";
+        }
+    }
+
+    const checkHook = setInterval(() => {
+        if (window.pipeline) {
+            clearInterval(checkHook);
+            initModel();
+        }
+    }, 100);
+
+    audioFile.addEventListener('change', function(e) {
+        selectedFile = e.target.files[0];
+        if (selectedFile) {
+            if (selectedFile.size === 0) {
+                statusText.textContent = "Status: Error - File audio kosong atau tidak valid.";
+                clearFileSelection();
+                return;
+            }
+            uploadLabel.textContent = `🎵 Terpilih: ${selectedFile.name}`;
+            statusText.textContent = "Status: File siap diekstrak.";
+            convertBtn.disabled = false;
+            transcriptResult = "";
+            downloadBtn.disabled = true;
+            progressContainer.style.display = 'none';
+            progressBar.style.width = '0%';
+        }
+    });
+
+    function clearFileSelection() {
+        selectedFile = null;
+        audioFile.value = "";
+        uploadLabel.textContent = "📁 Pilih File Audio (MP3, WAV, OGG, M4A, AAC, dll)";
+        convertBtn.disabled = true;
+        downloadBtn.disabled = true;
+    }
+
+    function setStageProgress(stage) {
+        progressBar.style.width = `${stage.pct}%`;
+        statusText.textContent = `Status: ${stage.text}`;
+    }
+
+    // Helper fungsi mengubah file biner ke bentuk ArrayBuffer Audio dan melakukan Stereo-to-Mono Downmix
+    async function readAudioData(file) {
+        let audioCtx = null;
+        let arrayBuffer = null;
+        try {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+            setStageProgress(STAGES.DECODING);
+            
+            arrayBuffer = await file.arrayBuffer();
+            const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+            
+            // Validasi durasi audio maksimal 2 Jam
+            if (audioBuffer.duration > MAX_AUDIO_DURATION_SEC) {
+                throw new Error("Durasi audio melebihi batas maksimal yang diizinkan (2 Jam). Process dihentikan.");
+            }
+
+            setStageProgress(STAGES.DOWNMIX);
+            const numberOfChannels = audioBuffer.numberOfChannels;
+            const length = audioBuffer.length;
+            let monoChannelData = null;
+
+            if (numberOfChannels === 1) {
+                monoChannelData = audioBuffer.getChannelData(0);
+            } else {
+                // Stereo Downmix: Gabungkan channel kiri (0) & kanan (1) secara presisi ke Mono Float32Array
+                monoChannelData = new Float32Array(length);
+                const leftChannel = audioBuffer.getChannelData(0);
+                const rightChannel = audioBuffer.getChannelData(1);
+                for (let i = 0; i < length; i++) {
+                    monoChannelData[i] = (leftChannel[i] + rightChannel[i]) * 0.5;
+                }
+            }
+
+            return {
+                monoData: monoChannelData,
+                ctx: audioCtx
+            };
+        } catch (err) {
+            if (audioCtx && audioCtx.state !== 'closed') {
+                await audioCtx.close();
+            }
+            throw err;
+        }
+    }
+
+    function formatBytes(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    convertBtn.addEventListener('click', async () => {
+        if (!selectedFile || !window.transcriber) return;
+
+        let decodingContext = null;
+        try {
+            convertBtn.disabled = true;
+            progressContainer.style.display = 'block';
+            setStageProgress(STAGES.INIT);
+
+            const startTime = performance.now();
+            
+            // Konversi file suara ke PCM mono data dengan validasi runtime lengkap
+            const audioResult = await readAudioData(selectedFile);
+            decodingContext = audioResult.ctx;
+            const audioData = audioResult.monoData;
+            
+            setStageProgress(STAGES.TRANSCRIPTION_READY);
+
+            // Callback opsional internal untuk Whisper processing stage animation
+            setTimeout(() => {
+                if (convertBtn.disabled && progressBar.style.width === '50%') {
+                    setStageProgress(STAGES.PROCESSING);
+                }
+            }, 400);
+
+            const response = await window.transcriber(audioData, {
+                chunk_length_s: 30,
+                stride_length_s: 5,
+                language: 'indonesian',
+                task: 'transcribe'
+            });
+
+            setStageProgress(STAGES.POST_PROCESSING);
+            transcriptResult = response.text.trim();
+            
+            const endTime = performance.now();
+            const processDurationSec = ((endTime - startTime) / 1000).toFixed(1);
+            
+            // Menghitung ukuran payload string TXT dalam byte untuk statistik display ringkas
+            const txtBlobSize = new Blob([transcriptResult], { type: 'text/plain' }).size;
+
+            setStageProgress(STAGES.COMPLETED);
+            
+            // Tampilkan informasi visual hasil transkripsi tanpa merusak DOM Textarea
+            statusText.innerHTML = `✔ Transkripsi berhasil<br>
+                                    <span style="font-weight:normal; font-size:12px; color:#666;">
+                                    Nama File: ${selectedFile.name}<br>
+                                    Ukuran TXT: ${formatBytes(txtBlobSize)}<br>
+                                    Durasi Proses: ${processDurationSec} detik
+                                    </span>`;
+            
+            convertBtn.disabled = false;
+            downloadBtn.disabled = transcriptResult.length === 0;
+
+        } catch (err) {
+            console.error(err);
+            statusText.textContent = `Status: Gagal - ${err.message || "Format corrupt atau tidak didukung browser."}`;
+            convertBtn.disabled = false;
+            downloadBtn.disabled = true;
+        } finally {
+            // Memory Cleanup Stage: Segera lepas reference pipeline context penampung RAM yang tidak terpakai
+            if (decodingContext) {
+                decodingContext.close().catch(console.error);
+                decodingContext = null;
+            }
+        }
+    });
+
+    downloadBtn.addEventListener('click', () => {
+        if (!transcriptResult) return;
+        const textFileAsBlob = new Blob([transcriptResult], { type: 'text/plain' });
+        
+        const originalName = selectedFile ? selectedFile.name.split('.').slice(0, -1).join('.') : 'Hasil_Konversi';
+        const fileNameToSaveAs = `${originalName}_transkrip.txt`;
+
+        const downloadLink = document.createElement("a");
+        downloadLink.download = fileNameToSaveAs;
+        
+        const blobUrl = window.URL.createObjectURL(textFileAsBlob);
+        downloadLink.href = blobUrl;
+        downloadLink.style.display = "none";
+        document.body.appendChild(downloadLink);
+
+        downloadLink.click();
+        
+        // Lepas alokasi object URL dari memory sesaat setelah trigger download tereksekusi
+        document.body.removeChild(downloadLink);
+        window.URL.revokeObjectURL(blobUrl);
+    });
+</script>
+
+</body>
+</html>
