@@ -219,7 +219,7 @@
 
     <div class="preview-title">Preview Dokumen:</div>
     <div id="pdf-content">
-        <p style="color: #94a3b8; text-align: center; margin-top: 100px;">Hasil copy text Gemini akan dirender di sini beserta struktur tabelnya...</p>
+        <p style="color: #94a3b8; text-align: center; margin-top: 100px;">Hasil copy text akan dirender di sini beserta struktur tabelnya...</p>
     </div>
 </div>
 
@@ -503,7 +503,7 @@
             const docDefinition = generatePdfMakeDefinition(rawClipboardContent);
             
             // Eksekusi pembuatan dan download file PDF menggunakan pdfMake
-            pdfMake.createPdf(docDefinition).download('Gemini_Analysis_Report.pdf');
+            pdfMake.createPdf(docDefinition).download('pdf_files.pdf');
         } catch (error) {
             console.error(error);
             alert('Terjadi kesalahan saat mengekspor menggunakan pdfmake.');
@@ -511,7 +511,7 @@
     });
 
     clearBtn.addEventListener('click', () => {
-        pdfContent.innerHTML = '<p style="color: #94a3b8; text-align: center; margin-top: 100px;">Hasil copy text Gemini akan dirender di sini beserta struktur tabelnya...</p>';
+        pdfContent.innerHTML = '<p style="color: #94a3b8; text-align: center; margin-top: 100px;">Hasil copy text akan dirender di sini beserta struktur tabelnya...</p>';
         rawClipboardContent = "";
         pdfBtn.disabled = true;
     });
