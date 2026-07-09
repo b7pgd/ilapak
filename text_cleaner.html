@@ -141,37 +141,10 @@
             accent-color: var(--accent-color);
         }
 
-        .btn {
-            background-color: var(--accent-color);
-            color: white;
-            border: none;
-            padding: 0.6rem 1.2rem;
-            font-size: 0.85rem;
-            font-weight: 600;
-            border-radius: 6px;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: background-color 0.15s ease;
-        }
-
-        .btn:hover {
-            background-color: var(--accent-hover);
-        }
-
-        .btn-secondary {
-            background-color: transparent;
-            color: var(--text-main);
-            border: 1px solid var(--border-color);
-        }
-
-        .btn-secondary:hover {
-            background-color: #f5f5f5;
-        }
-
         .action-area {
             margin-left: auto;
+            display: flex;
+            gap: 0.5rem;
         }
 
         @media (max-width: 600px) {
@@ -183,6 +156,7 @@
             .action-area {
                 margin-left: 0;
                 width: 100%;
+                flex-direction: column;
             }
             .btn {
                 width: 100%;
@@ -230,6 +204,8 @@
             </label>
         </div>
         <div class="action-area">
+            <button class="btn btn-secondary" id="clearBtn">CLEAR</button>
+            <button class="btn btn-secondary" id="pasteBtn">PASTE</button>
             <button class="btn" id="cleanBtn">CLEAN TEXT</button>
         </div>
     </div>
@@ -242,9 +218,6 @@
                 <span class="counter" id="rawCounter">0 chars</span>
             </div>
             <textarea id="rawInput" placeholder="Paste teks berantakan kamu di sini..."></textarea>
-            <div>
-                <button class="btn btn-secondary" id="clearBtn" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">Clear Input</button>
-            </div>
         </div>
 
         <!-- Output Panel -->
@@ -270,6 +243,7 @@
         const cleanBtn = document.getElementById('cleanBtn');
         const copyBtn = document.getElementById('copyBtn');
         const clearBtn = document.getElementById('clearBtn');
+        const pasteBtn = document.getElementById('pasteBtn');
         const preserveBreaks = document.getElementById('preserveBreaks');
         const strictSingle = document.getElementById('strictSingle');
         const rawCounter = document.getElementById('rawCounter');
@@ -296,6 +270,18 @@
             rawCounter.textContent = '0 chars';
             cleanCounter.textContent = '0 chars';
             rawInput.focus();
+        });
+
+        // Paste Trigger
+        pasteBtn.addEventListener('click', async () => {
+            try {
+                const text = await navigator.clipboard.readText();
+                rawInput.value = text;
+                rawCounter.textContent = `${text.length} chars`;
+                rawInput.focus();
+            } catch (err) {
+                alert('Gagal mengakses clipboard. Pastikan izin browser diberikan.');
+            }
         });
 
         // Copy Trigger
@@ -358,8 +344,28 @@
                 }
                 text = reconstructedText;
             } else {
-                // Preserve line breaks asli (Tiap baris hanya dibersihkan whitespace ujungnya)
-                text = text.split(/\r?\n/).map(line => line.trim()).join('\n');
+                // Preserve line breaks asli dengan optimasi perbaikan baris rusak & pembersihan bintang (*)
+                const lines = text.split(/\r?\n/);
+                let reconstructedText = '';
+
+                for (let i = 0; i < lines.length; i++) {
+                    // Bersihkan karakter bintang (*) dari salinan Gemini/AI di setiap baris
+                    let currentLine = lines[i].replace(/\*/g, '').trim();
+
+                    if (currentLine === '') {
+                        reconstructedText += '\n'; // Pertahankan struktur spasi antar baris yang kosong
+                        continue;
+                    }
+
+                    // Deteksi baris yang aslinya bersambung (kalimat terpotong di tengah jalan):
+                    // Jika baris saat ini tidak diakhiri tanda baca akhir, dan baris berikutnya berisi teks (bukan kosong)
+                    if (i < lines.length - 1 && lines[i+1].replace(/\*/g, '').trim() !== '' && !/[.!?:;\-•]$/.test(currentLine)) {
+                        reconstructedText += currentLine + ' '; // Satukan menjadi 1 baris utuh dengan spasi
+                    } else {
+                        reconstructedText += currentLine + '\n'; // Tetap biarkan beda baris jika aman
+                    }
+                }
+                text = reconstructedText;
             }
 
             // 4. Whitespace Clean Up (Multiple spaces -> single space)
