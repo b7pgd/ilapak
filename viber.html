@@ -121,6 +121,7 @@
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
+            margin-bottom: 10px;
         }
 
 
@@ -128,11 +129,15 @@
             background: #16a34a;
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 12px 20px;
             font-weight: bold;
             border-radius: 6px;
             cursor: pointer;
             transition: background 0.2s;
+            flex: 1;
+            min-width: 200px;
+            text-align: center;
+            font-size: 13px;
         }
 
 
@@ -185,6 +190,7 @@
             body { padding: 10px; }
             .setup-box { flex-direction: column; align-items: flex-start; }
             textarea { min-height: 300px; }
+            button { width: 100%; flex: none; }
         }
     </style>
 </head>
@@ -208,6 +214,10 @@
         <div class="container">
             <div class="file-box">
                 <h3>Daftar File Project (<span id="fileCount">0</span>) [Selected: <span id="selectedCount">0</span>]</h3>
+                <div class="btn-group" style="margin-bottom: 10px;">
+                    <button id="btnSelectAll" onclick="selectAllFiles()" style="background: #475569; min-width: 120px; padding: 6px 12px;" disabled>🗹 SELECT ALL</button>
+                    <button id="btnUnselectAll" onclick="unselectAllFiles()" style="background: #64748b; min-width: 120px; padding: 6px 12px;" disabled>☐ UNSELECT ALL</button>
+                </div>
                 <ul id="fileList">
                     <li style="color: var(--text-muted); cursor: default; background: none;">Silakan pilih folder terlebih dahulu...</li>
                 </ul>
@@ -219,6 +229,7 @@
                     <button id="btnExtract" onclick="extractSkeleton()" disabled>⚡ EXTRACT SKELETON WITH LINE ANCHORS</button>
                     <button id="btnExtractExact" onclick="extractExactFull()" style="background: #ea580c;" disabled>🔥 EXTRACT EXACT FULL CONTENT</button>
                     <button id="btnCopy" onclick="copyToClipboard()" style="background: #4f46e5;">📋 COPY OUTPUT</button>
+                    <button id="btnDownload" onclick="downloadAsTxt()" style="background: #0284c7;">💾 DOWNLOAD .TXT</button>
                 </div>
                 <div class="path-banner" id="pathBanner" style="margin-top: 15px;">Pilih file dari daftar di atas...</div>
                 <textarea id="outputArea" readonly placeholder="Hasil peta jangkar murni hemat token dengan nomor baris otomatis akan muncul di sini..."></textarea>
@@ -245,9 +256,17 @@
 
 
             let counted = 0;
+            
+            // Daftar ekstensi anomali / biner yang wajib diabaikan
+            const blacklistedExtensions = [
+                '.zip', '.exe', '.bin', '.png', '.jpg', '.jpeg', '.gif', 
+                '.ico', '.mp4', '.mp3', '.pdf', '.ttf', '.woff', '.woff2', '.eot'
+            ];
+
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
                 const path = file.webkitRelativePath;
+                const lowerFileName = file.name.toLowerCase();
 
 
                 if (path.includes('/.git/') ||
@@ -259,7 +278,10 @@
                 }
 
 
-                if (file.name.endsWith('.go') || file.name.endsWith('.js') || file.name.endsWith('.php') || file.name.endsWith('.html') || file.name.endsWith('.json') || file.name.endsWith('.env') || file.name.endsWith('.css')) {
+                // Validasi apakah file bukan termasuk anomali biner
+                const isAnomaly = blacklistedExtensions.some(ext => lowerFileName.endsWith(ext));
+
+                if (!isAnomaly) {
                     projectFiles[path] = file;
 
 
@@ -290,6 +312,10 @@
 
             document.getElementById('statusText').innerText = 'Berhasil memuat folder!';
             document.getElementById('fileCount').innerText = counted;
+            
+            const hasFiles = counted > 0;
+            document.getElementById('btnSelectAll').disabled = !hasFiles;
+            document.getElementById('btnUnselectAll').disabled = !hasFiles;
         });
 
 
@@ -320,6 +346,38 @@
             } else {
                 document.getElementById('pathBanner').innerText = 'Pilih file dari daftar di atas...';
             }
+            updateActionButtons();
+        }
+
+        function selectAllFiles() {
+            selectedFileKeys = [];
+            const checkboxes = document.querySelectorAll('#fileList li input[type="checkbox"]');
+            checkboxes.forEach(chk => {
+                chk.checked = true;
+                const path = chk.value;
+                if (!selectedFileKeys.includes(path)) {
+                    selectedFileKeys.push(path);
+                }
+            });
+            const listItems = document.querySelectorAll('#fileList li');
+            listItems.forEach(li => li.classList.add('active'));
+            
+            document.getElementById('selectedCount').innerText = selectedFileKeys.length;
+            document.getElementById('pathBanner').innerText = `Target Aktif: ${selectedFileKeys.length} File terpilih`;
+            updateActionButtons();
+        }
+
+        function unselectAllFiles() {
+            selectedFileKeys = [];
+            const checkboxes = document.querySelectorAll('#fileList li input[type="checkbox"]');
+            checkboxes.forEach(chk => {
+                chk.checked = false;
+            });
+            const listItems = document.querySelectorAll('#fileList li');
+            listItems.forEach(li => li.classList.remove('active'));
+            
+            document.getElementById('selectedCount').innerText = 0;
+            document.getElementById('pathBanner').innerText = 'Pilih file dari daftar di atas...';
             updateActionButtons();
         }
 
@@ -512,7 +570,7 @@
                     }
 
 
-                    // --- FLOW BACKUP (PHP, JSON, ENV, DLL) ---
+                    // --- FLOW BACKUP (PHP, JSON, ENV, PY, XML, UI, DLL) ---
                     else {
                         finalResultArray.push("// Baris 1-" + lines.length);
                         finalResultArray.push(rawCode);
@@ -573,6 +631,22 @@
                 btn.innerText = originalText;
                 btn.style.background = '#4f46e5';
             }, 1500);
+        }
+
+        function downloadAsTxt() {
+            const outputText = document.getElementById("outputArea").value;
+            if (!outputText) {
+                alert("Tidak ada output untuk di-download. Silakan jalankan extract terlebih dahulu.");
+                return;
+            }
+
+            const blob = new Blob([outputText], { type: "text/plain;charset=utf-8" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "viber_engine_output.txt";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
     </script>
 </body>
