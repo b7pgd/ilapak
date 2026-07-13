@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TXT to EPUB Converter & Text Cleaner</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .code-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen antialiased">
+
+    <header class="bg-gradient-to-r from-indigo-700 to-purple-800 text-white shadow-md">
+        <div class="max-w-6xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight">TXT to EPUB Post-Processor Engine</h1>
+                    <p class="text-indigo-200 text-sm mt-1">Rule-Based Cleaning Engine untuk Merapikan Hasil OCR & Eksport ke EPUB Standard</p>
+                </div>
+                <div class="bg-indigo-600/50 border border-indigo-400/30 rounded-lg px-4 py-2 text-xs text-indigo-100 max-w-xs">
+                    💡 Berjalan 100% di browser tanpa server. Sangat ringan untuk dokumen ratusan halaman.
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+        
+        <div class="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-r-xl shadow-xs mb-8">
+            <div class="flex items-start">
+                <div class="flex-shrink-0 text-blue-600 text-xl font-bold">📋</div>
+                <div class="ml-3">
+                    <p class="text-sm font-semibold text-blue-900">Konsep Pipeline Pengolahan Data (Terstruktur):</p>
+                    <p class="text-xs text-blue-700 mt-1 code-font font-medium">RAW OCR ➔ Normalize & Control Chars Removal ➔ Unicode Hyphen Fix ➔ Scoring-Based Chapter Detection ➔ Advanced Header/Footer Filtering ➔ Smart Paragraph Flow ➔ EPUB3 Compliance Packaging</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <div class="lg:col-span-1 space-y-6">
+                <div class="bg-white rounded-xl shadow-xs border border-slate-200 p-5">
+                    <h2 class="text-md font-bold text-slate-900 border-b border-slate-100 pb-3 mb-4 flex items-center gap-2">
+                        <span>📝</span> Metadata Buku
+                    </h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Judul Buku</label>
+                            <input type="text" id="bookTitle" value="Hasil OCR Rapih" class="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50 focus:bg-white transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Penulis / Author</label>
+                            <input type="text" id="bookAuthor" value="Digitalisasi Engine" class="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50 focus:bg-white transition-all">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-xs border border-slate-200 p-5">
+                    <h2 class="text-md font-bold text-slate-900 border-b border-slate-100 pb-3 mb-4 flex items-center gap-2">
+                        <span>🛠️</span> Advanced Text Rules Engine
+                    </h2>
+                    <p class="text-xs text-slate-500 mb-4">Centang rule-based processor yang ingin diaktifkan secara sekuensial:</p>
+                    
+                    <div class="space-y-3.5">
+                        <label class="flex items-start gap-3 cursor-pointer group">
+                            <input type="checkbox" id="ruleHyphen" checked class="mt-1 h-4 w-4 text-indigo-600 border-slate-300 rounded-sm focus:ring-indigo-500">
+                            <div>
+                                <span class="text-sm font-medium text-slate-800 group-hover:text-indigo-600 transition-colors">Gabung Kata Terpotong (Hyphen)</span>
+                                <p class="text-xs text-slate-400 code-font mt-0.5">or- \n ang ➔ orang (Mendukung Multi-dash Unicode & Spasi Tersembunyi)</p>
+                            </div>
+                        </label>
+
+                        <label class="flex items-start gap-3 cursor-pointer group">
+                            <input type="checkbox" id="ruleJoinLines" checked class="mt-1 h-4 w-4 text-indigo-600 border-slate-300 rounded-sm focus:ring-indigo-500">
+                            <div>
+                                <span class="text-sm font-medium text-slate-800 group-hover:text-indigo-600 transition-colors">Gabung Baris Mengalir (Paragraph Flow)</span>
+                                <p class="text-xs text-slate-400 mt-0.5">Menyambung baris kalimat jika baris sebelumnya tidak diakhiri tanda baca akhir <span class="code-font text-slate-500 font-bold">(. ? ! :)</span></p>
+                            </div>
+                        </label>
+
+                        <label class="flex items-start gap-3 cursor-pointer group">
+                            <input type="checkbox" id="ruleRemovePageNumbers" checked class="mt-1 h-4 w-4 text-indigo-600 border-slate-300 rounded-sm focus:ring-indigo-500">
+                            <div>
+                                <span class="text-sm font-medium text-slate-800 group-hover:text-indigo-600 transition-colors">Hapus Header/Footer & No. Halaman</span>
+                                <p class="text-xs text-slate-400 mt-0.5">Mendeteksi baris terisolasi yang hanya berisi angka halaman atau penanda berulang.</p>
+                            </div>
+                        </label>
+
+                        <label class="flex items-start gap-3 cursor-pointer group">
+                            <input type="checkbox" id="ruleCleanWeirdChars" checked class="mt-1 h-4 w-4 text-indigo-600 border-slate-300 rounded-sm focus:ring-indigo-500">
+                            <div>
+                                <span class="text-sm font-medium text-slate-800 group-hover:text-indigo-600 transition-colors">Bersihkan Karakter Aneh (Garbage Scan)</span>
+                                <p class="text-xs text-slate-400 mt-0.5">Menghilangkan artefak visual hasil scan OCR seperti simbol <span class="code-font text-slate-500">| _ ¤ º ~</span> berlebih.</p>
+                            </div>
+                        </label>
+
+                        <label class="flex items-start gap-3 cursor-pointer group">
+                            <input type="checkbox" id="ruleAutoChapter" checked class="mt-1 h-4 w-4 text-indigo-600 border-slate-300 rounded-sm focus:ring-indigo-500">
+                            <div>
+                                <span class="text-sm font-medium text-slate-800 group-hover:text-indigo-600 transition-colors">Deteksi Otomatis BAB Baru</span>
+                                <p class="text-xs text-slate-400 mt-0.5">Mendeteksi teks <span class="code-font text-slate-500">"B A B X"</span>, <span class="code-font text-slate-500">"BAB I"</span> atau spasi berantakan hasil scan.</p>
+                            </div>
+                        </label>
+
+                        <label class="flex items-start gap-3 cursor-pointer group">
+                            <input type="checkbox" id="ruleFixTypos" checked class="mt-1 h-4 w-4 text-indigo-600 border-slate-300 rounded-sm focus:ring-indigo-500">
+                            <div>
+                                <span class="text-sm font-medium text-slate-800 group-hover:text-indigo-600 transition-colors">Smart Typo Correction</span>
+                                <p class="text-xs text-slate-400 mt-0.5">Memperbaiki kesalahan deteksi spasi simbol umum seperti <span class="code-font text-slate-500">" , "</span> menjadi <span class="code-font text-slate-500">", "</span> dan <span class="code-font text-slate-500">" . "</span> menjadi <span class="code-font text-slate-500">". "</span></p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-2 space-y-6">
+                
+                <div class="bg-white rounded-xl shadow-xs border border-slate-200 p-5">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 pb-3 mb-4">
+                        <h2 class="text-md font-bold text-slate-900 flex items-center gap-2">
+                            <span>📥</span> Input Teks Mentah (Hasil OCR)
+                        </h2>
+                        <div class="flex items-center gap-2">
+                            <label for="filePicker" class="text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg cursor-pointer transition-colors border border-slate-300">
+                                📂 Upload .txt
+                            </label>
+                            <input type="file" id="filePicker" accept=".txt" class="hidden">
+                            <button id="btnLoadExample" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
+                                Gunakan Contoh Kasus
+                            </button>
+                        </div>
+                    </div>
+
+                    <textarea id="rawInput" class="w-full h-64 p-3 border border-slate-300 rounded-xl font-mono text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50 focus:bg-white transition-all resize-y" placeholder="Paste atau upload hasil text OCR berantakan di sini..."></textarea>
+                    
+                    <div class="mt-4 flex flex-col sm:flex-row gap-3">
+                        <button id="btnProcess" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer">
+                            <span>⚡</span> Jalankan Engine & Bersihkan Teks
+                        </button>
+                        <button id="btnExport" disabled class="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer">
+                            <span>📦</span> Export Jadi EPUB Resmi
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-xs border border-slate-200 p-5">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                        <h2 class="text-md font-bold text-slate-900 flex items-center gap-2">
+                            <span>👁️</span> Preview Output Hasil Pembersihan
+                        </h2>
+                        <span id="processStatus" class="hidden text-xs bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full font-medium">
+                            Pembersihan Berhasil
+                        </span>
+                    </div>
+
+                    <div class="border border-amber-100 rounded-xl bg-amber-50/40 p-6 min-h-[250px] max-h-[400px] overflow-y-auto shadow-inner">
+                        <div id="outputPreview" class="prose prose-slate max-w-none text-sm leading-relaxed text-slate-800 space-y-4">
+                            <p class="text-slate-400 italic text-center py-12">Belum ada data yang diproses. Masukkan teks di atas lalu klik tombol bersihkan.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="max-w-6xl mx-auto px-4 py-8 text-center text-xs text-slate-400 border-t border-slate-200 mt-12">
+        Mekanisme pembuatan berkas EPUB disusun secara client-side menggunakan standard arsitektur OEBPS. Kompatibel dengan ReadEra, Apple Books, maupun KOReader.
+    </footer>
+
+    <script>
+        const rawInput = document.getElementById('rawInput');
+        const bookTitle = document.getElementById('bookTitle');
+        const bookAuthor = document.getElementById('bookAuthor');
+        const outputPreview = document.getElementById('outputPreview');
+        const btnProcess = document.getElementById('btnProcess');
+        const btnExport = document.getElementById('btnExport');
+        const btnLoadExample = document.getElementById('btnLoadExample');
+        const filePicker = document.getElementById('filePicker');
+        const processStatus = document.getElementById('processStatus');
+
+        let processedChapters = [];
+
+        const exampleText = `B A B 1
+Sikap kita pada or-
+ang lain, sangat menentukan hubungan sosial.
+
+Manusia adalah makhluk sosial yang
+membutuhkan orang lain.
+
+| _ ¤ Beberapa karakter sampah dari hasil scanner buku tua º ~
+
+- 123 -
+
+Seringkali OCR membaca per baris visual , tanpa
+memahami bahwa itu satu paragraf utuh yang mengalir .
+
+BAB II
+METODOLOGI PENELITIAN
+Ini adalah konten dari bab kedua .
+Jarak antar bab harus diatur dengan rapih agar tidak rempet saat dibaca di ReadEra .
+Nomor halaman di bawah ini akan otomatis hilang .
+
+Digitalisasi Buku 124`;
+
+        btnLoadExample.addEventListener('click', () => {
+            rawInput.value = exampleText;
+        });
+
+        filePicker.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                rawInput.value = evt.target.result;
+            };
+            reader.readAsText(file);
+        });
+
+        // Fungsi bantu untuk mengevaluasi kelayakan sebuah baris sebagai elemen judul BAB (Scoring-Based Classifier)
+        function getChapterScore(line) {
+            let score = 0;
+            const cleanLine = line.trim();
+            if (!cleanLine) return 0;
+
+            // 1. Deteksi elemen teks kunci utama
+            if (/^B\s*A\s*B/i.test(cleanLine) || /^CHAPTER/i.test(cleanLine)) score += 35;
+            
+            // 2. Deteksi format huruf kapital penuh
+            if (cleanLine === cleanLine.toUpperCase() && /[A-Z]/.test(cleanLine)) score += 20;
+            
+            // 3. Batasan panjang baris rasional untuk sebuah judul
+            if (cleanLine.length < 80) score += 20;
+            
+            // 4. Deteksi keberadaan angka Romawi murni (tanpa false-positive pada kata umum seperti "METODOLOGI")
+            if (/\b(I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII|XIII|XIV|XV|XVI|XVII|XVIII|XIX|XX)\b/.test(cleanLine) || /^BAB\s+(I|II|III|IV|V|VI|VII|VIII|IX|X|\d+)\b/i.test(cleanLine)) {
+                score += 15;
+            }
+            
+            // 5. Deteksi angka biasa mandiri di dalam teks bab
+            if (/\d+/.test(cleanLine)) score += 10;
+
+            return score;
+        }
+
+        function cleanAndStructureText(text) {
+            // STAGE 2: Normalisasi Unicode Awal & Penghapusan Control Characters Bising bawaan OCR
+            let normalized = text.normalize("NFC");
+            normalized = normalized.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, "");
+
+            if (document.getElementById('ruleHyphen').checked) {
+                // Mendukung multi-dash unicode (-, ‐, –, —) beserta spasi acak sela baris baru hasil scan
+                normalized = normalized.replace(/([A-Za-zÀ-ÿ\w]+)[\-\u2010\u2011\u2012\u2013\u2014]\s*\n\s*([A-Za-zÀ-ÿ\w]+)/gu, "$1$2");
+            }
+
+            let lines = normalized.split(/\r?\n/);
+            let cleanedLines = [];
+
+            // Pra-analisis frekuensi baris berulang untuk mendeteksi Header/Footer statis otomatis
+            let lineFrequency = {};
+            if (document.getElementById('ruleRemovePageNumbers').checked) {
+                lines.forEach(l => {
+                    let trimmed = l.trim();
+                    if (trimmed && trimmed.length > 5 && !/^\d+$/.test(trimmed)) {
+                        lineFrequency[trimmed] = (lineFrequency[trimmed] || 0) + 1;
+                    }
+                });
+            }
+
+            // STAGE 3: Pembersihan elemen baris terisolasi & Pembuangan No. Halaman + Header/Footer
+            for (let i = 0; i < lines.length; i++) {
+                let line = lines[i].trim();
+
+                if (document.getElementById('ruleRemovePageNumbers').checked) {
+                    // Regex presisi untuk nomor halaman murni tanpa salah hapus kalimat yang berakhiran angka
+                    if (/^\D{0,20}\d{1,4}\D{0,20}$/.test(line) || /^(halaman|page)\s*\d+$/i.test(line)) {
+                        continue; 
+                    }
+                    // Menghapus baris statis berulang (Header/Footer terdeteksi otomatis jika muncul > 2 kali dan berukuran pendek)
+                    if (lineFrequency[line] && lineFrequency[line] > 2 && line.length < 50) {
+                        continue;
+                    }
+                }
+
+                if (document.getElementById('ruleCleanWeirdChars').checked) {
+                    line = line.replace(/[|¤º_~•†‡]/g, '');
+                    line = line.replace(/\s+/g, ' ').trim();
+                }
+
+                cleanedLines.push(line);
+            }
+
+            // STAGE 4: Document Classification & Smart Paragraph Flow Reconstruction
+            let flowLines = [];
+            const autoChapterChecked = document.getElementById('ruleAutoChapter').checked;
+
+            for (let i = 0; i < cleanedLines.length; i++) {
+                let current = cleanedLines[i].trim();
+                if (!current) {
+                    flowLines.push(""); 
+                    continue;
+                }
+
+                if (flowLines.length > 0) {
+                    let prev = flowLines[flowLines.length - 1].trim();
+                    
+                    let isCurrentChapter = autoChapterChecked && getChapterScore(current) >= 50;
+                    let isPrevChapter = autoChapterChecked && getChapterScore(prev) >= 50;
+                    
+                    // Aturan Penyambungan Flow Paragraf Pintar:
+                    // Tidak digabung jika baris penutup memiliki akhiran tanda baca akhir (.?!:)
+                    // Tidak digabung jika baris saat ini atau sebelumnya berperingkat tinggi sebagai judul bab (Scoring >= 50)
+                    // Tidak digabung jika baris baru bertindak sebagai Sub-heading kapital pendek mandiri
+                    // Tidak digabung jika baris baru merupakan awal list penomoran (1. , a. , 2) )
+                    if (prev && 
+                        !/[.?!:]\s*$/.test(prev) && 
+                        !isCurrentChapter && 
+                        !isPrevChapter &&
+                        !(current === current.toUpperCase() && current.length < 50) &&
+                        !/^\d+[\.\)]/.test(current) &&
+                        !/^[a-zA-Z][\.\)]\s/.test(current)) {
+                        flowLines[flowLines.length - 1] = prev + " " + current;
+                    } else {
+                        flowLines.push(current);
+                    }
+                } else {
+                    flowLines.push(current);
+                }
+            }
+            let processedText = flowLines.join('\n');
+
+            // Rule 6: Smart Typo Spacing Correction
+            if (document.getElementById('ruleFixTypos').checked) {
+                processedText = processedText.replace(/\s+,\s*/g, ', ');
+                processedText = processedText.replace(/\s+\.\s*/g, '. ');
+                processedText = processedText.replace(/\s+:\s*/g, ': ');
+                processedText = processedText.replace(/\s+;\s*/g, '; ');
+            }
+
+            // STAGE 5: Pemecahan ke Model Struktur Data Chapter
+            let rawParagraphs = processedText.split(/\n+/);
+            let chapters = [];
+            let currentChapter = {
+                title: "Halaman Pembuka",
+                paragraphs: []
+            };
+
+            for (let p of rawParagraphs) {
+                p = p.trim();
+                if (!p) continue;
+
+                if (autoChapterChecked && getChapterScore(p) >= 50) {
+                    if (currentChapter.paragraphs.length > 0 || currentChapter.title !== "Halaman Pembuka") {
+                        // Normalisasi keindahan teks judul Bab (B A B 1 -> BAB 1)
+                        let normalizedTitle = p.replace(/^B\s*A\s*B/i, 'BAB').replace(/\s+/g, ' ');
+                        chapters.push(currentChapter);
+                        currentChapter = {
+                            title: normalizedTitle,
+                            paragraphs: []
+                        };
+                    } else {
+                        currentChapter.title = p.replace(/^B\s*A\s*B/i, 'BAB').replace(/\s+/g, ' ');
+                    }
+                } else {
+                    currentChapter.paragraphs.push(p);
+                }
+            }
+            
+            if (currentChapter.paragraphs.length > 0) {
+                chapters.push(currentChapter);
+            }
+
+            if (chapters.length === 0) {
+                chapters.push({
+                    title: "Isi Buku",
+                    paragraphs: ["Konten kosong atau tidak terbaca."]
+                });
+            }
+
+            return chapters;
+        }
+
+        btnProcess.addEventListener('click', () => {
+            const inputData = rawInput.value.trim();
+            if (!inputData) {
+                alert("Silakan masukkan teks mentah hasil OCR terlebih dahulu!");
+                return;
+            }
+
+            processedChapters = cleanAndStructureText(inputData);
+
+            outputPreview.innerHTML = "";
+            processedChapters.forEach((ch, idx) => {
+                const chDiv = document.createElement('div');
+                chDiv.className = "mb-10 pb-6 border-b border-dashed border-slate-200 last:border-0";
+                
+                const h2 = document.createElement('h2');
+                h2.className = "text-xl font-bold text-indigo-900 mt-4 mb-6 tracking-wide uppercase border-l-4 border-indigo-600 pl-3";
+                h2.innerText = ch.title;
+                chDiv.appendChild(h2);
+
+                ch.paragraphs.forEach(pText => {
+                    const p = document.createElement('p');
+                    p.className = "text-slate-700 leading-relaxed text-justify mb-4 indent-6";
+                    p.innerText = pText;
+                    chDiv.appendChild(p);
+                });
+
+                outputPreview.appendChild(chDiv);
+            });
+
+            processStatus.classList.remove('hidden');
+            btnExport.removeAttribute('disabled');
+            outputPreview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
+
+        btnExport.addEventListener('click', () => {
+            if (processedChapters.length === 0) return;
+
+            const zip = new JSZip();
+            const title = sanitizeMetadata(bookTitle.value.trim() || "Buku Tanpa Judul");
+            const author = sanitizeMetadata(bookAuthor.value.trim() || "Anonim");
+
+            // 1. mimetype: Berada paling atas root utama & tidak dikompresi (STORE)
+            zip.file("mimetype", "application/epub+zip", { compression: "STORE" });
+
+            // 2. META-INF/container.xml
+            const containerXml = `<?xml version="1.0" encoding="UTF-8"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+    <rootfiles>
+        <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
+    </rootfiles>
+</container>`;
+            zip.folder("META-INF").file("container.xml", containerXml);
+
+            // 3. OEBPS/stylesheet.css
+            const stylesheetCss = `body {
+    font-family: sans-serif;
+    line-height: 1.6;
+    padding: 5%;
+    color: #333333;
+}
+h1, h2, h3 {
+    color: #111111;
+    text-align: center;
+    margin-top: 1.8em;
+    margin-bottom: 1.2em;
+    font-weight: bold;
+    page-break-after: avoid;
+}
+p {
+    text-align: justify;
+    text-indent: 1.5em;
+    margin-top: 0;
+    margin-bottom: 0.8em;
+}
+.chapter-container {
+    margin-top: 2em;
+    padding-top: 1em;
+}`;
+            zip.folder("OEBPS").file("stylesheet.css", stylesheetCss);
+
+            let manifestItems = "";
+            let spineItems = "";
+            let tocItems = "";
+            let navListItems = "";
+
+            // 4. XHTML Chapter Generation & Content Safety
+            processedChapters.forEach((ch, idx) => {
+                const filename = `chapter_${idx}.xhtml`;
+                let pTags = ch.paragraphs.map(p => `    <p>${escapeXml(p)}</p>`).join('\n');
+                
+                const xhtmlContent = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="id">
+<head>
+    <title>${escapeXml(ch.title)}</title>
+    <link rel="stylesheet" type="text/css" href="stylesheet.css"/>
+</head>
+<body>
+    <div class="chapter-container">
+        <h2>${escapeXml(ch.title)}</h2>
+        ${pTags}
+    </div>
+</body>
+</html>`;
+
+                zip.folder("OEBPS").file(filename, xhtmlContent);
+
+                manifestItems += `        <item id="ch_${idx}" href="${filename}" media-type="application/xhtml+xml"/>\n`;
+                spineItems += `        <itemref idref="ch_${idx}"/>\n`;
+                tocItems += `        <navPoint id="nav_${idx}" playOrder="${idx + 1}">
+            <navLabel><text>${escapeXml(ch.title)}</text></navLabel>
+            <content src="${filename}"/>
+        </navPoint>\n`;
+                navListItems += `        <li><a href="${filename}">${escapeXml(ch.title)}</a></li>\n`;
+            });
+
+            // 5. OEBPS/nav.xhtml (EPUB3 Mandatory Navigation)
+            const navXhtml = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="id">
+<head>
+    <title>Daftar Isi</title>
+    <link rel="stylesheet" type="text/css" href="stylesheet.css"/>
+</head>
+<body>
+    <nav epub:type="toc" id="toc">
+        <h1>Daftar Isi</h1>
+        <ol>
+${navListItems}
+        </ol>
+    </nav>
+</body>
+</html>`;
+            zip.folder("OEBPS").file("nav.xhtml", navXhtml);
+
+            // 6. OEBPS/toc.ncx (EPUB2 Backward Compatibility)
+            const tocNcx = `<?xml version="1.0" encoding="UTF-8"?>
+<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">
+    <head>
+        <meta name="dtb:uid" content="urn:uuid:b7-analyzer-generated-epub-id"/>
+        <meta name="dtb:depth" content="1"/>
+        <meta name="dtb:totalPageCount" content="0"/>
+        <meta name="dtb:maxPageNumber" content="0"/>
+    </head>
+    <docTitle><text>${escapeXml(title)}</text></docTitle>
+    <navMap>
+${tocItems}
+    </navMap>
+</ncx>`;
+            zip.folder("OEBPS").file("toc.ncx", tocNcx);
+
+            // 7. OEBPS/content.opf (Pembaruan Atribut Prefix & Spine Direction demi Standardisasi Validasi W3C)
+            const currentTime = new Date().toISOString().split('.')[0] + 'Z'; 
+            const contentOpf = `<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" prefix="rendition: http://www.idpf.org/vocab/rendition/#" unique-identifier="BookId" version="3.0">
+    <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+        <dc:title>${escapeXml(title)}</dc:title>
+        <dc:creator>${escapeXml(author)}</dc:creator>
+        <dc:language>id</dc:language>
+        <dc:identifier id="BookId">urn:uuid:b7-analyzer-generated-epub-id</dc:identifier>
+        <dc:date>${currentTime.split('T')[0]}</dc:date>
+        <dc:rights>Copyright © ${new Date().getFullYear()} by ${escapeXml(author)}. All rights reserved.</dc:rights>
+        <meta property="dcterms:modified">${currentTime}</meta>
+        <meta property="rendition:layout">reflowable</meta>
+        <meta property="rendition:orientation">auto</meta>
+    </metadata>
+    <manifest>
+        <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
+        <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>
+        <item id="style" href="stylesheet.css" media-type="text/css"/>
+${manifestItems}
+    </manifest>
+    <spine toc="ncx" page-progression-direction="ltr">
+${spineItems}
+    </spine>
+</package>`;
+            zip.folder("OEBPS").file("content.opf", contentOpf);
+
+            // 8. ZIP Deflate Packaging & Eksport Output MIME Blob Asli
+            zip.generateAsync({ 
+                type: "blob",
+                mimeType: "application/epub+zip",
+                compression: "DEFLATE"
+            }).then(function (content) {
+                const epubBlob = new Blob([content], { type: "application/epub+zip" });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(epubBlob);
+                link.download = `${title.toLowerCase().replace(/\s+/g, '_')}.epub`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            });
+        });
+
+        function sanitizeMetadata(str) {
+            if (!str) return "Unknown";
+            // Membersihkan karakter kontrol aneh di layer kolom metadata sebelum masuk XML packing
+            return str.replace(/[\x00-\x1F\x7F-\x9F]/g, "").trim();
+        }
+
+        function escapeXml(unsafe) {
+            return unsafe.replace(/[<>&'"]/g, function (c) {
+                switch (c) {
+                    case '<': return '&lt;';
+                    case '>': return '&gt;';
+                    case '&': return '&amp;';
+                    case '\'': return '&apos;';
+                    case '"': return '&quot;';
+                }
+            });
+        }
+    </script>
+</body>
+</html>
