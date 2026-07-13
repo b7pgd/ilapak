@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full overflow-hidden">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Format Document Reader Engine</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Lora:ital,wght@0,400;0,500;1,400&family=Merriweather:ital,wght@0,300;0,400;1,300&family=Roboto:wght@300;400;500&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .code-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        /* Definisikan font family alternatif untuk area pembaca */
+        .font-reader-inter { font-family: 'Inter', sans-serif; }
+        .font-reader-merriweather { font-family: 'Merriweather', serif; }
+        .font-reader-lora { font-family: 'Lora', serif; }
+        .font-reader-roboto { font-family: 'Roboto', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 h-full flex flex-col antialiased overflow-hidden">
+
+    <header id="mainHeader" class="bg-slate-800/90 border-b border-slate-700/50 backdrop-blur-md shadow-md flex-shrink-0 z-10 transition-all duration-300">
+        <div class="max-w-4xl mx-auto px-4 py-3 sm:px-6 lg:px-8">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div class="flex items-center gap-3 self-start sm:self-center">
+                    <span class="text-xl">📖</span>
+                    <div>
+                        <h1 class="text-sm font-bold tracking-tight text-white" id="docTitle">DocReader Engine</h1>
+                        <p class="text-[10px] text-slate-400 font-medium code-font" id="docType">Ready to load (.txt, .epub, .pdf)</p>
+                    </div>
+                </div>
+                
+                <div class="w-full sm:w-auto flex flex-wrap items-center justify-start sm:justify-end gap-2.5">
+                    <div class="flex items-center bg-slate-700/60 rounded-lg p-1 border border-slate-600/40 min-h-[40px]">
+                        <button id="btnFontDecrease" class="text-sm font-bold text-slate-300 hover:text-white px-3 py-1.5 hover:bg-slate-600 rounded-md transition-colors min-w-[35px]" title="Kecilkan Teks">A-</button>
+                        <span id="fontSizeDisplay" class="text-xs font-semibold text-slate-300 px-2 min-w-[50px] text-center code-font">100%</span>
+                        <button id="btnFontIncrease" class="text-sm font-bold text-slate-300 hover:text-white px-3 py-1.5 hover:bg-slate-600 rounded-md transition-colors min-w-[35px]" title="Besarkan Teks">A+</button>
+                    </div>
+
+                    <div class="flex items-center bg-slate-700/60 rounded-lg p-1 border border-slate-600/40 min-h-[40px]">
+                        <span class="text-xs px-2 text-slate-400 hidden xs:inline">🔤</span>
+                        <select id="fontPicker" class="bg-transparent text-xs font-medium text-slate-200 outline-none pr-2 cursor-pointer border-none focus:ring-0">
+                            <option value="font-reader-inter" class="bg-slate-800 text-white">Inter (Sans)</option>
+                            <option value="font-reader-merriweather" class="bg-slate-800 text-white">Merriweather (Serif)</option>
+                            <option value="font-reader-lora" class="bg-slate-800 text-white">Lora (Serif)</option>
+                            <option value="font-reader-roboto" class="bg-slate-800 text-white">Roboto (Clean)</option>
+                        </select>
+                    </div>
+
+                    <div class="flex items-center bg-slate-700/60 rounded-lg p-1 border border-slate-600/40 min-h-[40px]">
+                        <span class="text-xs px-2 text-slate-400 hidden xs:inline">🎨</span>
+                        <select id="themePicker" class="bg-transparent text-xs font-medium text-slate-200 outline-none pr-2 cursor-pointer border-none focus:ring-0">
+                            <option value="theme-amber" class="bg-slate-800 text-white">Sepia / Amber</option>
+                            <option value="theme-white" class="bg-slate-800 text-white">Pure White</option>
+                            <option value="theme-blue" class="bg-slate-800 text-white">Soft Blue</option>
+                            <option value="theme-dark" class="bg-slate-800 text-white">Dark Mode</option>
+                        </select>
+                    </div>
+
+                    <button id="btnFullScreen" class="text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-2.5 rounded-lg transition-colors border border-slate-600 shadow-xs flex items-center gap-1.5 min-h-[40px]" title="Toggle Full Screen Mode">
+                        <span id="fsIcon">📺</span> <span id="fsText">Full Screen</span>
+                    </button>
+
+                    <label for="filePicker" class="text-center text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 rounded-lg cursor-pointer transition-colors border border-indigo-500 shadow-xs flex items-center justify-center gap-1.5 min-h-[40px]">
+                        <span>📂</span> Import
+                    </label>
+                    <input type="file" id="filePicker" accept=".txt,.epub,.pdf" class="hidden">
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8 bg-slate-950/40 transition-all duration-300" id="mainContainer">
+        <div class="max-w-3xl mx-auto h-full flex flex-col transition-all duration-300" id="viewportWrapper">
+            
+            <div class="flex-1 bg-amber-50 rounded-2xl p-5 md:p-10 shadow-xl border border-amber-100/20 overflow-y-auto custom-scrollbar transition-colors duration-200" id="outputWrapper">
+                <div id="outputPreview" class="prose prose-slate max-w-none text-base leading-relaxed text-slate-900 space-y-5 transition-all duration-150 font-reader-inter">
+                    <div class="text-center py-24 flex flex-col items-center justify-center gap-3">
+                        <span class="text-4xl opacity-40">📥</span>
+                        <p class="text-slate-400 italic text-sm font-medium tracking-wide">Belum ada dokumen yang dimuat. Silakan klik tombol "Import Dokumen" di atas untuk membaca file TXT, EPUB, atau PDF.</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // Set worker URL untuk engine ekstraksi PDF.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+        const filePicker = document.getElementById('filePicker');
+        const outputPreview = document.getElementById('outputPreview');
+        const outputWrapper = document.getElementById('outputWrapper');
+        const docTitle = document.getElementById('docTitle');
+        const docType = document.getElementById('docType');
+
+        // Font Resizer Variables & Elements
+        const btnFontDecrease = document.getElementById('btnFontDecrease');
+        const btnFontIncrease = document.getElementById('btnFontIncrease');
+        const fontSizeDisplay = document.getElementById('fontSizeDisplay');
+        let currentFontScale = parseInt(localStorage.getItem('readerFontScale')) || 100;
+
+        // Custom Font & Theme Selectors
+        const fontPicker = document.getElementById('fontPicker');
+        const themePicker = document.getElementById('themePicker');
+        let currentFontClass = localStorage.getItem('readerFontClass') || 'font-reader-inter';
+        let currentThemeClass = localStorage.getItem('readerThemeClass') || 'theme-amber';
+
+        // Full Screen UI Elements
+        const btnFullScreen = document.getElementById('btnFullScreen');
+        const mainHeader = document.getElementById('mainHeader');
+        const mainContainer = document.getElementById('mainContainer');
+        const viewportWrapper = document.getElementById('viewportWrapper');
+        const fsIcon = document.getElementById('fsIcon');
+        const fsText = document.getElementById('fsText');
+        let isFullScreenMode = false;
+
+        // Cache Meta Config
+        let currentLoadedFileName = "";
+        let isRestoringScroll = false;
+
+        // INI: IndexedDB Initialization untuk menyimpan file binary berukuran besar (PDF/EPUB) di browser
+        const dbName = "ReaderEngineDB";
+        const storeName = "documentCache";
+
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(dbName, 1);
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(storeName)) {
+                        db.createObjectStore(storeName, { keyPath: "id" });
+                    }
+                };
+                request.onsuccess = (e) => resolve(e.target.result);
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        async function saveFileToCache(file) {
+            try {
+                const db = await openDB();
+                const transaction = db.transaction(storeName, "readwrite");
+                const store = transaction.objectStore(storeName);
+                
+                const data = {
+                    id: "last_session",
+                    name: file.name,
+                    size: file.size,
+                    type: file.type,
+                    blob: file,
+                    timestamp: Date.now()
+                };
+                
+                store.put(data);
+                localStorage.setItem('readerLastFileName', file.name);
+            } catch (err) {
+                console.error("Gagal menyimpan berkas ke local storage cache db:", err);
+            }
+        }
+
+        async function restoreLastSession() {
+            try {
+                const cachedName = localStorage.getItem('readerLastFileName');
+                if (!cachedName) return;
+
+                const db = await openDB();
+                const transaction = db.transaction(storeName, "readonly");
+                const store = transaction.objectStore(storeName);
+                const request = store.get("last_session");
+
+                request.onsuccess = async (e) => {
+                    const record = e.target.result;
+                    if (record && record.name === cachedName) {
+                        currentLoadedFileName = record.name;
+                        docTitle.innerText = record.name;
+                        docType.innerText = `Memulihkan sesi... (${(record.size / 1024 / 1024).toFixed(2)} MB)`;
+                        
+                        const fileObject = new File([record.blob], record.name, { type: record.type });
+                        const extension = record.name.split('.').pop().toLowerCase();
+                        
+                        isRestoringScroll = true;
+
+                        if (extension === 'txt') {
+                            await handleTxtFile(fileObject);
+                        } else if (extension === 'epub') {
+                            await handleEpubFile(fileObject);
+                        } else if (extension === 'pdf') {
+                            await handlePdfFile(fileObject);
+                        }
+                    }
+                };
+            } catch (err) {
+                console.error("Gagal merestore sesi dokumen:", err);
+            }
+        }
+
+        // Jalankan pemulihan cache sesaat setelah DOM terkonstruksi penuh
+        window.addEventListener('DOMContentLoaded', () => {
+            applyFontSize(currentFontScale);
+            applyFontClass(currentFontClass);
+            applyThemeClass(currentThemeClass);
+            restoreLastSession();
+        });
+
+        // Simpan posisi scroll penanda bacaan secara real-time
+        outputWrapper.addEventListener('scroll', () => {
+            if (currentLoadedFileName && !isRestoringScroll) {
+                localStorage.setItem(`scroll_${currentLoadedFileName}`, outputWrapper.scrollTop);
+            }
+        });
+
+        function triggerScrollRestore() {
+            if (currentLoadedFileName) {
+                const savedScroll = localStorage.getItem(`scroll_${currentLoadedFileName}`);
+                if (savedScroll) {
+                    setTimeout(() => {
+                        outputWrapper.scrollTop = parseInt(savedScroll);
+                        isRestoringScroll = false;
+                    }, 120);
+                    return;
+                }
+            }
+            isRestoringScroll = false;
+        }
+
+        // FONT SIZE CONTROLS INTERACTION
+        function applyFontSize(scale) {
+            currentFontScale = Math.max(70, Math.min(240, scale)); 
+            fontSizeDisplay.innerText = `${currentFontScale}%`;
+            outputPreview.style.fontSize = `${currentFontScale / 100}rem`;
+            localStorage.setItem('readerFontScale', currentFontScale);
+        }
+
+        btnFontDecrease.addEventListener('click', () => applyFontSize(currentFontScale - 10));
+        btnFontIncrease.addEventListener('click', () => applyFontSize(currentFontScale + 10));
+
+        // FONT FAMILY MANAGEMENT
+        function applyFontClass(fontClass) {
+            outputPreview.classList.remove('font-reader-inter', 'font-reader-merriweather', 'font-reader-lora', 'font-reader-roboto');
+            outputPreview.classList.add(fontClass);
+            fontPicker.value = fontClass;
+            currentFontClass = fontClass;
+            localStorage.setItem('readerFontClass', fontClass);
+        }
+        fontPicker.addEventListener('change', (e) => applyFontClass(e.target.value));
+
+        // THEME / SCREEN COLOR ENGINE MANAGEMENT
+        function applyThemeClass(theme) {
+            // Reset Class
+            outputWrapper.className = "flex-1 rounded-2xl p-5 md:p-10 shadow-xl border overflow-y-auto custom-scrollbar transition-colors duration-200";
+            
+            if (theme === 'theme-white') {
+                outputWrapper.classList.add('bg-white', 'border-slate-200/60');
+                adjustEmbeddedTextColor('#0f172a', '#1e293b'); // Dark State Slate Text
+            } else if (theme === 'theme-blue') {
+                outputWrapper.classList.add('bg-sky-50', 'border-sky-100/60');
+                adjustEmbeddedTextColor('#0369a1', '#0f172a'); // Blue-Slate Text
+            } else if (theme === 'theme-dark') {
+                outputWrapper.classList.add('bg-slate-900', 'border-slate-800');
+                adjustEmbeddedTextColor('#f1f5f9', '#cbd5e1'); // White Light Slate Text
+            } else { // default amber/sepia
+                outputWrapper.classList.add('bg-amber-50', 'border-amber-100/20');
+                adjustEmbeddedTextColor('#4c1d95', '#1e293b'); // Original Indigo/Slate Text
+            }
+            themePicker.value = theme;
+            currentThemeClass = theme;
+            localStorage.setItem('readerThemeClass', theme);
+        }
+        themePicker.addEventListener('change', (e) => applyThemeClass(e.target.value));
+
+        function adjustEmbeddedTextColor(headerColor, textColor) {
+            // Pipeline dinamis penentu warna kontras teks hasil render/ekstraksi
+            const styleId = "dynamic-text-color-override";
+            let styleTag = document.getElementById(styleId);
+            if (!styleTag) {
+                styleTag = document.createElement('style');
+                styleTag.id = styleId;
+                document.head.appendChild(styleTag);
+            }
+            styleTag.innerHTML = `
+                #outputPreview p { color: ${textColor} !important; }
+                #outputPreview h2 { color: ${headerColor} !important; border-color: ${headerColor} !important; }
+                #outputPreview { color: ${textColor} !important; }
+            `;
+        }
+
+        // FULL SCREEN VIEWPORT & HARDWARE BACK INTERCEPTION LAYER
+        function toggleFullScreenMode(forceState) {
+            isFullScreenMode = forceState !== undefined ? forceState : !isFullScreenMode;
+            
+            if (isFullScreenMode) {
+                mainHeader.classList.add('hidden');
+                mainContainer.classList.remove('py-6', 'px-4', 'sm:px-6', 'lg:px-8');
+                mainContainer.classList.add('p-0');
+                viewportWrapper.classList.remove('max-w-3xl');
+                viewportWrapper.classList.add('max-w-none', 'w-full');
+                outputWrapper.classList.remove('rounded-2xl', 'p-5', 'md:p-10');
+                outputWrapper.classList.add('rounded-none', 'p-4', 'xs:p-6', 'md:p-12');
+                fsIcon.innerText = "📺";
+                fsText.innerText = "Exit Full Screen";
+
+                // Dorong state riwayat palsu ke browser agar tombol back HP bisa digunakan untuk exit fullscreen
+                if (window.history.state !== "fullscreen-active") {
+                    window.history.pushState("fullscreen-active", null, "");
+                }
+            } else {
+                mainHeader.classList.remove('hidden');
+                mainContainer.classList.remove('p-0');
+                mainContainer.classList.add('py-6', 'px-4', 'sm:px-6', 'lg:px-8');
+                viewportWrapper.classList.remove('max-w-none', 'w-full');
+                viewportWrapper.classList.add('max-w-3xl');
+                outputWrapper.classList.remove('rounded-none', 'p-4', 'xs:p-6', 'md:p-12');
+                outputWrapper.classList.add('rounded-2xl', 'p-5', 'md:p-10');
+                applyThemeClass(currentThemeClass); // Redraw border style
+                fsIcon.innerText = "📺";
+                fsText.innerText = "Full Screen";
+            }
+        }
+
+        btnFullScreen.addEventListener('click', () => toggleFullScreenMode());
+
+        // Intersepsi tombol Back HP (Popstate Router Control)
+        window.addEventListener('popstate', (e) => {
+            if (isFullScreenMode) {
+                // Batalkan aksi back halaman asli, melainkan alihkan untuk keluar mode fullscreen
+                toggleFullScreenMode(false);
+            }
+        });
+
+        filePicker.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            currentLoadedFileName = file.name;
+            await saveFileToCache(file);
+
+            docTitle.innerText = file.name;
+            docType.innerText = `Loading... (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+            outputPreview.innerHTML = `<p class="text-slate-400 italic text-center py-24">Sedang mengekstrak dan memproses struktur dokumen...</p>`;
+
+            const extension = file.name.split('.').pop().toLowerCase();
+
+            try {
+                if (extension === 'txt') {
+                    await handleTxtFile(file);
+                } else if (extension === 'epub') {
+                    await handleEpubFile(file);
+                } else if (extension === 'pdf') {
+                    await handlePdfFile(file);
+                } else {
+                    throw new Error("Format berkas tidak didukung!");
+                }
+            } catch (error) {
+                console.error(error);
+                docType.innerText = "Gagal memuat dokumen";
+                outputPreview.innerHTML = `
+                    <div class="text-center text-rose-600 font-medium text-sm py-24">
+                        ⚠️ Gagal memproses berkas: ${error.message}
+                    </div>`;
+            }
+        });
+
+        // 1. ENGINE HANDLER: TXT File Processing
+        function handleTxtFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    const text = evt.target.result;
+                    docType.innerText = "Format: Plain Text (.txt)";
+                    renderStructuredText(text);
+                    resolve();
+                };
+                reader.onerror = () => reject(new Error("Gagal membaca file teks."));
+                reader.readAsText(file);
+            });
+        }
+
+        // 2. ENGINE HANDLER: EPUB Archive Parsing (OEBPS Parsing Layer)
+        async function handleEpubFile(file) {
+            const zip = await JSZip.loadAsync(file);
+            docType.innerText = "Format: Digital Publication (.epub)";
+            
+            const containerXml = await zip.file("META-INF/container.xml").async("text");
+            const parser = new DOMParser();
+            const containerDoc = parser.parseFromString(containerXml, "text/xml");
+            const rootfilePath = containerDoc.querySelector("rootfile").getAttribute("full-path");
+            
+            const opfFolder = rootfilePath.substring(0, rootfilePath.lastIndexOf('/')) || "";
+            const opfXml = await zip.file(rootfilePath).async("text");
+            const opfDoc = parser.parseFromString(opfXml, "text/xml");
+            
+            const itemrefs = opfDoc.querySelectorAll("spine itemref");
+            const items = opfDoc.querySelectorAll("manifest item");
+            
+            let itemMap = {};
+            items.forEach(item => {
+                itemMap[item.getAttribute("id")] = item.getAttribute("href");
+            });
+
+            outputPreview.innerHTML = "";
+            let fullHtmlContent = "";
+
+            for (let ref of itemrefs) {
+                const idref = ref.getAttribute("idref");
+                const href = itemMap[idref];
+                if (!href) continue;
+
+                const fullPath = opfFolder ? `${opfFolder}/${href}` : href;
+                const fileEntry = zip.file(fullPath);
+                if (fileEntry) {
+                    const xhtmlContent = await fileEntry.async("text");
+                    const htmlDoc = parser.parseFromString(xhtmlContent, "text/html");
+                    
+                    const body = htmlDoc.querySelector("body");
+                    if (body) {
+                        fullHtmlContent += `<div class="epub-section mb-10 pb-6 border-b border-dashed border-slate-200/60">${body.innerHTML}</div>`;
+                    }
+                }
+            }
+
+            if (fullHtmlContent.trim() === "") {
+                outputPreview.innerHTML = `<p class="text-slate-400 italic text-center py-24">Dokumen EPUB kosong atau berbasis gambar.</p>`;
+                isRestoringScroll = false;
+            } else {
+                outputPreview.innerHTML = fullHtmlContent;
+                cleanRenderedOutputStyles();
+                triggerScrollRestore();
+            }
+        }
+
+        // 3. ENGINE HANDLER: PDF Extraction via Canvasless Layer Extraction
+        async function handlePdfFile(file) {
+            docType.innerText = "Format: Portable Document Format (.pdf)";
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            
+            let combinedText = "";
+
+            for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                const page = await pdf.getPage(pageNum);
+                const textContent = await page.getTextContent();
+                
+                let lastY = null;
+                let pageText = `\n\n[--- HALAMAN ${pageNum} ---]\n\n`;
+                
+                for (let item of textContent.items) {
+                    if (lastY !== null && Math.abs(item.transform[5] - lastY) > 5) {
+                        pageText += "\n";
+                    }
+                    pageText += item.str + " ";
+                    lastY = item.transform[5];
+                }
+                combinedText += pageText;
+            }
+
+            renderStructuredText(combinedText);
+        }
+
+        // Core Text Classifier & Clean Core Pipeline Rule
+        function getChapterScore(line) {
+            let score = 0;
+            const cleanLine = line.trim();
+            if (!cleanLine) return 0;
+            if (/^B\s*A\s*B/i.test(cleanLine) || /^CHAPTER/i.test(cleanLine)) score += 35;
+            if (cleanLine === cleanLine.toUpperCase() && /[A-Z]/.test(cleanLine)) score += 20;
+            if (cleanLine.length < 80) score += 20;
+            if (/\b(I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII|XIII|XIV|XV|XVI|XVII|XVIII|XIX|XX)\b/.test(cleanLine) || /^BAB\s+(I|II|III|IV|V|VI|VII|VIII|IX|X|\d+)\b/i.test(cleanLine)) {
+                score += 15;
+            }
+            if (/\d+/.test(cleanLine)) score += 10;
+            return score;
+        }
+
+        function renderStructuredText(text) {
+            let normalized = text.normalize("NFC");
+            normalized = normalized.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, "");
+            normalized = normalized.replace(/([A-Za-zÀ-ÿ\w]+)[\-\u2010\u2011\u2012\u2013\u2014]\s*\n\s*([A-Za-zÀ-ÿ\w]+)/gu, "$1$2");
+
+            let lines = normalized.split(/\r?\n/);
+            let cleanedLines = [];
+
+            for (let i = 0; i < lines.length; i++) {
+                let line = lines[i].trim();
+                if (/^\D{0,20}\d{1,4}\D{0,20}$/.test(line) || /^(halaman|page)\s*\d+$/i.test(line)) {
+                    continue; 
+                }
+                line = line.replace(/[|¤º_~•†‡]/g, '').replace(/\s+/g, ' ').trim();
+                cleanedLines.push(line);
+            }
+
+            let flowLines = [];
+            for (let i = 0; i < cleanedLines.length; i++) {
+                let current = cleanedLines[i].trim();
+                if (!current) {
+                    flowLines.push(""); 
+                    continue;
+                }
+                if (flowLines.length > 0) {
+                    let prev = flowLines[flowLines.length - 1].trim();
+                    let isCurrentChapter = getChapterScore(current) >= 50;
+                    let isPrevChapter = getChapterScore(prev) >= 50;
+                    
+                    if (prev && !/[.?!:]\s*$/.test(prev) && !isCurrentChapter && !isPrevChapter && !(current === current.toUpperCase() && current.length < 50) && !/^\d+[\.\)]/.test(current)) {
+                        flowLines[flowLines.length - 1] = prev + " " + current;
+                    } else {
+                        flowLines.push(current);
+                    }
+                } else {
+                    flowLines.push(current);
+                }
+            }
+
+            let processedText = flowLines.join('\n').replace(/\s+,\s*/g, ', ').replace(/\s+\.\s*/g, '. ').replace(/\s+:\s*/g, ': ');
+            let rawParagraphs = processedText.split(/\n+/);
+            
+            outputPreview.innerHTML = "";
+            let currentContainer = document.createElement('div');
+            currentContainer.className = "mb-10 pb-4";
+
+            rawParagraphs.forEach(pText => {
+                pText = pText.trim();
+                if (!pText) return;
+
+                if (getChapterScore(pText) >= 50) {
+                    if (currentContainer.children.length > 0) {
+                        outputPreview.appendChild(currentContainer);
+                        currentContainer = document.createElement('div');
+                        currentContainer.className = "mb-10 pb-4";
+                    }
+                    const h2 = document.createElement('h2');
+                    h2.className = "text-xl font-bold mt-6 mb-5 tracking-wide uppercase border-l-4 pl-3";
+                    h2.innerText = pText.replace(/^B\s*A\s*B/i, 'BAB').replace(/\s+/g, ' ');
+                    currentContainer.appendChild(h2);
+                } else {
+                    const p = document.createElement('p');
+                    p.className = "leading-relaxed text-justify mb-4 indent-6 font-normal tracking-normal";
+                    p.innerText = pText;
+                    currentContainer.appendChild(p);
+                }
+            });
+
+            if (currentContainer.children.length > 0) {
+                outputPreview.appendChild(currentContainer);
+            }
+            
+            triggerScrollRestore();
+        }
+
+        function cleanRenderedOutputStyles() {
+            outputPreview.querySelectorAll('h1, h2, h3, h4').forEach(h => {
+                h.className = "text-xl font-bold mt-6 mb-4 tracking-wide text-center uppercase";
+            });
+            outputPreview.querySelectorAll('p').forEach(p => {
+                p.className = "leading-relaxed text-justify mb-4 indent-6 font-normal";
+            });
+        }
+    </script>
+</body>
+</html>
