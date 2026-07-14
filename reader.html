@@ -293,8 +293,16 @@
 
         // FULL SCREEN VIEWPORT & HARDWARE BACK INTERCEPTION LAYER
         function toggleFullScreenMode(forceState) {
+            // 1. Simpan rasio posisi scroll sebelum transisi layout dilakukan
+            const scrollHeightBefore = outputWrapper.scrollHeight - outputWrapper.clientHeight;
+            const scrollRatio = scrollHeightBefore > 0 ? outputWrapper.scrollTop / scrollHeightBefore : 0;
+
             isFullScreenMode = forceState !== undefined ? forceState : !isFullScreenMode;
             
+            // Kunci perekaman koordinat scroll agar data tidak rusak selama transisi kelas layout
+            const prevRestoring = isRestoringScroll;
+            isRestoringScroll = true;
+
             if (isFullScreenMode) {
                 mainHeader.classList.add('hidden');
                 mainContainer.classList.remove('py-6', 'px-4', 'sm:px-6', 'lg:px-8');
@@ -322,6 +330,13 @@
                 fsIcon.innerText = "📺";
                 fsText.innerText = "Full Screen";
             }
+
+            // 2. Kembalikan posisi scroll sesuai rasio semula setelah layout stabil
+            setTimeout(() => {
+                const scrollHeightAfter = outputWrapper.scrollHeight - outputWrapper.clientHeight;
+                outputWrapper.scrollTop = scrollRatio * scrollHeightAfter;
+                isRestoringScroll = prevRestoring;
+            }, 30);
         }
 
         btnFullScreen.addEventListener('click', () => toggleFullScreenMode());
