@@ -98,8 +98,8 @@ function loadStoredData() {
  * Menghubungkan elemen HTML dengan aksi interaksi logika program.
  */
 function bindEvents() {
-  const generateBtn = document.querySelector('#generate-btn');
-  const recordBtn = document.querySelector('#record-btn');
+  const generateBtn = document.querySelector('#generateBtn');
+  const recordBtn = document.querySelector('#recordBtn');
 
   if (generateBtn) {
     generateBtn.onclick = (e) => {
@@ -234,7 +234,7 @@ function renderChallenge(challenge) {
   }
 
   // Aktifkan kembali tombol rekaman jika sempat dinonaktifkan
-  const recordBtn = document.querySelector('#record-btn');
+  const recordBtn = document.querySelector('#recordBtn');
   if (recordBtn) {
     recordBtn.disabled = false;
   }
@@ -244,7 +244,7 @@ function renderChallenge(challenge) {
  * Mengendalikan siklus rekam suara pengguna (On / Off).
  */
 async function toggleRecord() {
-  const recordBtn = document.querySelector('#record-btn');
+  const recordBtn = document.querySelector('#recordBtn');
   
   if (!state.isRecording) {
     // Mulai perekaman suara
@@ -374,7 +374,7 @@ function saveToHistory(challenge) {
  * Memperbarui komponen daftar riwayat pada tampilan UI.
  */
 function renderHistory() {
-  const historyList = document.querySelector('#history-list');
+  const historyList = document.querySelector('#historyList');
   if (!historyList) return;
 
   historyList.innerHTML = "";

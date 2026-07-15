@@ -17,20 +17,31 @@ const state = {
  */
 export async function loadDatasets() {
   try {
-    // Menggunakan fetch langsung yang aman terhadap cache status 304
-    const [topics, patterns, objectives, twists, difficulty] = await Promise.all([
-      fetch('data/topics.json').then(res => res.json()),
-      fetch('data/patterns.json').then(res => res.json()),
-      fetch('data/objectives.json').then(res => res.json()),
-      fetch('data/twists.json').then(res => res.json()),
-      fetch('data/difficulty.json').then(res => res.json())
-    ]);
+    const files = [
+      "topics.json",
+      "patterns.json",
+      "objectives.json",
+      "twists.json",
+      "difficulty.json"
+    ];
 
-    state.topics = topics;
-    state.patterns = patterns;
-    state.objectives = objectives;
-    state.twists = twists;
-    state.difficulties = difficulty;
+    const dataResult = {};
+
+    for (const file of files) {
+      const res = await fetch(`data/${file}`);
+      const txt = await res.text();
+      const parsedData = JSON.parse(txt);
+      
+      // Simpan sementara hasil parse berdasarkan nama file untuk dimasukkan ke state setelah loop sukses
+      const key = file.replace('.json', '');
+      dataResult[key] = parsedData;
+    }
+
+    state.topics = dataResult["topics"];
+    state.patterns = dataResult["patterns"];
+    state.objectives = dataResult["objectives"];
+    state.twists = dataResult["twists"];
+    state.difficulties = dataResult["difficulty"];
 
   } catch (error) {
     console.error("Gagal memuat dataset untuk generator:", error);
