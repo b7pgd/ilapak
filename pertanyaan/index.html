@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Public Speaking Trainer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <div class="app-container">
+    <header class="app-header">
+      <div class="logo-area">
+        <i data-lucide="mic" class="header-icon"></i>
+        <h1>Public Speaking Trainer</h1>
+      </div>
+      <p class="tagline">Latih kemampuan berbicara impromptu secara offline tanpa batasan</p>
+    </header>
+
+    <div class="grid-layout">
+      <main class="main-content">
+        
+        <section class="card control-panel">
+          <div class="control-group">
+            <label for="difficulty">Tingkat Kesulitan</label>
+            <div class="select-wrapper">
+              <select id="difficulty">
+                <option value="easy">Mudah (Berpikir: 30s | Bicara: 60s)</option>
+                <option value="medium" selected>Sedang (Berpikir: 15s | Bicara: 120s)</option>
+                <option value="hard">Sulit (Berpikir: 5s | Bicara: 180s)</option>
+              </select>
+              <i data-lucide="chevron-down" class="select-arrow"></i>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <label for="category">Kategori Topik</label>
+            <div class="select-wrapper">
+              <select id="category">
+                <option value="all" selected>Semua Kategori (Acak)</option>
+                <option value="Teknologi">Teknologi</option>
+                <option value="Kesehatan">Kesehatan</option>
+                <option value="Pendidikan">Pendidikan</option>
+                <option value="Lingkungan">Lingkungan</option>
+                <option value="Bisnis & Karir">Bisnis & Karir</option>
+              </select>
+              <i data-lucide="chevron-down" class="select-arrow"></i>
+            </div>
+          </div>
+
+          <button id="generateBtn" class="btn btn-primary">
+            <i data-lucide="sparkles"></i>
+            <span>Generate Challenge</span>
+          </button>
+        </section>
+
+        <section class="card challenge-card">
+          <div class="challenge-header">
+            <div class="challenge-meta">
+              <span class="meta-label">Topik Utama</span>
+              <h3 id="topic" class="placeholder-text">Klik tombol generate untuk memulai</h3>
+            </div>
+            <div class="challenge-meta text-right">
+              <span class="meta-label">Tujuan Berbicara</span>
+              <p id="objective" class="placeholder-sub">-</p>
+            </div>
+          </div>
+
+          <hr class="divider">
+
+          <div class="challenge-body">
+            <span class="meta-label">Pertanyaan Tantangan</span>
+            <h2 id="question" class="question-text">Persiapkan dirimu untuk berpikir cepat dan berbicara secara sistematis.</h2>
+            
+            <span class="meta-label">Parameter Aturan</span>
+            <ul id="rules" class="rules-list">
+              <li class="placeholder-sub">Pilih kesulitan dan kategori di atas terlebih dahulu.</li>
+            </ul>
+          </div>
+
+          <div class="challenge-footer">
+            <div class="timer-section">
+              <div class="timer-ring-wrapper">
+                <div id="timer" class="timer-display">00:00</div>
+              </div>
+            </div>
+
+            <button id="recordBtn" class="btn btn-danger" disabled>
+              <i data-lucide="mic"></i>
+              <span>Mulai Rekam</span>
+            </button>
+          </div>
+        </section>
+
+      </main>
+
+      <aside class="sidebar">
+        <section class="card history-card">
+          <div class="sidebar-header">
+            <i data-lucide="history"></i>
+            <h3>Riwayat Sesi (Maks. 20)</h3>
+          </div>
+          <ul id="historyList" class="history-list">
+            <li class="empty-history">Belum ada riwayat latihan.</li>
+          </ul>
+        </section>
+      </aside>
+    </div>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+  <script>
+    // Membaca icon SVG Lucide secara global setelah DOM siap
+    document.addEventListener("DOMContentLoaded", () => {
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
