@@ -1,3 +1,5 @@
+// Target File: /pertanyaan/js/app.js
+// =========================================
 import { loadDatasets, generateChallenge } from './generator.js';
 import { startTimer, stopTimer } from './timer.js';
 
@@ -29,10 +31,13 @@ async function init() {
   try {
     // 1. Muat dataset JSON pendukung generator
     await loadDatasets();
+
     // 2. Inisialisasi penyimpanan database lokal IndexedDB untuk file audio
     await initIndexedDB();
+
     // 3. Muat riwayat dan favorit yang tersimpan dari LocalStorage
     loadStoredData();
+
     // 4. Daftarkan seluruh penanganan event DOM
     bindEvents();
 
@@ -97,7 +102,6 @@ function bindEvents() {
   const recordBtn = document.querySelector('#recordBtn');
 
   if (generateBtn) {
-    // Menggunakan arrow function langsung untuk keandalan binding event
     generateBtn.onclick = (e) => {
       e.preventDefault();
       handleGenerate();
@@ -121,6 +125,7 @@ function handleGenerate() {
 
   const selectedDifficulty = difficultySelect ? difficultySelect.value : 'medium';
   const selectedCategory = categorySelect ? categorySelect.value : 'all';
+
   // Hentikan timer & rekaman yang sedang berjalan jika pengguna langsung generate ulang
   stopTimer();
   if (state.isRecording) {
@@ -129,11 +134,13 @@ function handleGenerate() {
 
   // Bangun tantangan baru melalui generator mekanis
   state.activeChallenge = generateChallenge(selectedDifficulty, selectedCategory);
+
   // Simpan tantangan ke riwayat lokal
   saveToHistory(state.activeChallenge);
 
   // Render konten visual ke layar pengguna
   renderChallenge(state.activeChallenge);
+
   // Mulai fase berpikir pengguna secara otomatis
   startThinkingPhase();
 }
@@ -173,6 +180,7 @@ function startThinkingPhase() {
 function startSpeakingPhase() {
   state.timerMode = "speaking";
   const timerDisplay = document.querySelector('#timer');
+
   if (timerDisplay) {
     timerDisplay.classList.remove('thinking-active');
     timerDisplay.classList.add('speaking-active');
@@ -196,7 +204,7 @@ function startSpeakingPhase() {
         timerDisplay.textContent = "Selesai!";
       }
       playBeep();
-         
+      
       // Matikan rekaman otomatis jika sedang aktif merekam saat waktu habis
       if (state.isRecording) {
         toggleRecord();
@@ -264,7 +272,7 @@ async function toggleRecord() {
  * @returns {boolean} Keberhasilan pemesanan media recording
  */
 async function startAudioCapture() {
-  // Mode simulasi (pajangan): Selalu kembalikan true tanpa meminta akses mikrofon asli
+  // Hanya simulasi: bypass ijin mikrofon dan langsung kembalikan true agar animasi berjalan
   return true;
 }
 
@@ -273,7 +281,7 @@ async function startAudioCapture() {
  * @param {boolean} shouldSave - Menyimpan atau membuang chunk rekaman saat ini.
  */
 async function stopAudioCapture(shouldSave = true) {
-  // Mode simulasi (pajangan): Kembalikan Promise sukses langsung tanpa menyimpan apa pun ke memori/IndexedDB
+  // Hanya simulasi: langsung selesaikan Promise tanpa memproses audio asli atau menyimpannya ke database
   return new Promise((resolve) => {
     resolve();
   });
@@ -300,8 +308,7 @@ async function saveAudioToIndexedDB(recordingData) {
     };
 
     request.onerror = (event) => {
-      console.error("Gagal menyimpan audio:", 
-      event.target.error);
+      console.error("Gagal menyimpan audio:", event.target.error);
       reject(new Error("ERR_INDEXEDDB_FAIL"));
     };
   });
