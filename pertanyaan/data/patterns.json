@@ -1,0 +1,37 @@
+// ================================================================================
+// data/patterns.json
+// ================================================================================
+[
+  {
+    "id": "P001",
+    "text": "Bagaimana perkembangan {topic} akan mengubah cara hidup manusia dalam 10 tahun ke depan?"
+  },
+  {
+    "id": "P002",
+    "text": "Mengapa investasi besar-besaran pada sektor {topic} harus menjadi prioritas utama pemerintah?"
+  },
+  {
+    "id": "P003",
+    "text": "Apakah menurut Anda penerapan {topic} membawa lebih banyak dampak positif atau justru malapetaka bagi generasi muda?"
+  },
+  {
+    "id": "P004",
+    "text": "Bayangkan sebuah dunia di mana {topic} dilarang sepenuhnya. Berikan argumen Anda untuk menentang larangan tersebut!"
+  },
+  {
+    "id": "P005",
+    "text": "Bagaimana kita bisa menyeimbangkan etika kemanusiaan dengan kemajuan pesat di bidang {topic}?"
+  },
+  {
+    "id": "P006",
+    "text": "Sebutkan dan jelaskan tiga kesalahpahaman terbesar yang dimiliki masyarakat awam mengenai {topic}."
+  },
+  {
+    "id": "P007",
+    "text": "Jika Anda harus menjelaskan konsep rumit dari {topic} kepada seorang anak berusia 8 tahun, bagaimana Anda menyampaikannya?"
+  },
+  {
+    "id": "P008",
+    "text": "Mengapa mengabaikan isu terkait {topic} saat ini adalah kesalahan terbesar yang sedang dilakukan oleh masyarakat modern?"
+  }
+]

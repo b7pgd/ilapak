@@ -1,0 +1,37 @@
+// ================================================================================
+// data/twists.json
+// ================================================================================
+[
+  {
+    "id": "T001",
+    "text": "Dilarang menggunakan kata pengisi (filler words) seperti 'eee', 'mmm', atau 'apa ya'."
+  },
+  {
+    "id": "T002",
+    "text": "Selipkan minimal satu analogi atau metafora yang berkaitan dengan makanan atau memasak."
+  },
+  {
+    "id": "T003",
+    "text": "Buka presentasi Anda dengan sebuah pertanyaan retoris yang mengejutkan audiens."
+  },
+  {
+    "id": "T004",
+    "text": "Gunakan teknik kontras: jelaskan skenario terburuk terlebih dahulu sebelum skenario terbaik."
+  },
+  {
+    "id": "T005",
+    "text": "Dilarang menggunakan kata sambung 'dan' serta 'tetapi' di 30 detik pertama."
+  },
+  {
+    "id": "T006",
+    "text": "Sampaikan poin utama Anda seolah-olah Anda sedang menceritakan sebuah dongeng anak-anak."
+  },
+  {
+    "id": "T007",
+    "text": "Akhiri setiap poin penjelasan Anda dengan penekanan intonasi yang tegas dan lambat."
+  },
+  {
+    "id": "T008",
+    "text": "Gunakan gaya bahasa formal yang sangat terstruktur seolah-olah sedang berpidato di sidang PBB."
+  }
+]

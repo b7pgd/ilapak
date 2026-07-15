@@ -1,0 +1,30 @@
+// ================================================================================
+// data/objectives.json
+// ================================================================================
+[
+  {
+    "id": "OBJ001",
+    "name": "Persuasif",
+    "description": "Bujuk audiens agar sepenuhnya setuju dengan sudut pandang Anda dan tergerak untuk mengambil tindakan nyata."
+  },
+  {
+    "id": "OBJ002",
+    "name": "Informatif",
+    "description": "Sampaikan fakta dan data secara jernih, objektif, serta mudah dipahami tanpa berpihak pada opini tertentu."
+  },
+  {
+    "id": "OBJ003",
+    "name": "Inspiratif / Motivasional",
+    "description": "Gugah emosi, harapan, dan semangat audiens dengan menggunakan cerita, metafora, atau pengalaman pribadi."
+  },
+  {
+    "id": "OBJ004",
+    "name": "Eksploratif / Diskursus",
+    "description": "Ulas pro dan kontra dari berbagai sudut pandang secara adil dan ajak audiens untuk berpikir kritis bersama."
+  },
+  {
+    "id": "OBJ005",
+    "name": "Instruktif",
+    "description": "Jelaskan panduan langkah-demi-langkah atau proses teknis secara terstruktur agar audiens dapat menduplikasi metode tersebut."
+  }
+]

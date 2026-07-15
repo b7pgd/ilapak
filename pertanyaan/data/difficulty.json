@@ -1,0 +1,23 @@
+// ================================================================================
+// data/difficulty.json
+// ================================================================================
+{
+  "easy": {
+    "label": "Mudah",
+    "thinkingTime": 60,
+    "speakingTime": 120,
+    "description": "Waktu berpikir lebih panjang dengan durasi berbicara yang santai. Cocok untuk pemula."
+  },
+  "medium": {
+    "label": "Sedang",
+    "thinkingTime": 30,
+    "speakingTime": 180,
+    "description": "Waktu berpikir standar industri. Memaksa otak merumuskan struktur argumen dengan cepat."
+  },
+  "hard": {
+    "label": "Sulit",
+    "thinkingTime": 10,
+    "speakingTime": 300,
+    "description": "Tantangan berbicara spontan (impromptu) tingkat lanjut dengan durasi bicara yang panjang."
+  }
+}
