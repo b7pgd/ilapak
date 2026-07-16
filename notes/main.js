@@ -1,16 +1,60 @@
-@echo off
-:: Menembak path absolut System32 agar Windows dijamin menemukan perintahnya
-set "PATH=%SystemRoot%\System32;%SystemRoot%;%SystemRoot%\System32\Wbem"
+package main
 
-echo [~] Mendaftarkan Printer Zebra Virtual untuk Testing...
-C:\Windows\System32\rundll32.exe printui.dll,PrintUIEntry /if /b "Zebra GT800 (Simulator)" /f %windir%\inf\ntprint.inf /r "LPT1:" /m "Generic / Text Only"
-
-if %errorlevel% equ 0 (
-    echo [OK] BERHASIL! Printer "Zebra GT800 (Simulator)" telah aktif.
-    echo [i] Silakan jalankan Wails Dev / Exe ZDPU lu sekarang.
-) else (
-    echo [!] Masih gagal. Mencoba metode alternatif pendaftaran port...
-    C:\Windows\System32\rundll32.exe printui.dll,PrintUIEntry /if /b "Zebra GT800 (Simulator)" /f %windir%\inf\ntprint.inf /r "FILE:" /m "Generic / Text Only"
+import (
+	"bufio"
+	"fmt"
+	"net"
+	"strings"
 )
 
-pause
+func main() {
+	port := "9100"
+	listener, err := net.Listen("tcp", ":"+port)
+	if err != nil {
+		fmt.Printf("Gagal menjalankan Mock Printer: %v\n", err)
+		return
+	}
+	defer listener.Close()
+
+	fmt.Printf("==================================================\n")
+	fmt.Printf("   ZEBRA PRINTER EMULATOR (PORT %s) RUNNING...\n", port)
+	fmt.Printf("   [100%% Standalone - Di Luar Project Utama]\n")
+	fmt.Printf("==================================================\n")
+	fmt.Printf("Menunggu koneksi dari aplikasi ZDPU lu...\n\n")
+
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			fmt.Printf("Koneksi error: %v\n", err)
+			continue
+		}
+		go handleConnection(conn)
+	}
+}
+
+func handleConnection(conn net.Conn) {
+	defer conn.Close()
+	fmt.Printf("[+] Aplikasi Terhubung dari: %s\n", conn.RemoteAddr().String())
+
+	reader := bufio.NewReader(conn)
+	buffer := make([]byte, 4096)
+
+	for {
+		n, err := reader.Read(buffer)
+		if err != nil {
+			fmt.Printf("[-] Aplikasi Terputus\n\n")
+			return
+		}
+
+		received := string(buffer[:n])
+		fmt.Printf("\n--- DATA ZPL DITERIMA ---\n%s-------------------------\n", received)
+
+		// Otomatis merespons jika aplikasi mengirim perintah cek status (~HS)
+		if strings.Contains(received, "~HS") {
+			// Mengirim balik response status Zebra normal (Paper OK, Ribbon OK, Ready)
+			mockStatus := "\x02030,0,0,0800,000,0,0,0,000,0,0,0\x03\r\n"
+			conn.Write([]byte(mockStatus))
+			fmt.Println("[>] Membalas status printer simulator (~HS) ke aplikasi.")
+		}
+	}
+}
