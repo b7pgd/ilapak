@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spontaneous English Speaking Drill</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-light: #eff6ff;
+            --primary-hover: #1d4ed8;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --danger: #dc2626;
+            --danger-hover: #b91c1c;
+            --warning-light: #fef3c7;
+            --warning-text: #92400e;
+            --success: #16a34a;
+            --success-light: #dcfce7;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f8fafc;
+            color: var(--text-dark);
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px; /* Optimized for mobile layout */
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+
+        header {
+            margin-bottom: 20px;
+            text-align: center;
+            border-bottom: 2px solid var(--primary-light);
+            padding-bottom: 12px;
+        }
+
+        h1 {
+            font-size: 20px;
+            color: var(--primary);
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+
+        .api-badge {
+            display: inline-block;
+            font-size: 11px;
+            background-color: var(--primary-light);
+            color: var(--primary);
+            padding: 4px 10px;
+            border-radius: 20px;
+            margin-top: 6px;
+            font-weight: 600;
+        }
+
+        /* Top Box Wrapper */
+        .generator-box {
+            background-color: var(--primary-light);
+            border: 1px solid rgba(37, 99, 235, 0.15);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .control-group {
+            margin-bottom: 14px;
+        }
+
+        .control-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-dark);
+            background-color: #ffffff;
+            outline: none;
+        }
+
+        .section-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .display-box {
+            width: 100%;
+            min-height: 80px;
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: 700;
+            line-height: 1.5;
+            color: var(--text-dark);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        /* Target Vocabulary Section */
+        .vocab-box {
+            width: 100%;
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 14px;
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .vocab-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px; /* Increased gap for better vertical breathing room */
+            margin-top: 6px;
+        }
+
+        .vocab-item {
+            font-size: 15px;
+            font-weight: 700;
+            color: #0f172a;
+            padding: 8px 12px; /* Increased padding for easy mobile tapping */
+            background-color: #f1f5f9;
+            border-radius: 6px;
+            border-left: 4px solid var(--primary);
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.2s ease;
+        }
+
+        .vocab-item.used {
+            background-color: var(--success-light);
+            border-left-color: var(--success);
+            color: #166534;
+        }
+
+        .vocab-checkbox {
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--border);
+            border-radius: 4px;
+            background-color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            color: transparent;
+            font-weight: 900;
+            transition: all 0.2s ease;
+        }
+
+        .vocab-item.used .vocab-checkbox {
+            background-color: var(--success);
+            border-color: var(--success);
+            color: #ffffff;
+        }
+
+        /* Progress Bar Dashboard */
+        .status-dashboard {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .status-card {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .status-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .status-value {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--text-dark);
+            margin-top: 4px;
+        }
+
+        .status-action {
+            margin-top: 6px;
+            text-align: right;
+        }
+
+        .inline-btn {
+            background: transparent;
+            color: var(--danger);
+            border: 1px solid var(--border);
+            padding: 4px 8px;
+            font-size: 11px;
+            font-weight: 700;
+            border-radius: 4px;
+            width: auto;
+            display: inline-block;
+        }
+
+        .inline-btn:hover {
+            background-color: #fef2f2;
+            color: var(--danger-hover);
+        }
+
+        button.main-btn {
+            width: 100%;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px;
+            font-size: 15px;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        button.main-btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        button.main-btn:disabled {
+            background-color: var(--text-muted);
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Bottom Framework Wrapper Guide */
+        .framework-wrapper {
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            background-color: #ffffff;
+            margin-bottom: 20px;
+        }
+
+        .framework-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .framework-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .framework-item:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .badge {
+            background-color: var(--primary);
+            color: white;
+            font-weight: 800;
+            font-size: 14px;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        
+        .badge.optional {
+            background-color: var(--text-muted);
+        }
+
+        .framework-text {
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .framework-text strong {
+            color: var(--primary);
+            display: block;
+            font-size: 13px;
+            text-transform: uppercase;
+        }
+        
+        .framework-text strong span {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 4px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        
+        .status-wajib {
+            background-color: #dcfce7;
+            color: #15803d;
+        }
+        
+        .status-opsional {
+            background-color: #f1f5f9;
+            color: #475569;
+        }
+
+        .framework-desc {
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--text-dark);
+            margin: 24px 0 12px 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border-bottom: 1px dashed var(--border);
+            padding-bottom: 6px;
+        }
+
+        .strategy-box {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+
+        .strategy-box h4 {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 6px;
+        }
+
+        .strategy-box p {
+            font-size: 12.5px;
+            line-height: 1.5;
+            color: var(--text-dark);
+        }
+
+        .connector-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .connector-card {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        .connector-card div {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .connector-card span {
+            display: block;
+            font-size: 12px;
+            line-height: 1.4;
+            color: var(--text-dark);
+        }
+
+        .alert-box {
+            background-color: #fff7ed;
+            border: 1px solid #ffedd5;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 14px;
+        }
+
+        .alert-tag {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-right: 4px;
+            margin-bottom: 4px;
+        }
+
+        .tag-red { background: #fee2e2; color: #991b1b; }
+        .tag-yellow { background: #fef3c7; color: #92400e; }
+
+        .example-block {
+            background: #f1f5f9;
+            border-left: 4px solid var(--primary);
+            padding: 10px;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 10px;
+            font-size: 12px;
+        }
+
+        .example-title {
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 4px;
+        }
+
+        .example-flow {
+            font-style: italic;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .example-result {
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>English Speaking Drill</h1>
+        <div class="api-badge" id="modelStatus">Detecting API Model...</div>
+    </header>
+
+    <!-- Top Section: Question & Vocabulary Output -->
+    <div class="generator-box">
+        <div class="control-group">
+            <label for="vocabSetSelect">Select Vocabulary Set</label>
+            <select id="vocabSetSelect" onchange="changeSet()">
+                <!-- Generated dynamically via JS (Set 1 to Set 90) -->
+            </select>
+        </div>
+
+        <div class="section-label">Random AI Question</div>
+        <div class="display-box" id="questionDisplay">
+            Click the button below to generate your first spontaneous English speaking drill!
+        </div>
+        
+        <div class="section-label">Target Vocabulary (Use min. 2 words)</div>
+        <div class="vocab-box">
+            <div class="vocab-list" id="vocabDisplay">
+                <span style="color: var(--text-muted); font-size: 13px; font-weight: normal;">No target words active.</span>
+            </div>
+        </div>
+        
+        <!-- UI Dashboard Status: Strike & Vocabulary Tracker -->
+        <div class="status-dashboard">
+            <div class="status-card">
+                <div>
+                    <span class="status-title">Total Strike</span>
+                    <div class="status-value" id="strikeCount">0</div>
+                </div>
+                <div class="status-action">
+                    <button class="inline-btn" onclick="clearStrike()">Clear</button>
+                </div>
+            </div>
+            <div class="status-card">
+                <div>
+                    <span class="status-title">Vocabulary Progress</span>
+                    <div class="status-value" id="vocabProgress">0 / 50</div>
+                </div>
+                <div class="status-action">
+                    <button class="inline-btn" onclick="resetCurrentSet()">Reset</button>
+                </div>
+            </div>
+        </div>
+
+        <button id="generateBtn" class="main-btn" onclick="generateSession()" disabled>
+            <div class="spinner" id="btnSpinner"></div>
+            <span id="btnText">Loading API...</span>
+        </button>
+    </div>
+
+    <!-- Bottom Section: JACK Structural Framework Guide -->
+    <div class="framework-wrapper">
+        <div class="framework-title">JACK Speaking Framework (Spontaneous)</div>
+        
+        <div class="framework-item">
+            <div class="badge">J</div>
+            <div class="framework-text">
+                <strong>Judgment / Position <span class="status-wajib">Mandatory</span></strong>
+                <span class="framework-desc">Core objective: clear delivery of your primary stance, opinion, or answer.</span>
+            </div>
+        </div>
+
+        <div class="framework-item">
+            <div class="badge">A</div>
+            <div class="framework-text">
+                <strong>Argument / Reason <span class="status-wajib">Mandatory *</span></strong>
+                <span class="framework-desc">Logical flow support: explain why you hold this viewpoint (*crucial for opinions).</span>
+            </div>
+        </div>
+
+        <div class="framework-item">
+            <div class="badge optional">C</div>
+            <div class="framework-text">
+                <strong>Concrete Example <span class="status-opsional">Optional</span></strong>
+                <span class="framework-desc">Rhetorical asset: evidence, storytelling, or real-life illustrations if required.</span>
+            </div>
+        </div>
+
+        <div class="framework-item">
+            <div class="badge optional">K</div>
+            <div class="framework-text">
+                <strong>Conclusion / Closing <span class="status-opsional">Optional</span></strong>
+                <span class="framework-desc">Rhetorical closer: final emphasis (summary, recommendation, implication, or expectation).</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- FLOW PRIORITIES & STRATEGY IMPROVEMENT -->
+    <div class="section-title">🔥 Structural Ideation Priorities</div>
+    
+    <div class="strategy-box">
+        <h4>1. Dissect Thoughts (Priority #1)</h4>
+        <p>Avoid blending multiple ideas into long, complex paragraphs. Construct a linear sequence in your mind beforehand: <strong>Idea 1 → Idea 2 → Idea 3 → Conclusion</strong>. Rule: 1 Idea = 1 Sentence!</p>
+    </div>
+
+    <div class="section-title">🔗 English Discourse Connectors (Priority #2)</div>
+    <div class="connector-grid">
+        <div class="connector-card">
+            <div>A. Adding Ideas</div>
+            <span>Furthermore, Besides, In addition, Moreover, What's more</span>
+        </div>
+        <div class="connector-card">
+            <div>B. Reason / Cause</div>
+            <span>Because, Since, As, The reason is..., This occurs because...</span>
+        </div>
+        <div class="connector-card">
+            <div>C. Effect / Result</div>
+            <span>Therefore, Consequently, As a result, Thus, Thereby</span>
+        </div>
+        <div class="connector-card">
+            <div>D. Exemplification</div>
+            <span>For instance, For example, To illustrate, Namely</span>
+        </div>
+        <div class="connector-card">
+            <div>E. Contrast</div>
+            <span>Horizontal, On the other hand, Conversely, In contrast, Nonetheless</span>
+        </div>
+        <div class="connector-card">
+            <div>F. Clarification</div>
+            <span>In other words, That is to say, Meaning, Put simply</span>
+        </div>
+        <div class="connector-card">
+            <div>G. Sequencing</div>
+            <span>Firstly, Secondly, Next, Subsequently, Lastly</span>
+        </div>
+        <div class="connector-card">
+            <div>H. Concluding</div>
+            <span>In conclusion, Ultimately, To sum up, In a nutshell</span>
+        </div>
+    </div>
+
+    <div class="section-title">🚨 Repetitive Filler Alerts</div>
+    <div class="alert-box">
+        <div style="margin-bottom: 6px; font-size: 12px; font-weight: 700; color: #c2410c;">Avoid repeating the same structural transition sequentially (e.g., because → because):</div>
+        <span class="alert-tag tag-red">because ⭐⭐⭐⭐⭐</span>
+        <span class="alert-tag tag-red">so ⭐⭐⭐⭐</span>
+        <span class="alert-tag tag-red">actually ⭐⭐⭐⭐</span>
+        <span class="alert-tag tag-red">more ⭐⭐⭐⭐</span>
+        <span class="alert-tag tag-red">well ⭐⭐⭐</span>
+        <span class="alert-tag tag-yellow">maybe</span>
+        <span class="alert-tag tag-yellow">like</span>
+        <span class="alert-tag tag-yellow">when</span>
+        <span class="alert-tag tag-yellow">thing that</span>
+        <span class="alert-tag tag-yellow">and also</span>
+    </div>
+
+    <div class="section-title">💡 Concrete Application Examples</div>
+    
+    <div class="example-block">
+        <div class="example-title">Example 1: Workplace Efficiency</div>
+        <div class="example-flow">Mental Framework: Office is better (J) → High focus (A1) → Accountable environment (A2) → Conclusion (K)</div>
+        <div class="example-result">"In my opinion, working from the office is far more effective. The primary reason is that a dedicated workspace drastically improves focus. Furthermore, employees tend to feel a higher level of responsibility due to the physical presence of peers and managers. Consequently, I prefer on-site work over working from home."</div>
+    </div>
+
+    <div class="example-block">
+        <div class="example-title">Example 2: Managing Fatigue</div>
+        <div class="example-flow">Mental Framework: Watch anime (J) → Unwinds mind (A1) → Entertainment & insights (A2) → Conclusion (K)</div>
+        <div class="example-result">"Whenever I feel burnt out, I usually choose to watch anime. This happens because engaging visuals instantly relax my mind. In addition, I often gain valuable life lessons and sheer entertainment from the storyline. Put simply, anime is my go-to strategy to eliminate stress."</div>
+    </div>
+</div>
+
+<script>
+    // API Configuration
+    const API_KEY = "AQ.Ab8RN6KjLktGjE_NprUpzZfr0vH3SE4TvhaLT_4oL__sI9EUmA"; 
+    let activeModel = "models/gemini-3.1-flash-lite"; 
+    
+    // Arrays and App States
+    let questionHistory = [];
+    let strikeCount = 0;
+    let selectedSet = 50;
+    let currentSetWords = []; 
+    let exposedWords = []; 
+
+    // Initialize Dropdown and Load Cached Data on Boot
+    window.addEventListener('DOMContentLoaded', async () => {
+        initDropdown();
+        loadStateFromCache();
+        
+        const modelStatus = document.getElementById('modelStatus');
+        const generateBtn = document.getElementById('generateBtn');
+        const btnText = document.getElementById('btnText');
+
+        try {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${API_KEY}`);
+            const data = await response.json();
+
+            if (data.models && data.models.length > 0) {
+                const geminiModel = data.models.find(m => m.name.includes('gemini') && m.supportedGenerationMethods.includes('generateContent'));
+                if (geminiModel && !geminiModel.name.includes('gemini-2.5')) {
+                    activeModel = geminiModel.name;
+                }
+                const shortName = activeModel.replace('models/', '');
+                modelStatus.textContent = `Active Model: ${shortName}`;
+                modelStatus.style.backgroundColor = "var(--success-light)";
+                modelStatus.style.color = "var(--success)";
+                generateBtn.disabled = false;
+                btnText.textContent = "Generate Next Drill";
+            } else {
+                throw new Error("No active models.");
+            }
+        } catch (error) {
+            console.error(error);
+            activeModel = "models/gemini-3.1-flash-lite";
+            modelStatus.textContent = "Active Model: gemini-3.1-flash-lite";
+            modelStatus.style.backgroundColor = "var(--success-light)";
+            modelStatus.style.color = "var(--success)";
+            generateBtn.disabled = false;
+            btnText.textContent = "Generate Next Drill";
+        }
+    });
+
+    // Generate Select Options dynamically (Set 1 to Set 90)
+    function initDropdown() {
+        const select = document.getElementById('vocabSetSelect');
+        select.innerHTML = '';
+        for (let i = 1; i <= 90; i++) {
+            const endWord = i * 50;
+            const startWord = endWord - 49;
+            const option = document.createElement('option');
+            option.value = endWord;
+            option.textContent = `Set ${i} (${startWord}–${endWord})`;
+            select.appendChild(option);
+        }
+    }
+
+    // Cache management: Load State
+    function loadStateFromCache() {
+        strikeCount = parseInt(localStorage.getItem('eng_jack_strike_count')) || 0;
+        document.getElementById('strikeCount').textContent = strikeCount;
+
+        const cachedSet = localStorage.getItem('eng_jack_selected_set');
+        if (cachedSet) {
+            selectedSet = parseInt(cachedSet);
+            document.getElementById('vocabSetSelect').value = selectedSet;
+        } else {
+            selectedSet = parseInt(document.getElementById('vocabSetSelect').value);
+        }
+
+        const cachedExposed = localStorage.getItem('eng_jack_exposed_words');
+        if (cachedExposed) {
+            exposedWords = JSON.parse(cachedExposed);
+        }
+
+        const cachedCurrentSet = localStorage.getItem('eng_jack_current_set_words');
+        if (cachedCurrentSet) {
+            currentSetWords = JSON.parse(cachedCurrentSet);
+        }
+
+        updateVocabProgressUI();
+    }
+
+    // Cache management: Save State
+    function saveStateToCache() {
+        localStorage.setItem('eng_jack_strike_count', strikeCount);
+        localStorage.setItem('eng_jack_selected_set', selectedSet);
+        localStorage.setItem('eng_jack_exposed_words', JSON.stringify(exposedWords));
+        localStorage.setItem('eng_jack_current_set_words', JSON.stringify(currentSetWords));
+    }
+
+    // Action: Change Dropdown Value
+    async function changeSet() {
+        selectedSet = parseInt(document.getElementById('vocabSetSelect').value);
+        exposedWords = [];
+        currentSetWords = [];
+        updateVocabProgressUI();
+        saveStateToCache();
+    }
+
+    // Action: Reset Current Set Progression
+    function resetCurrentSet() {
+        exposedWords = [];
+        updateVocabProgressUI();
+        saveStateToCache();
+        alert("Vocabulary pool reset! All words are back in rotation.");
+    }
+
+    // Action: Reset Strike Count
+    function clearStrike() {
+        strikeCount = 0;
+        document.getElementById('strikeCount').textContent = strikeCount;
+        saveStateToCache();
+    }
+
+    function updateVocabProgressUI() {
+        const count = exposedWords.length;
+        const progressDisplay = document.getElementById('vocabProgress');
+        
+        if (count >= 50) {
+            progressDisplay.innerHTML = `50 / 50 <span style="display:block; font-size:11px; color:var(--success); font-weight:700;">✅ All words completed!</span>`;
+        } else {
+            progressDisplay.textContent = `${count} / 50`;
+        }
+    }
+
+    // Fetch JSON mapping dynamically based on value endpoint
+    async function fetchVocabularyPool() {
+        if (currentSetWords.length === 50) {
+            return currentSetWords;
+        }
+
+        try {
+            const response = await fetch(`words/${selectedSet}.json`);
+            if (!response.ok) {
+                throw new Error(`Failed to load file words/${selectedSet}.json`);
+            }
+            const wordsArray = await response.json();
+            currentSetWords = wordsArray;
+            saveStateToCache();
+            return currentSetWords;
+        } catch (error) {
+            console.error(error);
+            // Fallback mock array if directory configuration structure is missing
+            return Array.from({length: 50}, (_, i) => `word_${selectedSet - 50 + i + 1}`);
+        }
+    }
+
+    // Core Logic Flow Execution
+    async function generateSession() {
+        const questionDisplay = document.getElementById('questionDisplay');
+        const vocabDisplay = document.getElementById('vocabDisplay');
+        const generateBtn = document.getElementById('generateBtn');
+        const btnSpinner = document.getElementById('btnSpinner');
+        const btnText = document.getElementById('btnText');
+
+        // UI Trigger Loading Status
+        generateBtn.disabled = true;
+        btnSpinner.style.display = "block";
+        btnText.textContent = "Processing Content...";
+        questionDisplay.style.color = "var(--text-muted)";
+
+        // 1. Vocabulary Selection Engine (Shuffle without immediate repetitions)
+        const allWords = await fetchVocabularyPool();
+        
+        // Auto Reset pool cycle loop if all 50 items have been extracted
+        if (exposedWords.length >= 50) {
+            exposedWords = [];
+        }
+
+        // Filter out items that have already been displayed in the current loop
+        let availableWords = allWords.filter(w => !exposedWords.includes(w));
+        
+        // Pick 5 random items from the remaining pool
+        let targets = [];
+        const itemsToPick = Math.min(5, availableWords.length);
+        
+        // Shuffle mechanism for picking
+        let tempAvailable = [...availableWords];
+        for (let i = 0; i < itemsToPick; i++) {
+            const randIndex = Math.floor(Math.random() * tempAvailable.length);
+            const selectedWord = tempAvailable.splice(randIndex, 1)[0];
+            targets.push(selectedWord);
+            exposedWords.push(selectedWord);
+        }
+
+        // Render target elements onto view area
+        vocabDisplay.innerHTML = '';
+        targets.forEach(word => {
+            const div = document.createElement('div');
+            div.className = 'vocab-item';
+            
+            // Add word text element
+            const textSpan = document.createElement('span');
+            textSpan.textContent = word;
+            div.appendChild(textSpan);
+            
+            // Add custom check box indicator
+            const checkIcon = document.createElement('div');
+            checkIcon.className = 'vocab-checkbox';
+            checkIcon.textContent = '✓';
+            div.appendChild(checkIcon);
+            
+            // Add toggle visual event listener
+            div.addEventListener('click', () => {
+                div.classList.toggle('used');
+            });
+            
+            vocabDisplay.appendChild(div);
+        });
+
+        updateVocabProgressUI();
+
+        // 2. Query Gemini API for Spontaneous English Question Generation
+        const historyContext = questionHistory.length > 0 
+            ? `DO NOT repeat or ask the following questions under any circumstance: "${questionHistory.join('", "')}".` 
+            : "";
+
+        const promptSystem = `
+        You are an advanced verbal English communication coach. Your task is to output EXACTLY ONE short, engaging question to prompt a spontaneous speaking exercise.
+        
+        Randomly choose one of the following categories to base the question on, matching these probability metrics:
+        - 40% Personal Experience / Routine Category (e.g., "What is your favorite memory from childhood?", "When was the last time you felt truly proud?")
+        - 30% Rapid Preference / Short Choice Category (e.g., "Do you prefer reading physical books or e-books?", "Is it better to stay up late or wake up early?")
+        - 20% General Opinion / Debatable Category (e.g., "Should smartphones be banned in primary schools?", "Does social media harm face-to-face communication?")
+        - 10% Workplace Scenario / Ethical Dilemma Category (e.g., "If your project presentation fails completely, what is your immediate next action?")
+
+        Strict Conditions:
+        1. OUTPUT THE QUESTION TEXT ONLY. No introductory phrases, no prefix numbering, and no surrounding quotation marks.
+        2. The question must challenge the user to build a basic structural outline (Stance/Judgment and Supporting Arguments). Avoid factual closed-ended questions that require pure trivia knowledge (e.g., DO NOT ask "What is the capital of Japan?").
+        3. The language structure should be direct, clean, conversational, and practical for quick cognitive processing.
+        4. ABSOLUTELY FORBIDDEN to create duplicates or highly identical iterations of recently generated entries.
+        ${historyContext}
+        `;
+
+        try {
+            const url = `https://generativelanguage.googleapis.com/v1beta/${activeModel}:generateContent?key=${API_KEY}`;
+            const response = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{
+                            text: promptSystem
+                        }]
+                    }]
+                })
+            });
+
+            const result = await response.json();
+            
+            if (result.candidates && result.candidates[0].content.parts[0].text) {
+                const generatedText = result.candidates[0].content.parts[0].text.trim();
+                
+                // Track question logs history up to last 20 queries to prevent layout bloating
+                questionHistory.push(generatedText);
+                if (questionHistory.length > 20) {
+                    questionHistory.shift();
+                }
+
+                // Update UI Display Elements
+                questionDisplay.textContent = generatedText;
+                questionDisplay.style.color = "var(--text-dark)";
+
+                // Success Increment and Update Cache
+                strikeCount++;
+                document.getElementById('strikeCount').textContent = strikeCount;
+                saveStateToCache();
+            } else {
+                throw new Error("Invalid response schema layout");
+            }
+
+        } catch (error) {
+            console.error(error);
+            questionDisplay.textContent = "Failed to connect to the AI engine. Please verify connectivity and try again.";
+            questionDisplay.style.color = "var(--danger)";
+        } finally {
+            // Restore UI Buttons Control State
+            generateBtn.disabled = false;
+            btnSpinner.style.display = "none";
+            btnText.textContent = "Generate Next Drill";
+        }
+    }
+</script>
+
+</body>
+</html>
