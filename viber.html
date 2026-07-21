@@ -226,13 +226,16 @@
 
             <div class="output-box">
                 <div class="btn-group">
-                    <button id="btnExtract" onclick="extractSkeleton()" disabled>⚡ EXTRACT SKELETON WITH LINE ANCHORS</button>
-                    <button id="btnExtractExact" onclick="extractExactFull()" style="background: #ea580c;" disabled>🔥 EXTRACT EXACT FULL CONTENT</button>
+                    <button id="btnExtract" onclick="extractSkeleton()" disabled>⚓ MODE 1: SKELETON ANCHOR</button>
+                    <button id="btnExtractSemantic" onclick="extractSemanticSkeleton()" style="background: #0284c7;" disabled>🏛️ MODE 2: ARCHITECTURE MAP</button>
+                    <button id="btnExtractExact" onclick="extractExactFull()" style="background: #ea580c;" disabled>🔥 MODE 3: EXACT FULL CONTENT</button>
+                </div>
+                <div class="btn-group" style="margin-top: 5px;">
                     <button id="btnCopy" onclick="copyToClipboard()" style="background: #4f46e5;">📋 COPY OUTPUT</button>
                     <button id="btnDownload" onclick="downloadAsTxt()" style="background: #0284c7;">💾 DOWNLOAD .TXT</button>
                 </div>
                 <div class="path-banner" id="pathBanner" style="margin-top: 15px;">Pilih file dari daftar di atas...</div>
-                <textarea id="outputArea" readonly placeholder="Hasil peta jangkar murni hemat token dengan nomor baris otomatis akan muncul di sini..."></textarea>
+                <textarea id="outputArea" readonly placeholder="Hasil ekstraksi sesuai mode yang dipilih akan muncul di sini..."></textarea>
             </div>
         </div>
     </div>
@@ -384,6 +387,7 @@
         function updateActionButtons() {
             const hasSelection = selectedFileKeys.length > 0;
             document.getElementById('btnExtract').disabled = !hasSelection;
+            document.getElementById('btnExtractSemantic').disabled = !hasSelection;
             document.getElementById('btnExtractExact').disabled = !hasSelection;
         }
 
@@ -580,6 +584,329 @@
                     processedCount++;
                     if (processedCount === selectedFileKeys.length) {
                         document.getElementById('outputArea').value = finalOutputArray.join('\n\n=========================================\n\n');
+                    }
+                };
+                reader.readAsText(file);
+            });
+        }
+
+
+        function extractSemanticSkeleton() {
+            if (selectedFileKeys.length === 0) return;
+
+            let finalOutputArray = [];
+            let processedCount = 0;
+
+            selectedFileKeys.forEach(fileKey => {
+                const file = projectFiles[fileKey];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const rawCode = e.target.result;
+                    const lines = rawCode.split('\n');
+                    let semanticOutput = [];
+
+                    semanticOutput.push("FILE:");
+                    semanticOutput.push(`/${fileKey}`);
+                    semanticOutput.push("");
+
+                    // --- PURPOSES INFERENCE BASED ON PATH & NAME ---
+                    let purpose = "General Module / Utility Component";
+                    let lowerPath = fileKey.toLowerCase();
+                    if (lowerPath.includes('auth') || lowerPath.includes('login')) purpose = "Authentication & User Session Management";
+                    else if (lowerPath.includes('controller')) purpose = "Request Handler & Business Logic Controller";
+                    else if (lowerPath.includes('route') || lowerPath.includes('router')) purpose = "API Routing & Endpoint Mapping";
+                    else if (lowerPath.includes('model') || lowerPath.includes('struct') || lowerPath.includes('entity')) purpose = "Data Schema / State Entity Definition";
+                    else if (lowerPath.includes('service')) purpose = "Core Business Logic & External Integration Service";
+                    else if (lowerPath.includes('util') || lowerPath.includes('helper')) purpose = "Shared Helper Utilities";
+                    else if (file.name.endsWith('.html')) purpose = "UI Template & View Presentation";
+
+                    semanticOutput.push("PURPOSE:");
+                    semanticOutput.push(purpose);
+                    semanticOutput.push("");
+
+                    // --- DEPENDENCY & IMPORTS ---
+                    let dependencies = [];
+                    for (let line of lines) {
+                        let trimmed = line.trim();
+                        if (trimmed.startsWith('import ') || trimmed.includes('require(') || trimmed.includes('<script src=')) {
+                            dependencies.push(trimmed.replace(/;<.*$/, ''));
+                        }
+                    }
+                    semanticOutput.push("DEPENDENCY:");
+                    if (dependencies.length > 0) {
+                        dependencies.slice(0, 10).forEach(d => semanticOutput.push(`- ${d}`));
+                    } else {
+                        semanticOutput.push("- None");
+                    }
+                    semanticOutput.push("");
+
+                    // --- PARSER ENGINE UNTUK JS & HTML ---
+                    if (file.name.endsWith('.js') || file.name.endsWith('.html')) {
+                        let publicApis = [];
+                        let flowSteps = [];
+                        let endpoints = [];
+
+                        // Pass 1: Kumpulkan semua nama fungsi lokal yang didefinisikan di file
+                        let localFunctions = new Set();
+                        for (let i = 0; i < lines.length; i++) {
+                            let trimmed = lines[i].trim();
+                            if (trimmed.startsWith('function ') || (trimmed.includes('const ') && trimmed.includes('=>')) || (trimmed.includes('let ') && trimmed.includes('=>')) || trimmed.startsWith('export function ') || trimmed.startsWith('export const ')) {
+                                let funcName = "";
+                                if (trimmed.includes('function ')) {
+                                    funcName = trimmed.split('(')[0].replace('export ', '').replace('function ', '').trim();
+                                } else {
+                                    funcName = trimmed.split('=')[0].replace('export ', '').replace('const ', '').replace('let ', '').trim();
+                                }
+                                if (funcName) localFunctions.add(funcName);
+                            }
+                        }
+
+                        // Event Triggers & Inline Call Handlers
+                        for (let i = 0; i < lines.length; i++) {
+                            let line = lines[i];
+                            if (line.includes('addEventListener(')) {
+                                let match = line.match(/(?:document\.getElementById\(['"]([^'"]+)['"]\)|document\.querySelector\(['"]([^'"]+)['"]\)|(\$?[a-zA-Z0-9_]+))\s*\.\s*addEventListener\(['"]([^'"]+)['"]\s*,\s*([a-zA-Z0-9_]+)/);
+                                if (match) {
+                                    let target = match[1] ? `#${match[1]}` : (match[2] || match[3] || 'document');
+                                    let event = match[4];
+                                    let fn = match[5];
+                                    flowSteps.push(`[UI Event] ${target} (${event}) -> ${fn}()`);
+                                }
+                            }
+                        }
+
+                        // Pass 2: Function Tracing & Call Graph (Hanya fungsi lokal)
+                        for (let i = 0; i < lines.length; i++) {
+                            let trimmed = lines[i].trim();
+
+                            if (trimmed.startsWith('function ') || (trimmed.includes('const ') && trimmed.includes('=>')) || (trimmed.includes('let ') && trimmed.includes('=>')) || trimmed.startsWith('export function ') || trimmed.startsWith('export const ')) {
+                                let funcName = "";
+                                if (trimmed.includes('function ')) {
+                                    funcName = trimmed.split('(')[0].replace('export ', '').replace('function ', '').trim();
+                                } else {
+                                    funcName = trimmed.split('=')[0].replace('export ', '').replace('const ', '').replace('let ', '').trim();
+                                }
+
+                                if (!funcName) continue;
+                                publicApis.push(funcName);
+
+                                // Scope Isolation ({...})
+                                let braceCount = 0;
+                                let startedBrace = false;
+                                let funcEndIdx = lines.length - 1;
+
+                                for (let j = i; j < lines.length; j++) {
+                                    let openCount = (lines[j].match(/\{/g) || []).length;
+                                    let closeCount = (lines[j].match(/\}/g) || []).length;
+
+                                    if (openCount > 0) startedBrace = true;
+                                    braceCount += openCount - closeCount;
+
+                                    if (startedBrace && braceCount <= 0) {
+                                        funcEndIdx = j;
+                                        break;
+                                    }
+                                }
+
+                                let bodyText = lines.slice(i, funcEndIdx + 1).join('\n');
+
+                                // API Requests / Endpoints
+                                let reqMatch = bodyText.match(/(?:fetch|axios|\$.ajax)\s*\(\s*[`'"]([^`'"]+)[`'"]/);
+                                let methodMatch = bodyText.match(/method\s*:\s*['"]([A-Z]+)['"]/i) || bodyText.match(/(GET|POST|PUT|DELETE|PATCH)/);
+                                if (reqMatch) {
+                                    let ep = `${methodMatch ? methodMatch[1].toUpperCase() : 'GET'} ${reqMatch[1]}`;
+                                    if (!endpoints.includes(ep)) endpoints.push(ep);
+                                }
+
+                                // Function Call Chain (Filter hanya pemanggilan ke fungsi lokal)
+                                let internalCalls = [];
+                                let callMatches = bodyText.matchAll(/([a-zA-Z0-9_]+)\s*\(/g);
+                                for (let cm of callMatches) {
+                                    let fn = cm[1];
+                                    if (fn !== funcName && localFunctions.has(fn)) {
+                                        if (!internalCalls.includes(fn)) internalCalls.push(fn);
+                                    }
+                                }
+
+                                if (internalCalls.length > 0) {
+                                    flowSteps.push(`${funcName}() -> ${internalCalls.join(' -> ')}`);
+                                }
+                            }
+                        }
+
+                        semanticOutput.push("PUBLIC API / EXPORT:");
+                        if (publicApis.length > 0) {
+                            publicApis.forEach(fn => semanticOutput.push(`- ${fn}()`));
+                        } else {
+                            semanticOutput.push("- None (Internal / Anonymous Script)");
+                        }
+                        semanticOutput.push("");
+
+                        semanticOutput.push("FLOW / CALL GRAPH:");
+                        if (flowSteps.length > 0) {
+                            flowSteps.forEach(s => semanticOutput.push(`  ${s}`));
+                        } else {
+                            semanticOutput.push("  Sequential Script Execution");
+                        }
+                        semanticOutput.push("");
+
+                        semanticOutput.push("ENDPOINT:");
+                        if (endpoints.length > 0) {
+                            endpoints.forEach(ep => semanticOutput.push(`- ${ep}`));
+                        } else {
+                            semanticOutput.push("- None");
+                        }
+                        semanticOutput.push("");
+
+                        semanticOutput.push("MODEL / STATE:");
+                        let stateTracker = [];
+                        if (rawCode.includes('localStorage')) stateTracker.push('LocalStorage Persistent State');
+                        if (rawCode.includes('sessionStorage')) stateTracker.push('SessionStorage State');
+                        if (rawCode.includes('.innerHTML') || rawCode.includes('.value')) stateTracker.push('DOM State Mutations');
+                        semanticOutput.push(stateTracker.length > 0 ? stateTracker.map(s => `- ${s}`).join('\n') : "- Stateless");
+
+                    } 
+                    
+                    // --- PARSER ENGINE UNTUK GO (BACKEND ARCHITECTURE MAP) ---
+                    else if (file.name.endsWith('.go')) {
+                        let structs = [];
+                        let publicApis = [];
+                        let flowSteps = [];
+                        let endpoints = [];
+
+                        let currentStruct = null;
+                        let structFields = [];
+
+                        // Pass 1: Kumpulkan semua nama fungsi lokal Go yang didefinisikan di file
+                        let localFunctions = new Set();
+                        for (let i = 0; i < lines.length; i++) {
+                            let line = lines[i].trim();
+                            if (line.startsWith('func ')) {
+                                let funcSignature = line.split('{')[0].replace('func ', '').trim();
+                                let funcNameMatch = funcSignature.match(/([a-zA-Z0-9_]+)\s*\(/);
+                                let funcName = funcNameMatch ? funcNameMatch[1] : "";
+                                if (funcName) localFunctions.add(funcName);
+                            }
+                        }
+
+                        // Pass 2: Struct, Endpoints, dan Call Graph (Hanya fungsi lokal)
+                        for (let i = 0; i < lines.length; i++) {
+                            let line = lines[i].trim();
+
+                            // Struct Models
+                            if (line.startsWith('type ') && line.includes('struct {')) {
+                                currentStruct = line.split(' ')[1];
+                                structFields = [];
+                                continue;
+                            }
+                            if (currentStruct) {
+                                if (line === '}') {
+                                    structs.push(`${currentStruct} { ${structFields.join(', ')} }`);
+                                    currentStruct = null;
+                                } else if (line && !line.startsWith('//')) {
+                                    let parts = line.split(/\s+/);
+                                    if (parts.length >= 1) {
+                                        let jsonTagMatch = line.match(/json:"([^"]+)"/);
+                                        structFields.push(jsonTagMatch ? jsonTagMatch[1] : parts[0]);
+                                    }
+                                }
+                            }
+
+                            // Router / Endpoints detection
+                            if (line.includes('.GET(') || line.includes('.POST(') || line.includes('.PUT(') || line.includes('.DELETE(')) {
+                                let epMatch = line.match(/\.(GET|POST|PUT|DELETE)\s*\(\s*["']([^"']+)["']/);
+                                if (epMatch) {
+                                    endpoints.push(`${epMatch[1]} ${epMatch[2]}`);
+                                }
+                            }
+
+                            // Functions
+                            if (line.startsWith('func ')) {
+                                let funcSignature = line.split('{')[0].replace('func ', '').trim();
+                                let funcNameMatch = funcSignature.match(/([a-zA-Z0-9_]+)\s*\(/);
+                                let funcName = funcNameMatch ? funcNameMatch[1] : "";
+
+                                if (funcName) publicApis.push(funcSignature);
+
+                                // Scope Isolation ({...})
+                                let braceCount = 0;
+                                let startedBrace = false;
+                                let funcEndIdx = lines.length - 1;
+
+                                for (let j = i; j < lines.length; j++) {
+                                    let openCount = (lines[j].match(/\{/g) || []).length;
+                                    let closeCount = (lines[j].match(/\}/g) || []).length;
+
+                                    if (openCount > 0) startedBrace = true;
+                                    braceCount += openCount - closeCount;
+
+                                    if (startedBrace && braceCount <= 0) {
+                                        funcEndIdx = j;
+                                        break;
+                                    }
+                                }
+
+                                let bodyText = lines.slice(i, funcEndIdx + 1).join('\n');
+                                let calls = [];
+                                let callMatches = bodyText.matchAll(/([a-zA-Z0-9_]+)\s*\(/g);
+                                for (let cm of callMatches) {
+                                    let fn = cm[1];
+                                    if (fn !== funcName && localFunctions.has(fn)) {
+                                        if (!calls.includes(fn)) calls.push(fn);
+                                    }
+                                }
+                                if (calls.length > 0) {
+                                    flowSteps.push(`${funcName}() -> ${calls.join(' -> ')}`);
+                                }
+                            }
+                        }
+
+                        semanticOutput.push("PUBLIC API / EXPORT:");
+                        if (publicApis.length > 0) {
+                            publicApis.forEach(fn => semanticOutput.push(`- ${fn}`));
+                        } else {
+                            semanticOutput.push("- None");
+                        }
+                        semanticOutput.push("");
+
+                        semanticOutput.push("FLOW / CALL GRAPH:");
+                        if (flowSteps.length > 0) {
+                            flowSteps.forEach(s => semanticOutput.push(`  ${s}`));
+                        } else {
+                            semanticOutput.push("  Internal Data Handler / Package Executable");
+                        }
+                        semanticOutput.push("");
+
+                        semanticOutput.push("ENDPOINT:");
+                        if (endpoints.length > 0) {
+                            endpoints.forEach(ep => semanticOutput.push(`- ${ep}`));
+                        } else {
+                            semanticOutput.push("- None Route Mapped Directly");
+                        }
+                        semanticOutput.push("");
+
+                        semanticOutput.push("MODEL / STRUCT:");
+                        if (structs.length > 0) {
+                            structs.forEach(st => semanticOutput.push(`- ${st}`));
+                        } else {
+                            semanticOutput.push("- None");
+                        }
+
+                    } else {
+                        semanticOutput.push("PUBLIC API / EXPORT:\n- Static Asset / Config Data\n");
+                        semanticOutput.push("FLOW / CALL GRAPH:\n  Static Asset Loading\n");
+                        semanticOutput.push("ENDPOINT:\n- None\n");
+                        semanticOutput.push("MODEL / STRUCT:\n- None");
+                    }
+
+                    semanticOutput.push("==================================================");
+                    finalOutputArray.push(semanticOutput.join('\n'));
+
+                    processedCount++;
+                    if (processedCount === selectedFileKeys.length) {
+                        document.getElementById('outputArea').value = finalOutputArray.join('\n\n');
                     }
                 };
                 reader.readAsText(file);
