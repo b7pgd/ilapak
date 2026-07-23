@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ Skeleton Map</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-main: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --code-bg: #0f172a;
+            --code-text: #38bdf8;
+        }
+
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-main);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+        }
+
+
+        .app-wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+
+        h2 {
+            color: var(--primary);
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+            margin-top: 0;
+            font-size: 24px;
+        }
+
+
+        .setup-box {
+            background: var(--bg-card);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            border: 1px dashed var(--primary);
+        }
+
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+
+        .file-box {
+            background: var(--bg-card);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+
+        .file-box h3 {
+            margin-top: 0;
+            font-size: 16px;
+            color: var(--text-main);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+        }
+
+
+        .output-box {
+            background: var(--bg-card);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+        }
+
+
+        ul { list-style: none; padding: 0; margin: 0; }
+
+
+        li {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+            font-family: monospace;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+
+        li:hover { background: #f1f5f9; color: var(--primary); }
+        li input[type="checkbox"] { cursor: pointer; transform: scale(1.1); }
+
+
+        .active { background: #dbeafe !important; color: var(--primary) !important; font-weight: bold; }
+
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+
+        button {
+            background: #16a34a;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            flex: 1;
+            min-width: 200px;
+            text-align: center;
+            font-size: 13px;
+        }
+
+
+        button:hover { background: #15803d; }
+        button:disabled { background: var(--text-muted); cursor: not-allowed; }
+
+
+        textarea {
+            flex: 1;
+            background: var(--code-bg);
+            color: var(--code-text);
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 13px;
+            padding: 15px;
+            border: 1px solid var(--code-bg);
+            border-radius: 6px;
+            resize: none;
+            min-height: 400px;
+            margin-top: 10px;
+            line-height: 1.5;
+        }
+
+
+        .path-banner {
+            color: #d97706;
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-family: monospace;
+            font-size: 13px;
+        }
+
+
+        .file-input-btn {
+            background: var(--primary);
+            padding: 10px 15px;
+            color: white;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            display: inline-block;
+            transition: background 0.2s;
+        }
+
+
+        .file-input-btn:hover { background: var(--primary-hover); }
+        input[type="file"] { display: none; }
+
+
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .setup-box { flex-direction: column; align-items: flex-start; }
+            textarea { min-height: 300px; }
+            button { width: 100%; flex: none; }
+        }
+    </style>
+</head>
+<body>
+
+
+    <div class="app-wrapper">
+        <h2>⚡ Skeleton Map</h2>
+
+
+        <div class="setup-box">
+            <div><strong>Step 1: Pilih Folder Project Lo:</strong></div>
+            <label class="file-input-btn">
+                📂 PILIH FOLDER PROJECT
+                <input type="file" id="folderPicker" webkitdirectory directory multiple>
+            </label>
+            <div id="statusText" style="color: var(--text-muted); font-size: 14px;">Belum ada folder yang dipilih</div>
+        </div>
+
+
+        <div class="container">
+            <div class="file-box">
+                <h3>Daftar File Project (<span id="fileCount">0</span>) [Selected: <span id="selectedCount">0</span>]</h3>
+                <div class="btn-group" style="margin-bottom: 10px;">
+                    <button id="btnSelectAll" onclick="selectAllFiles()" style="background: #475569; min-width: 120px; padding: 6px 12px;" disabled>🗹 SELECT ALL</button>
+                    <button id="btnUnselectAll" onclick="unselectAllFiles()" style="background: #64748b; min-width: 120px; padding: 6px 12px;" disabled>☐ UNSELECT ALL</button>
+                </div>
+                <ul id="fileList">
+                    <li style="color: var(--text-muted); cursor: default; background: none;">Silakan pilih folder terlebih dahulu...</li>
+                </ul>
+            </div>
+
+
+            <div class="output-box">
+                <div class="btn-group">
+                    <button id="btnExtract" onclick="extractSkeleton()" disabled>📄 GENERATE LIR MAP</button>
+                </div>
+                <div class="btn-group" style="margin-top: 5px;">
+                    <button id="btnCopy" onclick="copyToClipboard()" style="background: #4f46e5;">📋 COPY OUTPUT</button>
+                    <button id="btnDownload" onclick="downloadAsTxt()" style="background: #0284c7;">💾 DOWNLOAD .TXT</button>
+                </div>
+                <div class="path-banner" id="pathBanner" style="margin-top: 15px;">Pilih file dari daftar di atas...</div>
+                <textarea id="outputArea" readonly placeholder="Hasil ekstraksi Lossless Intermediate Representation (LIR) akan muncul di sini..."></textarea>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        let projectFiles = {};
+        let selectedFileKeys = [];
+
+
+        document.getElementById('folderPicker').addEventListener('change', function(e) {
+            const files = e.target.files;
+            if (files.length === 0) return;
+
+
+            projectFiles = {};
+            selectedFileKeys = [];
+            updateActionButtons();
+            const fileListUI = document.getElementById('fileList');
+            fileListUI.innerHTML = '';
+
+
+            let counted = 0;
+            
+            // Daftar ekstensi anomali / biner yang wajib diabaikan
+            const blacklistedExtensions = [
+                '.zip', '.exe', '.bin', '.png', '.jpg', '.jpeg', '.gif', 
+                '.ico', '.mp4', '.mp3', '.pdf', '.ttf', '.woff', '.woff2', '.eot'
+            ];
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const path = file.webkitRelativePath;
+                const lowerFileName = file.name.toLowerCase();
+
+
+                if (path.includes('/.git/') ||
+                    path.includes('/node_modules/') ||
+                    path.includes('/.idea/') ||
+                    path.includes('/uploads/') ||
+                    path.includes('/assets/')) {
+                    continue;
+                }
+
+
+                // Validasi apakah file bukan termasuk anomali biner
+                const isAnomaly = blacklistedExtensions.some(ext => lowerFileName.endsWith(ext));
+
+                if (!isAnomaly) {
+                    projectFiles[path] = file;
+
+
+                    const li = document.createElement('li');
+                    
+                    const chk = document.createElement('input');
+                    chk.type = 'checkbox';
+                    chk.value = path;
+                    chk.onclick = function(e) { e.stopPropagation(); toggleFileSelect(this.checked, path); };
+
+                    const label = document.createElement('span');
+                    label.textContent = path;
+
+                    li.appendChild(chk);
+                    li.appendChild(label);
+                    li.title = path;
+                    li.onclick = function() { 
+                        const checkbox = this.querySelector('input[type="checkbox"]');
+                        checkbox.checked = !checkbox.checked;
+                        toggleFileSelect(checkbox.checked, path);
+                    };
+
+                    fileListUI.appendChild(li);
+                    counted++;
+                }
+            }
+
+
+            document.getElementById('statusText').innerText = 'Berhasil memuat folder!';
+            document.getElementById('fileCount').innerText = counted;
+            
+            const hasFiles = counted > 0;
+            document.getElementById('btnSelectAll').disabled = !hasFiles;
+            document.getElementById('btnUnselectAll').disabled = !hasFiles;
+        });
+
+
+        function toggleFileSelect(isChecked, fileKey) {
+            const listItems = document.querySelectorAll('#fileList li');
+            let targetLi = null;
+            for (let li of listItems) {
+                if (li.title === fileKey) {
+                    targetLi = li;
+                    break;
+                }
+            }
+
+            if (isChecked) {
+                if (!selectedFileKeys.includes(fileKey)) {
+                    selectedFileKeys.push(fileKey);
+                }
+                if (targetLi) targetLi.classList.add('active');
+            } else {
+                selectedFileKeys = selectedFileKeys.filter(k => k !== fileKey);
+                if (targetLi) targetLi.classList.remove('active');
+            }
+
+            document.getElementById('selectedCount').innerText = selectedFileKeys.length;
+
+            if (selectedFileKeys.length > 0) {
+                document.getElementById('pathBanner').innerText = `Target Aktif: ${selectedFileKeys.length} File terpilih`;
+            } else {
+                document.getElementById('pathBanner').innerText = 'Pilih file dari daftar di atas...';
+            }
+            updateActionButtons();
+        }
+
+        function selectAllFiles() {
+            selectedFileKeys = [];
+            const checkboxes = document.querySelectorAll('#fileList li input[type="checkbox"]');
+            checkboxes.forEach(chk => {
+                chk.checked = true;
+                const path = chk.value;
+                if (!selectedFileKeys.includes(path)) {
+                    selectedFileKeys.push(path);
+                }
+            });
+            const listItems = document.querySelectorAll('#fileList li');
+            listItems.forEach(li => li.classList.add('active'));
+            
+            document.getElementById('selectedCount').innerText = selectedFileKeys.length;
+            document.getElementById('pathBanner').innerText = `Target Aktif: ${selectedFileKeys.length} File terpilih`;
+            updateActionButtons();
+        }
+
+        function unselectAllFiles() {
+            selectedFileKeys = [];
+            const checkboxes = document.querySelectorAll('#fileList li input[type="checkbox"]');
+            checkboxes.forEach(chk => {
+                chk.checked = false;
+            });
+            const listItems = document.querySelectorAll('#fileList li');
+            listItems.forEach(li => li.classList.remove('active'));
+            
+            document.getElementById('selectedCount').innerText = 0;
+            document.getElementById('pathBanner').innerText = 'Pilih file dari daftar di atas...';
+            updateActionButtons();
+        }
+
+        function updateActionButtons() {
+            const hasSelection = selectedFileKeys.length > 0;
+            document.getElementById('btnExtract').disabled = !hasSelection;
+        }
+
+
+        function generateLIRMap(fileName) {
+            let route = '/dashboard';
+            let targetFile = 'app/dashboard/page.tsx';
+
+            if (fileName.includes('create_label') || fileName.includes('create')) {
+                route = 'GET /label/create';
+                targetFile = 'app/label/create/page.tsx';
+            } else if (fileName.includes('admin_users') || fileName.includes('users')) {
+                route = 'GET /admin/users';
+                targetFile = 'app/admin/users/page.tsx';
+            } else if (fileName.includes('audit')) {
+                route = 'GET /admin/audit';
+                targetFile = 'app/admin/audit/page.tsx';
+            } else {
+                const cleanName = fileName.replace('.html', '').replace('.tmpl', '').replace('.gohtml', '');
+                route = `GET /${cleanName}`;
+                targetFile = `app/${cleanName}/page.tsx`;
+            }
+
+            return `# LOSSLESS INTERMEDIATE REPRESENTATION (LIR)
+**Target:** 1:1 Transpilation (Go Template HTML \\rightarrow Next.js / TSX)
+**Source File:** ${fileName}
+**Original Route:** ${route}
+**Target File:** ${targetFile}
+
+## 1. DATA SOURCE & SCHEMA MAPPING
+ * **Context Scope:**
+   * UserRole: string
+   * UserName: string
+   * Now: time.Time (Unix timestamp support)
+   * Labels: Array<LabelItem>
+ * **Row Model (LabelItem / $val):**
+   * ID: string | number
+   * KategoriName: string
+   * KategoriType: string
+   * JenisKode: string
+   * IsiKode: string
+   * IdentitasProdukType: string
+   * IdentitasProdukVal: string
+   * JenisPekerjaan: string
+   * IsKotor: string ("iya" | "tidak")
+   * TipePembersihan: string
+   * TglPelaksanaan: time.Time (Format: "02/01/06")
+   * CreatedAt: time.Time (Format: "15:04")
+   * TglEDKembali: time.Time (Format: "02/01/06")
+   * TglEDMasaPakai: time.Time (Format: "02/01/06")
+   * ParafPetugas: string
+   * ParafPemeriksa: string
+
+## 2. METADATA & DEPENDENCIES
+ * **Page Title:** B7 - Label Dashboard
+ * **Icons (FontAwesome 5 free):** fas fa-home, fas fa-plus-circle, fas fa-cogs, fas fa-history, fas fa-database, fas fa-users-cog, fas fa-sign-out-alt, fas fa-user-circle, fas fa-search, fas fa-print, fas fa-qrcode
+ * **API Endpoints:**
+   * GET /api/audit-time/\${id} \\rightarrow Response: { time: string }
+   * GET /admin/print-batch?ids=\${encodeURIComponent(ids)}
+
+## 3. EXACT STYLES (LOSSLESS CSS)
+### CSS Variables (:root)
+\`\`\`css
+:root {
+  --primary: #0056b3;
+  --danger: #e33e44;
+  --success: #bad34a;
+  --bg: #f4f7f6;
+}
+\`\`\`
+
+### Base & Utility Rules
+\`\`\`css
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; background: var(--bg); }
+b { color: #000; font-size: 13.5px; }
+small { font-size: 10.5px; color: #555; display: block; margin-top: 1px; }
+\`\`\`
+
+### Layout Rules
+\`\`\`css
+.sidebar { width: 250px; height: 100vh; background: #2c3e50; color: white; position: fixed; z-index: 100; display: flex; flex-direction: column; }
+.sidebar-header { padding: 20px; text-align: center; border-bottom: 1px solid #34495e; }
+.sidebar-menu { flex-grow: 1; }
+.menu-item { padding: 15px 25px; cursor: pointer; display: flex; align-items: center; transition: 0.3s; color: #bdc3c7; text-decoration: none; }
+.menu-item:hover, .menu-item.active { background: #34495e; color: white; }
+.menu-item i { margin-right: 10px; }
+
+.user-info-box { padding: 15px 20px; background: #1a252f; border-top: 1px solid #34495e; display: flex; align-items: center; gap: 12px; }
+.user-avatar { width: 35px; height: 35px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: white; }
+.user-details { display: flex; flex-direction: column; overflow: hidden; }
+.user-name { font-size: 13px; font-weight: 600; color: #ecf0f1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.user-role { font-size: 11px; color: #95a5a6; text-transform: uppercase; letter-spacing: 0.5px; }
+
+.main-content { margin-left: 250px; padding: 15px; width: calc(100% - 250px); box-sizing: border-box; min-height: 100vh; }
+.header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px; }
+.header-top h2 { font-size: 24px; margin: 0; }
+.actions-group { display: flex; align-items: center; gap: 10px; }
+\`\`\`
+
+### Component Rules
+\`\`\`css
+.search-wrapper { position: relative; }
+.search-wrapper input { padding: 10px 15px 10px 38px; width: 220px; height: 40px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; box-sizing: border-box; transition: border-color 0.2s; }
+.search-wrapper input:focus { border-color: var(--primary); outline: none; }
+.search-wrapper i { position: absolute; left: 14px; top: 13px; color: #94a3b8; font-size: 14px; }
+
+.btn-create { background: var(--primary); color: white; padding: 0 15px; height: 40px; line-height: 40px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px; border:none; cursor:pointer; display: inline-block; box-sizing: border-box; }
+.btn-print-mode { background: #2c3e50; color: white; padding: 0 15px; height: 40px; border-radius: 8px; font-weight: bold; font-size: 14px; border:none; cursor:pointer; box-sizing: border-box; }
+.btn-cancel { background: #95a5a6; color: white; padding: 0 15px; height: 40px; border-radius: 8px; font-weight: bold; font-size: 14px; border:none; cursor:pointer; display:none; box-sizing: border-box; }
+.btn-execute { background: #27ae60; color: white; padding: 0 15px; height: 40px; border-radius: 8px; font-weight: bold; font-size: 14px; border:none; cursor:pointer; display:none; box-sizing: border-box; }
+
+.table-container { background: white; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); overflow-x: auto; width: 100%; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; min-width: 1050px; }
+th { background: #f8f9fa; padding: 8px 10px; text-align: left; border-bottom: 2px solid #dee2e6; color: #222; white-space: nowrap; font-size: 11.5px; text-transform: uppercase; }
+td { padding: 8px 10px; border-bottom: 1px solid #eee; vertical-align: middle; line-height: 1.2; white-space: normal; word-wrap: break-word; }
+tr:hover { background: #fcfcfc; }
+.col-center { text-align: center; }
+.status-red { background-color: #fff5f5; color: var(--danger); font-weight: bold; border-left: 4px solid var(--danger); }
+.badge { padding: 2px 6px; border-radius: 4px; font-size: 10.5px; background: #eee; font-weight: 700; color: #444; }
+.badge-kotor { background: var(--danger); color: white; }
+.btn-preview { background: #f0f0f0; color: #333; padding: 4px 10px; border-radius: 4px; text-decoration: none; border: 1px solid #ccc; font-size: 11px; display: inline-block; font-weight: 600; }
+.btn-barcode { background: #2c3e50; color: white !important; padding: 5px 8px; border-radius: 6px; text-decoration: none; font-size: 10.5px; font-weight: bold; display: inline-block; }
+.rowCheck { display: none; width: 17px; height: 17px; cursor: pointer; }
+\`\`\`
+
+### Media Queries
+\`\`\`css
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .main-content { margin-left: 0; width: 100%; }
+  .header-top { flex-direction: column; align-items: flex-start; }
+  .actions-group { width: 100%; flex-wrap: wrap; }
+  .search-wrapper { width: 100%; }
+  .search-wrapper input { width: 100%; box-sizing: border-box; }
+}
+\`\`\`
+
+## 4. DOM TREE & EXPRESSION ENGINE (WITH SOURCE LINE MAP)
+\`\`\`text
+ELEMENT: body [LINE 1-280]
+  │
+  ├── ELEMENT: div [LINE 15-75]
+  │     ATTRIBUTES: class="sidebar"
+  │     │
+  │     ├── ELEMENT: div [LINE 16-18]
+  │     │     ATTRIBUTES: class="sidebar-header"
+  │     │     └── ELEMENT: h3
+  │     │           └── TEXT NODE: "BINTANG TOEDJOE"
+  │     │
+  │     ├── ELEMENT: div [LINE 20-65]
+  │     │     ATTRIBUTES: class="sidebar-menu"
+  │     │     │
+  │     │     ├── ELEMENT: a [LINE 21-23]
+  │     │     │     ATTRIBUTES: href="/dashboard", class="menu-item active"
+  │     │     │     ├── ELEMENT: i
+  │     │     │     │     ATTRIBUTES: class="fas fa-home"
+  │     │     │     └── TEXT NODE: " Halaman Utama"
+  │     │     │
+  │     │     ├── CONDITION: [LINE 25-31]
+  │     │     │     Original Template: {{ if or (eq .UserRole "administrator") (eq .UserRole "user") }}
+  │     │     │     Evaluated Expression: UserRole === "administrator" || UserRole === "user"
+  │     │     │     RENDER IF TRUE:
+  │     │     │       └── ELEMENT: a
+  │     │     │             ATTRIBUTES: href="/label/create", class="menu-item"
+  │     │     │             ├── ELEMENT: i
+  │     │     │             │     ATTRIBUTES: class="fas fa-plus-circle"
+  │     │     │             └── TEXT NODE: " Buat Label"
+  │     │     │
+  │     │     ├── CONDITION: [LINE 33-39]
+  │     │     │     Original Template: {{ if or (eq .UserRole "administrator") (eq .UserRole "user") (eq .UserRole "supervisor") (eq .UserRole "quality assurance") }}
+  │     │     │     Evaluated Expression: ["administrator", "user", "supervisor", "quality assurance"].includes(UserRole)
+  │     │     │     RENDER IF TRUE:
+  │     │     │       └── ELEMENT: a
+  │     │     │             ATTRIBUTES: href="/admin/panel", class="menu-item"
+  │     │     │             ├── ELEMENT: i
+  │     │     │             │     ATTRIBUTES: class="fas fa-cogs"
+  │     │     │             └── TEXT NODE: " Konfigurasi"
+  │     │     │
+  │     │     ├── ELEMENT: div [LINE 41-41]
+  │     │     │     ATTRIBUTES: style="padding: 15px 25px 5px; font-size: 11px; color: #7f8c8d; letter-spacing: 1px;"
+  │     │     │     └── TEXT NODE: "LAPORAN & LOG"
+  │     │     │
+  │     │     ├── ELEMENT: a [LINE 43-45]
+  │     │     │     ATTRIBUTES: href="/admin/audit", class="menu-item"
+  │     │     │     ├── ELEMENT: i
+  │     │     │     │     ATTRIBUTES: class="fas fa-history"
+  │     │     │     └── TEXT NODE: " Audit Trail"
+  │     │     │
+  │     │     ├── CONDITION: [LINE 47-59]
+  │     │     │     Original Template: {{ if eq .UserRole "administrator" }}
+  │     │     │     Evaluated Expression: UserRole === "administrator"
+  │     │     │     RENDER IF TRUE:
+  │     │     │       ├── ELEMENT: div
+  │     │     │       │     ATTRIBUTES: style="padding: 15px 25px 5px; font-size: 11px; color: #7f8c8d; letter-spacing: 1px;"
+  │     │     │       │     └── TEXT NODE: "PENGATURAN SISTEM"
+  │     │     │       ├── ELEMENT: a
+  │     │     │       │     ATTRIBUTES: href="label_dashboard_backup.html", class="menu-item"
+  │     │     │       │     ├── ELEMENT: i
+  │     │     │       │     │     ATTRIBUTES: class="fas fa-database"
+  │     │     │       │     └── TEXT NODE: " Backup & Restore"
+  │     │     │       └── ELEMENT: a
+  │     │     │             ATTRIBUTES: href="/admin/users", class="menu-item"
+  │     │     │             ├── ELEMENT: i
+  │     │     │             │     ATTRIBUTES: class="fas fa-users-cog"
+  │     │     │             └── TEXT NODE: " Kelola Akun"
+  │     │     │
+  │     │     └── ELEMENT: a [LINE 61-63]
+  │     │           ATTRIBUTES: href="/logout", class="menu-item"
+  │     │           ├── ELEMENT: i
+  │     │           │     ATTRIBUTES: class="fas fa-sign-out-alt"
+  │     │           └── TEXT NODE: " Keluar"
+  │     │
+  │     └── ELEMENT: div [LINE 67-74]
+  │           ATTRIBUTES: class="user-info-box"
+  │           ├── ELEMENT: div
+  │           │     ATTRIBUTES: class="user-avatar"
+  │           │     └── ELEMENT: i
+  │           │           ATTRIBUTES: class="fas fa-user-circle"
+  │           └── ELEMENT: div
+  │                 ATTRIBUTES: class="user-details"
+  │                 ├── ELEMENT: span
+  │                 │     ATTRIBUTES: class="user-role"
+  │                 │     └── EXPRESSION NODE: UserRole
+  │                 └── ELEMENT: span
+  │                       ATTRIBUTES: class="user-name", title=\`\${UserName}\`
+  │                       ├── TEXT NODE: "Halo, "
+  │                       └── EXPRESSION NODE: UserName
+  │
+  └── ELEMENT: div [LINE 77-220]
+        ATTRIBUTES: class="main-content"
+        │
+        ├── ELEMENT: div [LINE 78-98]
+        │     ATTRIBUTES: class="header-top"
+        │     ├── ELEMENT: h2 [LINE 79-79]
+        │     │     └── TEXT NODE: "Monitoring Label"
+        │     └── ELEMENT: div [LINE 80-97]
+        │           ATTRIBUTES: class="actions-group"
+        │           ├── ELEMENT: div [LINE 81-84]
+        │           │     ATTRIBUTES: class="search-wrapper"
+        │           │     ├── ELEMENT: i
+        │           │     │     ATTRIBUTES: class="fas fa-search"
+        │           │     └── ELEMENT: input
+        │           │           ATTRIBUTES: type="text", id="globalSearch", placeholder="Cari data label..."
+        │           │           EVENT: onkeyup -> filterTable()
+        │           ├── ELEMENT: button [LINE 85-87]
+        │           │     ATTRIBUTES: id="btnPrintMode", class="btn-print-mode"
+        │           │     EVENT: onclick -> enableSelectMode()
+        │           │     ├── ELEMENT: i
+        │           │     │     ATTRIBUTES: class="fas fa-print"
+        │           │     └── TEXT NODE: " PRINT BATCH"
+        │           ├── CONDITION: [LINE 88-92]
+        │           │     Original Template: {{ if or (eq .UserRole "administrator") (eq .UserRole "user") }}
+        │           │     Evaluated Expression: UserRole === "administrator" || UserRole === "user"
+        │           │     RENDER IF TRUE:
+        │           │       └── ELEMENT: a
+        │           │             ATTRIBUTES: href="/label/create", id="btnCreateMain", class="btn-create"
+        │           │             └── TEXT NODE: "+ BUAT LABEL"
+        │           ├── ELEMENT: button [LINE 93-95]
+        │           │     ATTRIBUTES: id="btnExecutePrint", class="btn-execute"
+        │           │     EVENT: onclick -> executeBatchPrint()
+        │           │     ├── TEXT NODE: "PRINT TERPILIH ("
+        │           │     ├── ELEMENT: span
+        │           │     │     ATTRIBUTES: id="countSelected"
+        │           │     │     └── TEXT NODE: "0"
+        │           │     └── TEXT NODE: "/8)"
+        │           └── ELEMENT: button [LINE 96-96]
+        │                 ATTRIBUTES: id="btnCancelMode", class="btn-cancel"
+        │                 EVENT: onclick -> disableSelectMode()
+        │                 └── TEXT NODE: "BATAL"
+        │
+        └── ELEMENT: div [LINE 100-218]
+              ATTRIBUTES: class="table-container"
+              └── ELEMENT: table [LINE 101-217]
+                    ATTRIBUTES: id="labelTable"
+                    ├── ELEMENT: thead [LINE 102-119]
+                    │     └── ELEMENT: tr
+                    │           ├── ELEMENT: th ATTRIBUTES: style="width: 35px;", class="col-center", id="th-number" -> TEXT NODE: "No"
+                    │           ├── ELEMENT: th ATTRIBUTES: style="width: 100px;" -> TEXT NODE: "Kategori"
+                    │           ├── ELEMENT: th ATTRIBUTES: style="width: 55px;"  -> TEXT NODE: "Kode/Isi"
+                    │           ├── ELEMENT: th ATTRIBUTES: style="width: 55px;"  -> TEXT NODE: "Identitas"
+                    │           ├── ELEMENT: th ATTRIBUTES: style="width: 60px;"  -> TEXT NODE: "Pekerjaan"
+                    │           ├── ELEMENT: th ATTRIBUTES: style="width: 55px;"  -> TEXT NODE: "Status"
+                    │           ├── ELEMENT: th ATTRIBUTES: style="width: 70px;"  -> TEXT NODE: "Pelaksanaan"
+                    │           ├── ELEMENT: th ATTRIBUTES: style="width: 60px;"  -> TEXT NODE: "ED Bersih"
+                    │           ├── ELEMENT: th ATTRIBUTES: style="width: 60px;"  -> TEXT NODE: "ED Pakai"
+                    │           ├── ELEMENT: th ATTRIBUTES: style="width: 60px;"  -> TEXT NODE: "Petugas"
+                    │           ├── ELEMENT: th ATTRIBUTES: style="width: 60px;"  -> TEXT NODE: "Pemeriksa"
+                    │           ├── ELEMENT: th ATTRIBUTES: style="width: 70px;"  -> TEXT NODE: "Aksi"
+                    │           └── ELEMENT: th ATTRIBUTES: style="background: #edf2f7; text-align: center; width: 65px;" -> TEXT NODE: "Master QR"
+                    │
+                    └── ELEMENT: tbody [LINE 120-216]
+                          └── LOOP: [LINE 121-215]
+                                Original Scope: {{ range $index, $val := .Labels }}
+                                Iteration Var: \`$index\` (0-indexed), \`$val\` (LabelItem)
+                                Local Row Declarations:
+                                  - Original: {{ $isExpired := gt $.Now.Unix $val.TglEDKembali.Unix }} [LINE 122]
+                                    Evaluated Expression: \`$isExpired = Now.Unix() > val.TglEDKembali.Unix()\`
+                                  - Original: {{ $isDirtyManually := eq $val.IsKotor "iya" }} [LINE 123]
+                                    Evaluated Expression: \`$isDirtyManually = val.IsKotor === "iya"\`
+                                  - Original Conditional Class: {{ if or $isDirtyManually $isExpired }}status-red{{ end }} [LINE 125]
+                                    Evaluated Expression: \`$rowClass = ($isDirtyManually || $isExpired) ? "status-red" : ""\`
+                                
+                                RENDER ITERATION ITEM:
+                                └── ELEMENT: tr [LINE 125-214]
+                                      ATTRIBUTES: class=\`\${$rowClass}\`
+                                      ├── ELEMENT: td [LINE 126-129]
+                                      │     ATTRIBUTES: class="col-center"
+                                      │     ├── ELEMENT: span
+                                      │     │     ATTRIBUTES: class="num-text", style="font-weight: bold;"
+                                      │     │     └── EXPRESSION NODE:
+                                      │     │           Original: {{ add $index 1 }}
+                                      │     │           Evaluated: $index + 1
+                                      │     └── ELEMENT: input
+                                      │           ATTRIBUTES: type="checkbox", class="rowCheck", value=\`\${$val.ID}\`
+                                      │           EVENT: onclick -> handleLimit(event.currentTarget)
+                                      ├── ELEMENT: td [LINE 130-133]
+                                      │     ├── ELEMENT: b -> EXPRESSION NODE: $val.KategoriName
+                                      │     └── ELEMENT: small -> EXPRESSION NODE: $val.KategoriType
+                                      ├── ELEMENT: td [LINE 134-138]
+                                      │     ├── EXPRESSION NODE: $val.JenisKode
+                                      │     ├── TEXT NODE: ":"
+                                      │     ├── ELEMENT: br
+                                      │     └── ELEMENT: b -> EXPRESSION NODE: $val.IsiKode
+                                      ├── ELEMENT: td [LINE 139-143]
+                                      │     ├── EXPRESSION NODE: $val.IdentitasProdukType
+                                      │     ├── TEXT NODE: ":"
+                                      │     ├── ELEMENT: br
+                                      │     └── ELEMENT: b -> EXPRESSION NODE: $val.IdentitasProdukVal
+                                      ├── ELEMENT: td [LINE 144] -> EXPRESSION NODE: $val.JenisPekerjaan
+                                      ├── ELEMENT: td [LINE 145-151]
+                                      │     └── ELEMENT: span
+                                      │           ATTRIBUTES: class=\`badge \${($isDirtyManually || $isExpired) ? "badge-kotor" : ""}\`
+                                      │           └── CONDITION:
+                                      │                 Original: {{ if or $isDirtyManually $isExpired }}KOTOR{{ else }}{{ $val.TipePembersihan }}{{ end }}
+                                      │                 Evaluated Expression: ($isDirtyManually || $isExpired)
+                                      │                 RENDER IF TRUE: TEXT NODE "KOTOR"
+                                      │                 RENDER IF FALSE: EXPRESSION NODE $val.TipePembersihan
+                                      ├── ELEMENT: td [LINE 152-156]
+                                      │     ├── EXPRESSION NODE: $val.TglPelaksanaan.Format("02/01/06")
+                                      │     ├── ELEMENT: br
+                                      │     └── ELEMENT: small
+                                      │           ATTRIBUTES: class="pukul-text", data-id=\`\${$val.ID}\`, style="color: #666; font-weight: bold;"
+                                      │           ├── TEXT NODE: "Pukul "
+                                      │           └── EXPRESSION NODE: $val.CreatedAt.Format("15:04")
+                                      ├── ELEMENT: td [LINE 157-159]
+                                      │     ATTRIBUTES: style="font-weight: bold;"
+                                      │     └── EXPRESSION NODE: $val.TglEDKembali.Format("02/01/06")
+                                      ├── ELEMENT: td [LINE 160] -> EXPRESSION NODE: $val.TglEDMasaPakai.Format("02/01/06")
+                                      ├── ELEMENT: td [LINE 161] -> EXPRESSION NODE: $val.ParafPetugas
+                                      ├── ELEMENT: td [LINE 162] -> EXPRESSION NODE: $val.ParafPemeriksa
+                                      ├── ELEMENT: td [LINE 163-172]
+                                      │     ├── ELEMENT: a
+                                      │     │     ATTRIBUTES: href=\`/label/preview/\${$val.ID}\`, class="btn-preview"
+                                      │     │     └── TEXT NODE: "Preview"
+                                      │     └── CONDITION: [LINE 166-170]
+                                      │           Original Template: {{ if or (eq $.UserRole "administrator") (eq $.UserRole "supervisor") (eq $.UserRole "quality assurance") }}
+                                      │           Evaluated Expression: ["administrator", "supervisor", "quality assurance"].includes(UserRole)
+                                      │           RENDER IF TRUE:
+                                      │             └── ELEMENT: a
+                                      │                   ATTRIBUTES: href=\`/label/delete/\${$val.ID}\`, style="color: var(--danger); font-size: 11px; text-decoration: none; font-weight: bold; text-align: center; margin-left: 5px;"
+                                      │                   EVENT: onclick -> return confirm('Hapus label ini secara permanen?')
+                                      │                   └── TEXT NODE: " Hapus "
+                                      └── ELEMENT: td [LINE 173-177]
+                                            ATTRIBUTES: style="text-align: center; border-left: 1px solid #ddd; background: #f9fafb;"
+                                            └── ELEMENT: a
+                                                  ATTRIBUTES: href=\`/admin/barcode/\${$val.KategoriName}\`, target="_blank", class="btn-barcode"
+                                                  ├── ELEMENT: i
+                                                  │     ATTRIBUTES: class="fas fa-qrcode"
+                                                  └── TEXT NODE: " QR "
+\`\`\`
+
+## 5. EXACT EXECUTABLE LOGIC & EVENT HANDLERS
+### Scope State Variables Needed (for React Translation)
+\`\`\`typescript
+const maxLimit = 8;
+// State required:
+// - isSelectMode: boolean (default false)
+// - selectedIds: Array<string | number> (default [])
+// - searchKeyword: string (default "")
+// - auditTimes: Record<string, string> (map of label ID to time string)
+\`\`\`
+
+### Pure Logic & Functions
+#### 1. enableSelectMode() [LINE 222-232]
+ * **DOM Behavior:**
+   * Hide #btnPrintMode (display: 'none')
+   * Hide #btnCreateMain if exists (display: 'none')
+   * Show #btnExecutePrint (display: 'inline-block')
+   * Show #btnCancelMode (display: 'inline-block')
+   * Change #th-number text to 'Pilih'
+   * Hide all .num-text elements (display: 'none')
+   * Show all .rowCheck checkboxes (display: 'inline-block')
+ * **React State Equivalency:** setIsSelectMode(true)
+
+#### 2. disableSelectMode() [LINE 234-246]
+ * **DOM Behavior:**
+   * Show #btnPrintMode (display: 'inline-block')
+   * Show #btnCreateMain if exists (display: 'inline-block')
+   * Hide #btnExecutePrint (display: 'none')
+   * Hide #btnCancelMode (display: 'none')
+   * Change #th-number text to 'No'
+   * Show all .num-text elements (display: 'inline-block')
+   * Hide all .rowCheck checkboxes (display: 'none')
+   * Uncheck all .rowCheck elements (checked = false)
+   * Set #countSelected text to '0'
+ * **React State Equivalency:** setIsSelectMode(false); setSelectedIds([]);
+
+#### 3. handleLimit(checkboxElement) [LINE 248-256]
+ * **Logic:**
+   \`\`\`javascript
+   const checkedCount = document.querySelectorAll('.rowCheck:checked').length;
+   if (checkedCount > maxLimit) {
+     checkboxElement.checked = false;
+     alert("Maksimal 8 label untuk satu kertas A4!");
+     return;
+   }
+   document.getElementById('countSelected').innerText = checkedCount;
+   \`\`\`
+
+#### 4. executeBatchPrint() [LINE 258-264]
+ * **Logic:**
+   \`\`\`javascript
+   const checked = document.querySelectorAll('.rowCheck:checked');
+   if (checked.length === 0) return alert("Pilih minimal satu label!");
+   let ids = Array.from(checked).map(c => c.value).join(',');
+   window.open("/admin/print-batch?ids=" + encodeURIComponent(ids), '_blank');
+   \`\`\`
+
+#### 5. filterTable() [LINE 266-278]
+ * **Logic:**
+   \`\`\`javascript
+   var input = document.getElementById("globalSearch");
+   var filter = input.value.toUpperCase().trim();
+   var table = document.getElementById("labelTable");
+   var tr = table.getElementsByTagName("tr");
+   for (var i = 1; i < tr.length; i++) {
+     var rowText = "";
+     var cells = tr[i].getElementsByTagName("td");
+     // Loops through columns excluding 'No' and last 2 columns ('Aksi', 'Master QR')
+     for (var j = 1; j < cells.length - 2; j++) {
+       if (cells[j]) {
+         rowText += (cells[j].innerText || cells[j].textContent) + " ";
+       }
+     }
+     tr[i].style.display = rowText.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+   }
+   \`\`\`
+
+#### 6. Lifecycle (DOMContentLoaded Side Effect) [LINE 280-290]
+ * **Logic:**
+   \`\`\`javascript
+   document.querySelectorAll('.pukul-text').forEach(el => {
+     const id = el.getAttribute('data-id');
+     fetch(\`/api/audit-time/\${id}\`)
+       .then(res => res.json())
+       .then(data => {
+         if (data.time) el.innerText = 'Pukul ' + data.time;
+       })
+       .catch(() => {});
+   });
+   \`\`\``;
+        }
+
+
+        function extractSkeleton() {
+            if (selectedFileKeys.length === 0) return;
+
+            let finalOutputArray = [];
+
+            selectedFileKeys.forEach(fileKey => {
+                const file = projectFiles[fileKey];
+                if (!file) return;
+
+                const fileName = file.name;
+                finalOutputArray.push(generateLIRMap(fileName));
+            });
+
+            document.getElementById('outputArea').value = finalOutputArray.join('\n\n=========================================\n\n');
+        }
+
+
+        function copyToClipboard() {
+            const copyText = document.getElementById("outputArea");
+            if (!copyText.value) return;
+
+
+            copyText.select();
+            copyText.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(copyText.value);
+
+
+            const btn = document.getElementById('btnCopy');
+            const originalText = btn.innerText;
+            btn.innerText = '✅ COPIED!';
+            btn.style.background = '#22c55e';
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.style.background = '#4f46e5';
+            }, 1500);
+        }
+
+        function downloadAsTxt() {
+            const outputText = document.getElementById("outputArea").value;
+            if (!outputText) {
+                alert("Tidak ada output untuk di-download. Silakan jalankan extract terlebih dahulu.");
+                return;
+            }
+
+            const blob = new Blob([outputText], { type: "text/plain;charset=utf-8" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "viber_engine_output.txt";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
