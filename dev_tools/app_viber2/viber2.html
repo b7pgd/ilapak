@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ Skeleton Map - LIR Engine</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-main: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --code-bg: #0f172a;
+            --code-text: #38bdf8;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-main);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .app-wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h2 {
+            color: var(--primary);
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+            margin-top: 0;
+            font-size: 24px;
+        }
+
+        .setup-box {
+            background: var(--bg-card);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            border: 1px dashed var(--primary);
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .file-box {
+            background: var(--bg-card);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .file-box h3 {
+            margin-top: 0;
+            font-size: 16px;
+            color: var(--text-main);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+        }
+
+        .output-box {
+            background: var(--bg-card);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        ul { list-style: none; padding: 0; margin: 0; }
+
+        li {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+            font-family: monospace;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        li:hover { background: #f1f5f9; color: var(--primary); }
+        li input[type="checkbox"] { cursor: pointer; transform: scale(1.1); }
+
+        .active { background: #dbeafe !important; color: var(--primary) !important; font-weight: bold; }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        button {
+            background: #16a34a;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            flex: 1;
+            min-width: 200px;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        button:hover { background: #15803d; }
+        button:disabled { background: var(--text-muted); cursor: not-allowed; }
+
+        textarea {
+            flex: 1;
+            background: var(--code-bg);
+            color: var(--code-text);
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 13px;
+            padding: 15px;
+            border: 1px solid var(--code-bg);
+            border-radius: 6px;
+            resize: none;
+            min-height: 400px;
+            margin-top: 10px;
+            line-height: 1.5;
+        }
+
+        .path-banner {
+            color: #d97706;
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-family: monospace;
+            font-size: 13px;
+        }
+
+        .file-input-btn {
+            background: var(--primary);
+            padding: 10px 15px;
+            color: white;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            display: inline-block;
+            transition: background 0.2s;
+        }
+
+        .file-input-btn:hover { background: var(--primary-hover); }
+        input[type="file"] { display: none; }
+
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .setup-box { flex-direction: column; align-items: flex-start; }
+            textarea { min-height: 300px; }
+            button { width: 100%; flex: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-wrapper">
+        <h2>⚡ Skeleton Map - LIR Engine</h2>
+
+        <div class="setup-box">
+            <div><strong>Step 1: Pilih Folder Project Lo:</strong></div>
+            <label class="file-input-btn">
+                📂 PILIH FOLDER PROJECT
+                <input type="file" id="folderPicker" webkitdirectory directory multiple>
+            </label>
+            <div id="statusText" style="color: var(--text-muted); font-size: 14px;">Belum ada folder yang dipilih</div>
+        </div>
+
+        <div class="container">
+            <div class="file-box">
+                <h3>Daftar File Project (<span id="fileCount">0</span>) [Selected: <span id="selectedCount">0</span>]</h3>
+                <div class="btn-group" style="margin-bottom: 10px;">
+                    <button id="btnSelectAll" style="background: #475569; min-width: 120px; padding: 6px 12px;" disabled>🗹 SELECT ALL</button>
+                    <button id="btnUnselectAll" style="background: #64748b; min-width: 120px; padding: 6px 12px;" disabled>☐ UNSELECT ALL</button>
+                </div>
+                <ul id="fileList">
+                    <li style="color: var(--text-muted); cursor: default; background: none;">Silakan pilih folder terlebih dahulu...</li>
+                </ul>
+            </div>
+
+            <div class="output-box">
+                <div class="btn-group">
+                    <button id="btnExtract" disabled>📄 GENERATE LIR MAP</button>
+                </div>
+                <div class="btn-group" style="margin-top: 5px;">
+                    <button id="btnCopy" style="background: #4f46e5;">📋 COPY OUTPUT</button>
+                    <button id="btnDownload" style="background: #0284c7;">💾 DOWNLOAD .TXT</button>
+                </div>
+                <div class="path-banner" id="pathBanner" style="margin-top: 15px;">Pilih file dari daftar di atas...</div>
+                <textarea id="outputArea" readonly placeholder="Hasil ekstraksi Lossless Intermediate Representation (LIR) berbasis AST & parser isi file akan muncul di sini..."></textarea>
+            </div>
+        </div>
+    </div>
+
+    <script src="viber.js"></script>
+    <script src="viber2.js"></script>
+    <script src="viber3.js"></script>
+    <script src="viber4.js"></script>
+</body>
+</html>
