@@ -204,6 +204,7 @@
                 <div class="btn-group">
                     <button id="btnExtractFrontend" disabled>📄 EXTRACT FRONTEND SEMANTIC</button>
                     <button id="btnExtractBackend" disabled>📄 EXTRACT BACKEND SEMANTIC</button>
+                    <button id="btnExtractFullstack" style="background:#9333ea;" disabled>🚀 EXTRACT FULLSTACK SEMANTIC</button>
                 </div>
                 <div class="btn-group" style="margin-top: 5px;">
                     <button id="btnCopy" style="background: #4f46e5;">📋 COPY OUTPUT</button>
@@ -245,6 +246,7 @@
             document.getElementById('btnUnselectAll').addEventListener('click', unselectAllFiles);
             document.getElementById('btnExtractFrontend').addEventListener('click', () => launchEngine('frontend'));
             document.getElementById('btnExtractBackend').addEventListener('click', () => launchEngine('backend'));
+            document.getElementById('btnExtractFullstack').addEventListener('click', () => launchFullstack());
             document.getElementById('btnCopy').addEventListener('click', copyToClipboard);
             document.getElementById('btnDownload').addEventListener('click', downloadAsTxt);
         });
@@ -369,6 +371,7 @@
             const hasSelection = selectedFileKeys.length > 0;
             document.getElementById('btnExtractFrontend').disabled = !hasSelection;
             document.getElementById('btnExtractBackend').disabled = !hasSelection;
+            document.getElementById('btnExtractFullstack').disabled = !hasSelection;
         }
 
         async function launchEngine(engineType) {
@@ -406,6 +409,90 @@
             }
         }
 
+        async function launchFullstack() {
+            if (selectedFileKeys.length === 0) return;
+
+            document.getElementById('outputArea').value = "Detecting project architecture...";
+
+            const frontendFiles = [];
+            const backendFiles = [];
+
+            selectedFileKeys.forEach(path => {
+                const p = path.toLowerCase();
+                let feScore = 0;
+                let beScore = 0;
+
+                // FRONTEND SCORE CALCULATION
+                if (p.endsWith(".tsx")) feScore += 3;
+                if (p.endsWith(".jsx")) feScore += 3;
+                if (p.endsWith(".css") || p.endsWith(".scss")) feScore += 1;
+                if (p.endsWith(".vue") || p.endsWith(".html")) feScore += 2;
+                if (p.includes("frontend")) feScore += 3;
+                if (p.includes("components")) feScore += 2;
+                if (p.includes("app/page") || p.includes("pages/")) feScore += 2;
+
+                // BACKEND SCORE CALCULATION
+                if (p.endsWith(".go")) beScore += 3;
+                if (p.endsWith(".py") || p.endsWith(".java") || p.endsWith(".cs")) beScore += 3;
+                if (p.includes("backend") || p.includes("server") || p.includes("api")) beScore += 3;
+                if (p.includes("controller")) beScore += 3;
+                if (p.includes("routes") || p.includes("router")) beScore += 2;
+                if (p.includes("models")) beScore += 2;
+                if (p.includes("migration")) beScore += 2;
+
+                if (feScore > beScore && feScore > 0) {
+                    frontendFiles.push(path);
+                } else if (beScore > feScore && beScore > 0) {
+                    backendFiles.push(path);
+                } else if (feScore === beScore && feScore > 0) {
+                    frontendFiles.push(path);
+                    backendFiles.push(path);
+                }
+            });
+
+            let frontendResult = null;
+            let backendResult = null;
+
+            if (frontendFiles.length > 0) {
+                const stages = window.LirEngineRegistry.frontend;
+                if (stages && stages.length > 0) {
+                    let output = null;
+                    for (const stageFn of stages) {
+                        output = await stageFn({
+                            projectFiles,
+                            selectedFiles: frontendFiles
+                        });
+                    }
+                    frontendResult = output?.finalOutput ?? output;
+                }
+            }
+
+            if (backendFiles.length > 0) {
+                const stages = window.LirEngineRegistry.backend;
+                if (stages && stages.length > 0) {
+                    let output = null;
+                    for (const stageFn of stages) {
+                        output = await stageFn({
+                            projectFiles,
+                            selectedFiles: backendFiles
+                        });
+                    }
+                    backendResult = output?.finalOutput ?? output;
+                }
+            }
+
+            let combinedOutput = "FULLSTACK SEMANTIC MAP\n\n";
+
+            combinedOutput += "========== FRONTEND ==========\n";
+            combinedOutput += frontendResult ? (typeof frontendResult === 'string' ? frontendResult : JSON.stringify(frontendResult, null, 2)) : "No frontend components detected or processed.";
+            combinedOutput += "\n\n";
+
+            combinedOutput += "========== BACKEND ==========\n";
+            combinedOutput += backendResult ? (typeof backendResult === 'string' ? backendResult : JSON.stringify(backendResult, null, 2)) : "No backend components detected or processed.";
+
+            renderOutput(combinedOutput);
+        }
+
         function renderOutput(output) {
             document.getElementById('outputArea').value = output || '';
         }
@@ -436,7 +523,7 @@
             }
 
             const blob = new Blob([outputText], { type: "text/plain;charset=utf-8" });
-            const link = document.append? link : document.createElement("a");
+            const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
             link.download = "viber_engine_output.txt";
             document.body.appendChild(link);
