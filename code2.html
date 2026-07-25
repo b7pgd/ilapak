@@ -327,8 +327,9 @@ const blocks = parseDocumentBlocks(input);
 // Step 2: Process each block with its appropriate context rule
 const compressedBlocks = blocks.map(block => processBlockByLanguage(block));
 
-// Step 3: Combine and return final lossless text
-return compressedBlocks.join('\n');
+// Step 3: Combine and return final lossless text with final cleanup
+const rawCombined = compressedBlocks.join('\n');
+return sanitizeOutputArtifacts(rawCombined);
 }
 
 // Step 1: Parser - Breakdown text into Markdown code blocks and non-code sections
@@ -562,7 +563,23 @@ i++;
 merged.push(current.replace(/^[*•-]\s+/, ''));
 }
 }
-result.push(merged.join(', '));
+
+// Gabungkan buffer dengan aman tanpa melipatgandakan koma
+let lineResult = '';
+for (let item of merged) {
+let cleanItem = item.trim();
+if (!cleanItem) continue;
+if (!lineResult) {
+lineResult = cleanItem;
+} else {
+if (/[,,;:{}()\[\]]$/.test(lineResult) || /^[,;:{}()\[\]]/.test(cleanItem)) {
+lineResult += ' ' + cleanItem;
+} else {
+lineResult += ', ' + cleanItem;
+}
+}
+}
+if (lineResult) result.push(lineResult);
 listBuffer = [];
 }
 
@@ -624,6 +641,94 @@ continue;
 result += char;
 }
 return result;
+}
+
+// Helper: Executes callback strictly on segments outside string literals
+function processOutsideQuotes(str, callback) {
+let result = '';
+let currentBuffer = '';
+let inSingle = false;
+let inDouble = false;
+let inBacktick = false;
+
+for (let i = 0; i < str.length; i++) {
+let char = str[i];
+let prev = i > 0 ? str[i - 1] : '';
+
+if (char === "'" && !inDouble && !inBacktick && prev !== '\\') {
+if (!inSingle) {
+result += callback(currentBuffer) + "'";
+currentBuffer = '';
+inSingle = true;
+} else {
+result += "'";
+inSingle = false;
+}
+continue;
+}
+if (char === '"' && !inSingle && !inBacktick && prev !== '\\') {
+if (!inDouble) {
+result += callback(currentBuffer) + '"';
+currentBuffer = '';
+inDouble = true;
+} else {
+result += '"';
+inDouble = false;
+}
+continue;
+}
+if (char === '`' && !inSingle && !inDouble && prev !== '\\') {
+if (!inBacktick) {
+result += callback(currentBuffer) + '`';
+currentBuffer = '';
+inBacktick = true;
+} else {
+result += '`';
+inBacktick = false;
+}
+continue;
+}
+
+if (inSingle || inDouble || inBacktick) {
+result += char;
+} else {
+currentBuffer += char;
+}
+}
+
+if (currentBuffer) {
+result += callback(currentBuffer);
+}
+
+return result;
+}
+
+// Helper Final Cleanup: Menghilangkan artefak separator ganda tanpa merusak string literal
+function sanitizeOutputArtifacts(text) {
+const lines = text.split('\n');
+let inCodeBlock = false;
+
+return lines.map(line => {
+const trimmed = line.trim();
+if (trimmed.startsWith('```')) {
+inCodeBlock = !inCodeBlock;
+return line;
+}
+if (inCodeBlock) return line;
+
+return processOutsideQuotes(line, (part) => {
+let clean = part;
+// Bersihkan koma berulang (misal: ,, atau , ,) di luar string
+clean = clean.replace(/,\s*,+/g, ',');
+clean = clean.replace(/,(\s*,)+/g, ',');
+// Hapus koma menggantung sebelum penutup kurung/bracket/titik koma (jika ada artefak merge)
+clean = clean.replace(/,\s*([;})\]])/g, '$1');
+// Rapikan spasi setelah koma di luar string
+clean = clean.replace(/,\s*/g, ', ');
+clean = clean.replace(/\s+,/g, ',');
+return clean;
+});
+}).join('\n');
 }
 
 // Fitur Gabung & Copy Otomatis (Berurutan dari atas ke bawah)
