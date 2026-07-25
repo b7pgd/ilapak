@@ -202,7 +202,8 @@
 
             <div class="output-box">
                 <div class="btn-group">
-                    <button id="btnExtract" disabled>📄 GENERATE LIR MAP</button>
+                    <button id="btnExtractFrontend" disabled>📄 EXTRACT FRONTEND SEMANTIC</button>
+                    <button id="btnExtractBackend" disabled>📄 EXTRACT BACKEND SEMANTIC</button>
                 </div>
                 <div class="btn-group" style="margin-top: 5px;">
                     <button id="btnCopy" style="background: #4f46e5;">📋 COPY OUTPUT</button>
@@ -214,9 +215,236 @@
         </div>
     </div>
 
-    <script src="viber.js"></script>
-    <script src="viber2.js"></script>
-    <script src="viber3.js"></script>
-    <script src="viber4.js"></script>
+    <script>
+    window.onerror = function(message, source, lineno, colno, error) {
+        console.error("SOURCE:", source);
+        console.error("LINE:", lineno);
+        console.error("COL:", colno);
+        console.error("MSG:", message);
+    };
+
+        // Global Registries & Pipeline State Management
+        window.LirEngineRegistry = window.LirEngineRegistry || {
+            registerStage(targetEngine, stageFn) {
+                if (!this[targetEngine]) {
+                    this[targetEngine] = [];
+                }
+                if (!this[targetEngine].includes(stageFn)) {
+                    this[targetEngine].push(stageFn);
+                }
+            }
+        };
+
+        let projectFiles = {};
+        let selectedFileKeys = [];
+        const loadedScripts = new Set();
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('folderPicker').addEventListener('change', readProject);
+            document.getElementById('btnSelectAll').addEventListener('click', selectAllFiles);
+            document.getElementById('btnUnselectAll').addEventListener('click', unselectAllFiles);
+            document.getElementById('btnExtractFrontend').addEventListener('click', () => launchEngine('frontend'));
+            document.getElementById('btnExtractBackend').addEventListener('click', () => launchEngine('backend'));
+            document.getElementById('btnCopy').addEventListener('click', copyToClipboard);
+            document.getElementById('btnDownload').addEventListener('click', downloadAsTxt);
+        });
+
+        function readProject(e) {
+            const files = e.target.files;
+            if (!files || files.length === 0) return;
+
+            projectFiles = {};
+            selectedFileKeys = [];
+            loadedScripts.clear();
+            updateActionButtons();
+
+            const fileListUI = document.getElementById('fileList');
+            fileListUI.innerHTML = '';
+            let counted = 0;
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const path = file.webkitRelativePath || file.name;
+                
+                projectFiles[path] = file;
+                console.log("RAW PATH:", JSON.stringify(path));
+
+                const li = document.createElement('li');
+                const chk = document.createElement('input');
+                chk.type = 'checkbox';
+                chk.value = path;
+                chk.onclick = function(event) { 
+                    event.stopPropagation(); 
+                    toggleFileSelect(this.checked, path); 
+                };
+                
+                const label = document.createElement('span');
+                label.textContent = path;
+                
+                li.appendChild(chk);
+                li.appendChild(label);
+                li.title = path;
+                li.onclick = function() {
+                    const checkbox = this.querySelector('input[type="checkbox"]');
+                    checkbox.checked = !checkbox.checked;
+                    toggleFileSelect(checkbox.checked, path);
+                };
+                
+                fileListUI.appendChild(li);
+                counted++;
+            }
+
+            document.getElementById('statusText').innerText = 'Berhasil memuat folder!';
+            document.getElementById('fileCount').innerText = counted;
+            const hasFiles = counted > 0;
+            document.getElementById('btnSelectAll').disabled = !hasFiles;
+            document.getElementById('btnUnselectAll').disabled = !hasFiles;
+        }
+
+        function toggleFileSelect(isChecked, fileKey) {
+            const listItems = document.querySelectorAll('#fileList li');
+            let targetLi = null;
+
+            for (let li of listItems) {
+                if (li.title === fileKey) {
+                    targetLi = li;
+                    break;
+                }
+            }
+
+            if (isChecked) {
+                if (!selectedFileKeys.includes(fileKey)) {
+                    selectedFileKeys.push(fileKey);
+                }
+                if (targetLi) targetLi.classList.add('active');
+            } else {
+                selectedFileKeys = selectedFileKeys.filter(k => k !== fileKey);
+                if (targetLi) targetLi.classList.remove('active');
+            }
+
+            document.getElementById('selectedCount').innerText = selectedFileKeys.length;
+            if (selectedFileKeys.length > 0) {
+                document.getElementById('pathBanner').innerText = `Target Aktif: ${selectedFileKeys.length} File terpilih`;
+            } else {
+                document.getElementById('pathBanner').innerText = 'Pilih file dari daftar di atas...';
+            }
+            updateActionButtons();
+        }
+
+        function selectAllFiles() {
+            selectedFileKeys = [];
+            const checkboxes = document.querySelectorAll('#fileList li input[type="checkbox"]');
+            checkboxes.forEach(chk => {
+                chk.checked = true;
+                const path = chk.value;
+                if (!selectedFileKeys.includes(path)) {
+                    selectedFileKeys.push(path);
+                }
+            });
+
+            const listItems = document.querySelectorAll('#fileList li');
+            listItems.forEach(li => li.classList.add('active'));
+
+            document.getElementById('selectedCount').innerText = selectedFileKeys.length;
+            document.getElementById('pathBanner').innerText = `Target Aktif: ${selectedFileKeys.length} File terpilih`;
+            updateActionButtons();
+        }
+
+        function unselectAllFiles() {
+            selectedFileKeys = [];
+            const checkboxes = document.querySelectorAll('#fileList li input[type="checkbox"]');
+            checkboxes.forEach(chk => {
+                chk.checked = false;
+            });
+
+            const listItems = document.querySelectorAll('#fileList li');
+            listItems.forEach(li => li.classList.remove('active'));
+
+            document.getElementById('selectedCount').innerText = 0;
+            document.getElementById('pathBanner').innerText = 'Pilih file dari daftar di atas...';
+            updateActionButtons();
+        }
+
+        function updateActionButtons() {
+            const hasSelection = selectedFileKeys.length > 0;
+            document.getElementById('btnExtractFrontend').disabled = !hasSelection;
+            document.getElementById('btnExtractBackend').disabled = !hasSelection;
+        }
+
+        async function launchEngine(engineType) {
+            if (selectedFileKeys.length === 0) return;
+
+            document.getElementById('outputArea').value =
+                `Executing ${engineType.toUpperCase()} pipeline...`;
+
+            const stages = window.LirEngineRegistry[engineType];
+
+            if (!stages || stages.length === 0) {
+                document.getElementById('outputArea').value =
+                    `Error: No registered stages found for ${engineType}.`;
+                return;
+            }
+
+            let currentOutput = null;
+
+            try {
+                for (const stageFn of stages) {
+                    currentOutput = await stageFn({
+                        projectFiles,
+                        selectedFiles: selectedFileKeys
+                    });
+                }
+
+                renderOutput(
+                    (currentOutput && currentOutput.finalOutput !== undefined)
+                        ? currentOutput.finalOutput
+                        : JSON.stringify(currentOutput, null, 2)
+                );
+            } catch (err) {
+                console.error(`Error executing ${engineType} pipeline:`, err);
+                document.getElementById('outputArea').value = `Pipeline Execution Error: ${err.message}`;
+            }
+        }
+
+        function renderOutput(output) {
+            document.getElementById('outputArea').value = output || '';
+        }
+
+        function copyToClipboard() {
+            const copyText = document.getElementById("outputArea");
+            if (!copyText.value) return;
+
+            copyText.select();
+            copyText.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(copyText.value);
+
+            const btn = document.getElementById('btnCopy');
+            const originalText = btn.innerText;
+            btn.innerText = '✅ COPIED!';
+            btn.style.background = '#22c55e';
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.style.background = '#4f46e5';
+            }, 1500);
+        }
+
+        function downloadAsTxt() {
+            const outputText = document.getElementById("outputArea").value;
+            if (!outputText) {
+                alert("Tidak ada output untuk di-download. Silakan jalankan extract terlebih dahulu.");
+                return;
+            }
+
+            const blob = new Blob([outputText], { type: "text/plain;charset=utf-8" });
+            const link = document.append? link : document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "viber_engine_output.txt";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+    <script src="./frontend.js"></script>
+    <script src="./backend.js"></script>
 </body>
 </html>

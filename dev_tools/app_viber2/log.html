@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Chrome-Style DevTools Wrapper</title>
+  <style>
+    :root {
+      --primary: #0284c7;
+      --primary-hover: #0369a1;
+      --bg-main: #f8fafc;
+      --bg-devtools: #0f172a;
+      --bg-card: #1e293b;
+      --border-color: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent-error: #ef4444;
+      --accent-warn: #f59e0b;
+      --accent-info: #3b82f6;
+      --accent-success: #10b981;
+      --touch-size: 44px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+      background: var(--bg-main);
+      position: relative;
+    }
+
+    /* Top Navigation Toolbar */
+    .top-toolbar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 52px;
+      background: #ffffff;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 8px;
+      z-index: 10;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .nav-btn {
+      min-width: 40px;
+      height: 38px;
+      background: #f1f5f9;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .nav-btn:active {
+      background: #e2e8f0;
+    }
+
+    .nav-btn.btn-go {
+      background: var(--primary);
+      color: #ffffff;
+      border: none;
+      padding: 0 12px;
+    }
+
+    .url-bar {
+      flex: 1;
+      height: 38px;
+      padding: 0 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 13px;
+      outline: none;
+      background: #f8fafc;
+      color: #0f172a;
+      min-width: 0;
+    }
+
+    .url-bar:focus {
+      background: #ffffff;
+      border-color: var(--primary);
+    }
+
+    /* More Menu Dropdown Panel */
+    .more-menu {
+      display: none;
+      position: absolute;
+      top: 58px;
+      right: 8px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+      padding: 10px;
+      width: 280px;
+      z-index: 20;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .more-menu.active {
+      display: flex;
+    }
+
+    .more-menu textarea {
+      width: 100%;
+      height: 70px;
+      padding: 8px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 11px;
+      resize: vertical;
+      outline: none;
+    }
+
+    .menu-actions {
+      display: flex;
+      gap: 6px;
+      justify-content: flex-end;
+    }
+
+    /* Main Viewport Container */
+    .viewport-container {
+      position: absolute;
+      top: 52px;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #ffffff;
+    }
+
+    iframe#appFrame {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+
+    /* Floating Action Button */
+    .fab-devtools {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      height: 48px;
+      padding: 0 18px;
+      background: var(--primary);
+      color: #ffffff;
+      border: none;
+      border-radius: 24px;
+      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      z-index: 90;
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .fab-devtools:active {
+      transform: scale(0.95);
+    }
+
+    .fab-badge {
+      background: #ffffff;
+      color: var(--primary);
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 10px;
+    }
+
+    .fab-badge.has-errors {
+      background: var(--accent-error);
+      color: #ffffff;
+    }
+
+    /* Floating DevTools Overlay Panel */
+    .devtools-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(2px);
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      display: flex;
+      justify-content: flex-end;
+      align-items: flex-end;
+    }
+
+    .devtools-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .devtools-panel {
+      width: 100%;
+      height: 85%;
+      max-height: 90vh;
+      background: var(--bg-devtools);
+      border-top-left-radius: 16px;
+      border-top-right-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow: hidden;
+    }
+
+    @media (min-width: 768px) {
+      .devtools-panel {
+        width: 85%;
+        max-width: 900px;
+        height: 100%;
+        max-height: 100%;
+        border-top-right-radius: 0;
+        border-top-left-radius: 16px;
+        border-bottom-left-radius: 16px;
+      }
+    }
+
+    .devtools-overlay.active .devtools-panel {
+      transform: translateY(0);
+    }
+
+    /* DevTools Header Bar */
+    .dt-header {
+      background: #1e293b;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-color);
+      flex-shrink: 0;
+    }
+
+    .dt-title-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .dt-close-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px 8px;
+    }
+
+    /* Tabbed Navigation Filter */
+    .dt-tabs {
+      display: flex;
+      background: #0f172a;
+      border-bottom: 1px solid var(--border-color);
+      overflow-x: auto;
+      flex-shrink: 0;
+      scrollbar-width: none;
+    }
+
+    .dt-tabs::-webkit-scrollbar {
+      display: none;
+    }
+
+    .tab-btn {
+      min-height: var(--touch-size);
+      padding: 0 16px;
+      background: transparent;
+      color: var(--text-muted);
+      border: none;
+      border-bottom: 2px solid transparent;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+      background: rgba(2, 132, 199, 0.05);
+    }
+
+    /* Action Controls Bar */
+    .dt-action-bar {
+      padding: 8px 12px;
+      background: #1e293b;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      flex-shrink: 0;
+    }
+
+    .search-box {
+      flex: 1;
+      height: 34px;
+      background: #0f172a;
+      border: 1px solid var(--border-color);
+      color: #ffffff;
+      padding: 0 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      outline: none;
+    }
+
+    .dt-action-btn {
+      height: 34px;
+      padding: 0 12px;
+      background: #334155;
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .dt-action-btn:active {
+      background: #475569;
+    }
+
+    /* Main Tab Panels Container */
+    .dt-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      color: var(--text-main);
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    /* Dashboard Overview Card */
+    .overview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .metric-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .metric-title {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .metric-value {
+      font-size: 18px;
+      font-weight: 800;
+      color: #ffffff;
+    }
+
+    .session-info-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 16px;
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding-bottom: 4px;
+    }
+
+    .info-label { color: var(--text-muted); }
+    .info-val { font-family: monospace; font-weight: 600; color: #ffffff; }
+
+    /* Modern Log Cards */
+    .log-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .log-card {
+      background: var(--bg-card);
+      border-left: 4px solid var(--text-muted);
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-family: monospace;
+      font-size: 11px;
+      word-break: break-all;
+    }
+
+    .log-card.error { border-left-color: var(--accent-error); background: rgba(239, 68, 68, 0.08); }
+    .log-card.warn { border-left-color: var(--accent-warn); background: rgba(245, 158, 11, 0.08); }
+    .log-card.network { border-left-color: var(--accent-info); }
+    .log-card.event { border-left-color: var(--accent-success); }
+
+    .log-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+
+    .log-time { font-size: 10px; color: var(--text-muted); }
+    .badge-tag {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      background: #334155;
+      color: #ffffff;
+    }
+
+    .log-body {
+      color: #ffffff;
+      line-height: 1.4;
+    }
+
+    .log-detail {
+      margin-top: 6px;
+      padding: 6px;
+      background: #0f172a;
+      border-radius: 4px;
+      color: var(--text-muted);
+      font-size: 10px;
+      white-space: pre-wrap;
+      cursor: pointer;
+    }
+
+    .section-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <div class="top-toolbar">
+    <button class="nav-btn" id="btnBack">◀</button>
+    <button class="nav-btn" id="btnForward">▶</button>
+    <button class="nav-btn" id="btnRefresh">↻</button>
+    <input
+  type="text"
+  id="urlInput"
+  class="url-bar"
+  placeholder="Masukkan URL"
+  value=""
+>
+    <button class="nav-btn btn-go" id="btnOpenUrl">GO</button>
+    <button class="nav-btn" id="btnMore">•••</button>
+
+    <!-- More Options Dropdown -->
+    <div class="more-menu" id="moreMenu">
+      <textarea id="htmlInput" placeholder="<!-- Enter HTML/JS snippet here -->&#10;<button onclick=&quot;console.log('Tested!')&quot;>Click Me</button>"></textarea>
+      <div class="menu-actions">
+        <button class="dt-action-btn" id="btnClearCache">Clear Storage</button>
+        <button class="dt-action-btn" id="btnRunHtml" style="background: var(--accent-success);">Run HTML</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Primary Iframe Viewport -->
+  <div class="viewport-container">
+    <iframe id="appFrame" sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups"></iframe>
+  </div>
+
+  <!-- Floating DevTools Button -->
+  <button class="fab-devtools" id="btnFab">
+    <span> DevTools</span>
+    <span class="fab-badge" id="fabBadge">0</span>
+  </button>
+
+  <!-- DevTools Floating Drawer Overlay -->
+  <div class="devtools-overlay" id="dtOverlay">
+    <div class="devtools-panel">
+      
+      <!-- Panel Header -->
+      <div class="dt-header">
+        <div class="dt-title-group">
+          <span>Chrome DevTools</span>
+        </div>
+        <button class="dt-close-btn" id="btnCloseDt">✕</button>
+      </div>
+
+      <!-- Category Filter Tabs -->
+      <div class="dt-tabs">
+        <button class="tab-btn active" data-tab="tabOverview">Overview</button>
+        <button class="tab-btn" data-tab="tabConsole">Console</button>
+        <button class="tab-btn" data-tab="tabNetwork">Network</button>
+        <button class="tab-btn" data-tab="tabEvents">Events</button>
+        <button class="tab-btn" data-tab="tabErrors">Errors</button>
+        <button class="tab-btn" data-tab="tabNav">Navigation</button>
+        <button class="tab-btn" data-tab="tabStorage">Storage</button>
+        <button class="tab-btn" data-tab="tabPerf">Performance</button>
+      </div>
+
+      <!-- Action Controls -->
+      <div class="dt-action-bar">
+        <input type="text" id="searchInput" class="search-box" placeholder="Filter logs...">
+        <button class="dt-action-btn" id="btnClearLog">Clear</button>
+        <button class="dt-action-btn" id="btnCopyLog">Copy</button>
+        <button class="dt-action-btn" id="btnExportJson">JSON</button>
+      </div>
+
+      <!-- Scrollable Tab Content Container -->
+      <div class="dt-content">
+
+        <!-- TAB: OVERVIEW -->
+        <div class="tab-panel active" id="tabOverview">
+          <div class="overview-grid">
+            <div class="metric-card"><span class="metric-title">Logs</span><span class="metric-value" id="stLog">0</span></div>
+            <div class="metric-card"><span class="metric-title">Errors</span><span class="metric-value" id="stErr" style="color: var(--accent-error);">0</span></div>
+            <div class="metric-card"><span class="metric-title">Warnings</span><span class="metric-value" id="stWarn" style="color: var(--accent-warn);">0</span></div>
+            <div class="metric-card"><span class="metric-title">Requests</span><span class="metric-value" id="stReq">0</span></div>
+            <div class="metric-card"><span class="metric-title">Clicks</span><span class="metric-value" id="stClick">0</span></div>
+            <div class="metric-card"><span class="metric-title">Inputs</span><span class="metric-value" id="stInput">0</span></div>
+          </div>
+
+          <div class="session-info-card">
+            <div class="info-row"><span class="info-label">Running Time</span><span class="info-val" id="infoRuntime">00:00:00</span></div>
+            <div class="info-row"><span class="info-label">Current URL</span><span class="info-val" id="infoUrl">about:blank</span></div>
+            <div class="info-row"><span class="info-label">Title</span><span class="info-val" id="infoTitle">-</span></div>
+            <div class="info-row"><span class="info-label">ReadyState</span><span class="info-val" id="infoState">-</span></div>
+            <div class="info-row"><span class="info-label">Same Origin</span><span class="info-val" id="infoSameOrigin">YES</span></div>
+            <div class="info-row"><span class="info-label">Injection Status</span><span class="info-val" id="infoInjection">Ready</span></div>
+            <div class="info-row"><span class="info-label">DOM Nodes</span><span class="info-val" id="infoDom">0</span></div>
+            <div class="info-row"><span class="info-label">Viewport</span><span class="info-val" id="infoViewport">0x0</span></div>
+          </div>
+
+          <div class="section-title">
+            <span>Latest 10 Logs</span>
+            <button class="dt-action-btn" id="btnJumpLogs">View Full Logs</button>
+          </div>
+          <div class="log-list" id="recentLogContainer"></div>
+        </div>
+
+        <!-- TAB: CONSOLE -->
+        <div class="tab-panel" id="tabConsole"><div class="log-list" id="consoleLogContainer"></div></div>
+
+        <!-- TAB: NETWORK -->
+        <div class="tab-panel" id="tabNetwork"><div class="log-list" id="networkLogContainer"></div></div>
+
+        <!-- TAB: EVENTS -->
+        <div class="tab-panel" id="tabEvents"><div class="log-list" id="eventsLogContainer"></div></div>
+
+        <!-- TAB: ERRORS -->
+        <div class="tab-panel" id="tabErrors"><div class="log-list" id="errorsLogContainer"></div></div>
+
+        <!-- TAB: NAVIGATION -->
+        <div class="tab-panel" id="tabNav"><div class="log-list" id="navLogContainer"></div></div>
+
+        <!-- TAB: STORAGE -->
+        <div class="tab-panel" id="tabStorage"><div class="log-list" id="storageLogContainer"></div></div>
+
+        <!-- TAB: PERFORMANCE -->
+        <div class="tab-panel" id="tabPerf">
+          <div class="session-info-card">
+            <div class="info-row"><span class="info-label">Scripts Count</span><span class="info-val" id="perfScripts">0</span></div>
+            <div class="info-row"><span class="info-label">Stylesheets Count</span><span class="info-val" id="perfStyles">0</span></div>
+            <div class="info-row"><span class="info-label">Screen Resolution</span><span class="info-val" id="perfScreen">0x0</span></div>
+            <div class="info-row"><span class="info-label">Memory Log Count</span><span class="info-val" id="perfMemory">0</span></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State Management
+    const state = {
+      activeTab: 'tabOverview',
+      searchQuery: '',
+      isPaused: false,
+      startTime: Date.now(),
+      logs: [],
+      stats: { log: 0, err: 0, warn: 0, req: 0, click: 0, input: 0, nav: 0 }
+    };
+
+    const MAX_RENDERED_ROWS = 100;
+
+    // DOM Elements
+    const appFrame = document.getElementById('appFrame');
+    const urlInput = document.getElementById('urlInput');
+    const btnMore = document.getElementById('btnMore');
+    const moreMenu = document.getElementById('moreMenu');
+    const htmlInput = document.getElementById('htmlInput');
+    const btnFab = document.getElementById('btnFab');
+    const fabBadge = document.getElementById('fabBadge');
+    const dtOverlay = document.getElementById('dtOverlay');
+    const btnCloseDt = document.getElementById('btnCloseDt');
+    const searchInput = document.getElementById('searchInput');
+
+    // Toggle Dropdown
+    btnMore.addEventListener('click', () => moreMenu.classList.toggle('active'));
+
+    // Drawer Controls
+    btnFab.addEventListener('click', () => dtOverlay.classList.add('active'));
+    btnCloseDt.addEventListener('click', () => dtOverlay.classList.remove('active'));
+
+    // Tabs Switcher
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        e.target.classList.add('active');
+        
+        state.activeTab = e.target.getAttribute('data-tab');
+        document.getElementById(state.activeTab).classList.add('active');
+        renderLogs();
+      });
+    });
+
+    document.getElementById('btnJumpLogs').addEventListener('click', () => {
+      document.querySelector('[data-tab="tabConsole"]').click();
+    });
+
+    // Injected Script String Generator
+    const injectionScript = `
+      <script>
+      (function() {
+        function safeStringify(obj) {
+          try {
+            if (obj === undefined) return 'undefined';
+            if (obj === null) return 'null';
+            if (typeof obj === 'function') return obj.toString();
+            if (typeof obj !== 'object') return String(obj);
+            return JSON.stringify(obj, (key, value) => {
+              if (value instanceof HTMLElement) return '<' + value.tagName.toLowerCase() + (value.id ? '#' + value.id : '') + '>';
+              if (value instanceof Error) return value.stack || value.message;
+              return value;
+            });
+          } catch(e) { return String(obj); }
+        }
+
+        function sendLog(category, type, message, detail = '') {
+          try {
+            window.parent.postMessage({
+              source: 'DEVTOOLS_WRAPPER',
+              category: category,
+              type: type,
+              message: String(message),
+              detail: typeof detail === 'object' ? safeStringify(detail) : String(detail),
+              timestamp: new Date().toLocaleTimeString()
+            }, '*');
+          } catch(e) {}
+        }
+
+        function updateMetrics() {
+          try {
+            window.parent.postMessage({
+              source: 'DEVTOOLS_METRICS',
+              title: document.title,
+              scripts: document.querySelectorAll('script').length,
+              css: document.querySelectorAll('link[rel="stylesheet"], style').length,
+              domNodes: document.querySelectorAll('*').length,
+              url: window.location.href,
+              readyState: document.readyState,
+              viewport: window.innerWidth + 'x' + window.innerHeight,
+              screen: screen.width + 'x' + screen.height
+            }, '*');
+          } catch(e) {}
+        }
+
+        // 1. Console Patch
+        ['log', 'warn', 'error', 'info', 'debug'].forEach(method => {
+          const orig = console[method];
+          console[method] = function(...args) {
+            if (orig) orig.apply(console, args);
+            const cat = method === 'error' ? 'ERROR' : (method === 'warn' ? 'ERROR' : 'CONSOLE');
+            sendLog(cat, method.toUpperCase(), args.map(safeStringify).join(' '));
+          };
+        });
+
+        // 2. Window Error & Rejection
+        window.onerror = function(msg, url, lineNo, columnNo, error) {
+          sendLog('ERROR', 'WINDOW_ERROR', msg, 'Line: ' + lineNo + ':' + columnNo + (error ? '\\n' + safeStringify(error) : ''));
+        };
+
+        window.addEventListener('unhandledrejection', function(e) {
+          sendLog('ERROR', 'PROMISE_REJECT', safeStringify(e.reason));
+        });
+
+        // 3. Network Patching (Fetch & XHR)
+        const origFetch = window.fetch;
+        if (origFetch) {
+          window.fetch = async function(...args) {
+            const method = (args[1] && args[1].method) || 'GET';
+            const url = typeof args[0] === 'string' ? args[0] : (args[0] ? args[0].url : '');
+            sendLog('NETWORK', 'FETCH', method + ' ' + url);
+            try {
+              const response = await origFetch.apply(this, args);
+              sendLog('NETWORK', 'FETCH_RES', '[' + response.status + '] ' + method + ' ' + url);
+              return response;
+            } catch (err) {
+              sendLog('NETWORK', 'FETCH_ERR', err.message + ' ' + url);
+              throw err;
+            }
+          };
+        }
+
+        const origXHR = window.XMLHttpRequest.prototype.open;
+        window.XMLHttpRequest.prototype.open = function(method, url, ...rest) {
+          sendLog('NETWORK', 'XHR', method + ' ' + url);
+          return origXHR.apply(this, [method, url, ...rest]);
+        };
+
+        // 4. History API
+        const origPushState = history.pushState;
+        history.pushState = function(...args) {
+          origPushState.apply(this, args);
+          sendLog('NAVIGATION', 'PUSH_STATE', String(args[2]));
+          updateMetrics();
+        };
+
+        // 5. DOM Events
+        ['click', 'input', 'change', 'submit', 'keydown'].forEach(evtName => {
+          window.addEventListener(evtName, (e) => {
+            let targetStr = '';
+            if (e.target && e.target !== window) {
+              const t = e.target;
+              targetStr = t.tagName ? t.tagName.toLowerCase() : '';
+              if (t.id) targetStr += '#' + t.id;
+            }
+            sendLog('EVENT', evtName.toUpperCase(), targetStr || 'document');
+            updateMetrics();
+          }, true);
+        });
+
+        setInterval(updateMetrics, 1000);
+      })();
+      <\/script>
+    `;
+
+    // Process Incoming Logs
+    function pushLog(category, type, message, detail = '', timestamp = null) {
+      const entry = {
+        id: Date.now(),
+        category,
+        type,
+        message,
+        detail,
+        timestamp: timestamp || new Date().toLocaleTimeString()
+      };
+
+      state.logs.push(entry);
+
+      // Update Internal Counts
+      if (category === 'ERROR' || type.includes('ERR')) state.stats.err++;
+      else if (type === 'WARN') state.stats.warn++;
+      else if (category === 'CONSOLE') state.stats.log++;
+      else if (category === 'NETWORK') state.stats.req++;
+      else if (type === 'CLICK') state.stats.click++;
+      else if (type === 'INPUT') state.stats.input++;
+
+      updateUI();
+    }
+
+    function updateUI() {
+      // Metrics Update
+      document.getElementById('stLog').innerText = state.stats.log;
+      document.getElementById('stErr').innerText = state.stats.err;
+      document.getElementById('stWarn').innerText = state.stats.warn;
+      document.getElementById('stReq').innerText = state.stats.req;
+      document.getElementById('stClick').innerText = state.stats.click;
+      document.getElementById('stInput').innerText = state.stats.input;
+      document.getElementById('perfMemory').innerText = state.logs.length;
+
+      fabBadge.innerText = state.logs.length;
+      if (state.stats.err > 0) fabBadge.classList.add('has-errors');
+
+      renderLogs();
+    }
+
+    function renderLogs() {
+      const q = state.searchQuery.toLowerCase();
+      const filtered = state.logs.filter(l => {
+        if (!q) return true;
+        return (l.message + l.type + l.category + l.detail).toLowerCase().includes(q);
+      });
+
+      // Render Recent 10 on Overview
+      const recentContainer = document.getElementById('recentLogContainer');
+      recentContainer.innerHTML = '';
+      filtered.slice(-10).reverse().forEach(l => recentContainer.appendChild(createLogCard(l)));
+
+      // Render Active Tab Logs
+      let containerId = null;
+      let categoryFilter = null;
+
+      if (state.activeTab === 'tabConsole') { containerId = 'consoleLogContainer'; categoryFilter = ['CONSOLE', 'ERROR']; }
+      if (state.activeTab === 'tabNetwork') { containerId = 'networkLogContainer'; categoryFilter = ['NETWORK']; }
+      if (state.activeTab === 'tabEvents') { containerId = 'eventsLogContainer'; categoryFilter = ['EVENT']; }
+      if (state.activeTab === 'tabErrors') { containerId = 'errorsLogContainer'; categoryFilter = ['ERROR']; }
+      if (state.activeTab === 'tabNav') { containerId = 'navLogContainer'; categoryFilter = ['NAVIGATION']; }
+
+      if (containerId) {
+        const target = document.getElementById(containerId);
+        target.innerHTML = '';
+        const tabLogs = filtered.filter(l => categoryFilter.includes(l.category));
+        
+        // Virtual limit to prevent DOM bloat
+        tabLogs.slice(-MAX_RENDERED_ROWS).reverse().forEach(l => target.appendChild(createLogCard(l)));
+      }
+    }
+
+    function createLogCard(log) {
+      const card = document.createElement('div');
+      let typeClass = log.category.toLowerCase();
+      if (log.type === 'WARN') typeClass = 'warn';
+
+      card.className = `log-card ${typeClass}`;
+      card.innerHTML = `
+        <div class="log-meta">
+          <span class="log-time">${log.timestamp}</span>
+          <span class="badge-tag">${log.type}</span>
+        </div>
+        <div class="log-body">${escapeHtml(log.message)}</div>
+        ${log.detail ? `<div class="log-detail" onclick="this.classList.toggle('expanded')">${escapeHtml(log.detail)}</div>` : ''}
+      `;
+      return card;
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    // Debounce Search Logic
+    let searchTimeout;
+    searchInput.addEventListener('input', (e) => {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        state.searchQuery = e.target.value.trim();
+        renderLogs();
+      }, 200);
+    });
+
+    // Receive PostMessages
+    window.addEventListener('message', (event) => {
+      const data = event.data;
+      if (!data || typeof data !== 'object') return;
+
+      if (data.source === 'DEVTOOLS_WRAPPER') {
+        pushLog(data.category, data.type, data.message, data.detail, data.timestamp);
+      }
+
+      if (data.source === 'DEVTOOLS_METRICS') {
+        document.getElementById('infoTitle').innerText = data.title || '-';
+        document.getElementById('infoUrl').innerText = data.url;
+        document.getElementById('infoState').innerText = data.readyState;
+        document.getElementById('infoDom').innerText = data.domNodes;
+        document.getElementById('infoViewport').innerText = data.viewport;
+
+        document.getElementById('perfScripts').innerText = data.scripts;
+        document.getElementById('perfStyles').innerText = data.css;
+        document.getElementById('perfScreen').innerText = data.screen;
+      }
+    });
+
+    // Navigation Actions
+    document.getElementById('btnOpenUrl').addEventListener('click', loadUrl);
+    urlInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') loadUrl(); });
+
+    function loadUrl() {
+      let url = urlInput.value.trim();
+      if (!url) return;
+      if (!/^https?:\/\//i.test(url) && url !== 'about:blank') url = 'http://' + url;
+
+      pushLog('NAVIGATION', 'NAVIGATE', 'Targeting URL: ' + url);
+      appFrame.removeAttribute('srcdoc');
+      appFrame.src = url;
+
+      appFrame.onload = () => {
+        try {
+          const frameDoc = appFrame.contentDocument || appFrame.contentWindow.document;
+          const script = frameDoc.createElement('script');
+          script.text = injectionScript.replace(/<script>|<\/script>/g, '');
+          frameDoc.head.appendChild(script);
+          document.getElementById('infoSameOrigin').innerText = 'YES';
+          document.getElementById('infoInjection').innerText = 'Injected';
+        } catch (err) {
+          document.getElementById('infoSameOrigin').innerText = 'NO (Cross-Origin)';
+          document.getElementById('infoInjection').innerText = 'Blocked by SOP';
+          pushLog('WARN', 'CROSS_ORIGIN', 'Cross-origin restricted. Real-time JS inspection limited.');
+        }
+      };
+    }
+
+    document.getElementById('btnRunHtml').addEventListener('click', () => {
+      let rawHtml = htmlInput.value.trim();
+      if (!rawHtml) return;
+
+      if (!/^\s*<!DOCTYPE/i.test(rawHtml) && !/^\s*<html/i.test(rawHtml)) {
+        rawHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>${rawHtml}</body></html>`;
+      }
+
+      appFrame.removeAttribute('src');
+      appFrame.srcdoc = injectionScript + rawHtml;
+      urlInput.value = 'srcdoc (Inline Content)';
+      moreMenu.classList.remove('active');
+      pushLog('NAVIGATION', 'SRCDOC', 'Executing inline HTML snippet');
+    });
+
+    document.getElementById('btnRefresh').addEventListener('click', () => {
+      try { appFrame.contentWindow.location.reload(); } catch(e) { appFrame.src = appFrame.src; }
+    });
+
+    document.getElementById('btnBack').addEventListener('click', () => {
+      try { appFrame.contentWindow.history.back(); } catch(e) {}
+    });
+
+    document.getElementById('btnForward').addEventListener('click', () => {
+      try { appFrame.contentWindow.history.forward(); } catch(e) {}
+    });
+
+    document.getElementById('btnClearCache').addEventListener('click', () => {
+      try {
+        localStorage.clear();
+        sessionStorage.clear();
+        pushLog('CONSOLE', 'STORAGE', 'Storage cleared');
+      } catch(e) {}
+    });
+
+    document.getElementById('btnClearLog').addEventListener('click', () => {
+      state.logs = [];
+      Object.keys(state.stats).forEach(k => state.stats[k] = 0);
+      updateUI();
+    });
+
+    document.getElementById('btnCopyLog').addEventListener('click', () => {
+      const text = state.logs.map(l => `[${l.timestamp}] [${l.category}/${l.type}] ${l.message}`).join('\n');
+      navigator.clipboard.writeText(text).then(() => alert('Logs copied to clipboard'));
+    });
+
+    document.getElementById('btnExportJson').addEventListener('click', () => {
+      const blob = new Blob([JSON.stringify(state.logs, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `devtools-log-${Date.now()}.json`;
+      a.click();
+    });
+
+    // Session Timer
+    setInterval(() => {
+      const elapsed = Math.floor((Date.now() - state.startTime) / 1000);
+      const hrs = String(Math.floor(elapsed / 3600)).padStart(2, '0');
+      const mins = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
+      const secs = String(elapsed % 60).padStart(2, '0');
+      document.getElementById('infoRuntime').innerText = `${hrs}:${mins}:${secs}`;
+    }, 1000);
+  </script>
+</body>
+</html>
