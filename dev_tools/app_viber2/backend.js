@@ -1,7 +1,7 @@
 /**
  * Backend Semantic Extraction Engine - Modular Pipeline Stage
  * Target Directory: /backend/
- * File: viber.js
+ * File: backend.js
  */
 (function () {
   // Helper: Clean raw text from extra spaces and quotes
@@ -9,27 +9,30 @@
     return text ? text.replace(/\s+/g, ' ').trim() : '';
   }
 
-  // Helper: Infer business module name from function name
-  function inferBusinessModule(functionName) {
-    const name = functionName.toLowerCase();
+  // Helper: Infer generic module or service grouping objectively based on function action and file context
+  function inferBusinessModule(functionName, fileName) {
+    const rawName = functionName.replace(/^(Handle|Handler|Process|Execute|Run|Service|Controller)/i, '').trim() || functionName;
+    
+    // Extract base entity / action phrase without hardcoding domain words
+    const actionMatch = rawName.match(/^(Get|List|Fetch|Create|Add|Save|Insert|Update|Edit|Modify|Delete|Remove|Destroy|Verify|Check|Validate|Find|Search)([A-Z][a-zA-Z0-9_]*)/);
+    
+    if (actionMatch && actionMatch[2]) {
+      return `${actionMatch[2]} Service`;
+    }
 
-    if (name.includes('login') || name.includes('auth'))
-      return 'Authentication';
+    const fallback = rawName.replace(/(Get|Create|Update|Delete|Show|List|Handler|Service|Handle)/gi, '').trim();
+    if (fallback) {
+      return `${fallback} Service`;
+    }
 
-    if (name.includes('label'))
-      return 'Label Management';
+    if (fileName) {
+      const fileBase = fileName.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9_]/g, '');
+      if (fileBase && !/^(main|app|index|server)$/i.test(fileBase)) {
+        return `${fileBase.charAt(0).toUpperCase() + fileBase.slice(1)} Module`;
+      }
+    }
 
-    if (name.includes('category') || name.includes('kategori'))
-      return 'Category Management';
-
-    if (name.includes('audit') || name.includes('activity'))
-      return 'Audit Logging';
-
-    if (name.includes('verify'))
-      return 'API Verification';
-
-    const fallback = functionName.replace(/(Get|Create|Update|Delete|Show|List|Handler|Service|Handle)/g, '').trim();
-    return fallback ? `${fallback} Service` : 'Core Service';
+    return 'Core Service';
   }
 
   // Helper: Extract nested block contents considering balanced braces
@@ -53,9 +56,44 @@
     return endPos !== -1 ? text.substring(startPos, endPos + 1) : null;
   }
 
-  // Stage 1 & 2: Extract Structs, Fields, and Relationships
+  // Helper: Extract python function block based on indentation
+  function extractPythonBlock(text, startPos) {
+    const lines = text.substring(startPos).split('\n');
+    if (lines.length <= 1) return text.substring(startPos);
+
+    let blockLines = [lines[0]];
+    let baseIndent = -1;
+
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i];
+      if (line.trim().length === 0) {
+        blockLines.push(line);
+        continue;
+      }
+
+      const match = line.match(/^(\s+)/);
+      const indent = match ? match[1].length : 0;
+
+      if (baseIndent === -1) {
+        if (indent === 0) break;
+        baseIndent = indent;
+      }
+
+      if (indent < baseIndent && line.trim().length > 0) {
+        break;
+      }
+
+      blockLines.push(line);
+    }
+
+    return blockLines.join('\n');
+  }
+
+  // Stage 1 & 2: Extract Structs, Classes, Fields, and Relationships
   function extractStructs(content) {
     const structs = [];
+
+    // Go struct pattern
     const structRegex = /type\s+([a-zA-Z0-9_]+)\s+struct\s*\{/g;
     let match;
 
@@ -74,30 +112,27 @@
           const trimmed = line.trim();
           if (!trimmed || trimmed.startsWith('//') || trimmed.startsWith('/*')) return;
 
-          // Check embedded gorm / relationships or struct fields
           const fieldMatch = trimmed.match(/^([a-zA-Z0-9_]+)\s+([^\s`]+)(?:\s+`([^`]+)`)?/);
           if (fieldMatch) {
             const fieldName = fieldMatch[1];
             const fieldType = fieldMatch[2];
             const tags = fieldMatch[3] || '';
 
-            if (tags.includes('gorm:') || tags.includes('primaryKey') || fieldName === 'gorm.Model' || fieldName === 'ID') {
+            if (tags.includes('gorm:') || tags.includes('primaryKey') || tags.includes('db:') || tags.includes('column:') || fieldName.toLowerCase() === 'id') {
               isDbEntity = true;
             }
 
-            // Skip unexported lower case private properties if not relevant, but capture primary entities
-            if (fieldName !== 'gorm.Model') {
+            if (!fieldName.includes('.')) {
               fields.push({ name: fieldName, type: fieldType });
             }
 
-            // Relationship heuristics
-            if (tags.includes('foreignKey') || tags.includes('many2many') || tags.includes('belongsTo')) {
+            if (tags.includes('foreignKey') || tags.includes('many2many') || tags.includes('belongsTo') || tags.includes('references')) {
               relationships.push(`${structName} -> ${fieldType} (${tags.includes('many2many') ? 'many-to-many' : 'association'})`);
               isDbEntity = true;
             } else if (fieldType.startsWith('[]') && /^[A-Z]/.test(fieldType.slice(2))) {
               relationships.push(`${structName} has many ${fieldType.slice(2)}`);
               isDbEntity = true;
-            } else if (/^[A-Z]/.test(fieldType) && !['String', 'Time', 'Int', 'Int64', 'Float64', 'Bool', 'Uint'].includes(fieldType)) {
+            } else if (/^[A-Z]/.test(fieldType) && !['String', 'Time', 'Int', 'Int64', 'Float64', 'Bool', 'Uint', 'Object', 'Any'].includes(fieldType)) {
               relationships.push(`${structName} belongs to ${fieldType}`);
               isDbEntity = true;
             }
@@ -108,43 +143,121 @@
         structRegex.lastIndex = blockStart + fullBlock.length;
       }
     }
+
+    // Generic ES6/TypeScript/Class/Model Entity pattern
+    const classRegex = /class\s+([a-zA-Z0-9_]+)(?:\s*[\(\<]\s*([a-zA-Z0-9_.,\s]+)[\)\>]|\s+extends\s+([a-zA-Z0-9_]+))?\s*[\{:]/g;
+    while ((match = classRegex.exec(content)) !== null) {
+      const className = match[1];
+      const extendsOrBase = match[2] || match[3] || '';
+      const blockStart = match.index + match[0].length - 1;
+
+      let fullBlock = null;
+      if (content[blockStart] === '{') {
+        fullBlock = extractBalancedBlock(content, blockStart);
+      } else {
+        fullBlock = extractPythonBlock(content, match.index);
+      }
+
+      if (fullBlock) {
+        const fields = [];
+        const relationships = [];
+        let isDbEntity = /@Entity|@Table|Model|Schema|Authenticatable/i.test(extendsOrBase) || 
+                         /@Entity|@Table|Model|Schema/i.test(content.substring(Math.max(0, match.index - 100), match.index));
+
+        const propRegex = /(?:@([a-zA-Z0-9_]+)\s*\([^)]*\)\s*)?([a-zA-Z0-9_]+)\s*[:=]/g;
+        let propMatch;
+        const classBody = fullBlock;
+
+        while ((propMatch = propRegex.exec(classBody)) !== null) {
+          const decorator = propMatch[1];
+          const propName = propMatch[2];
+
+          if (decorator && /Column|Primary|Entity|Field/i.test(decorator)) {
+            isDbEntity = true;
+          }
+          if (decorator && /OneToMany|ManyToOne|ManyToMany|HasMany|BelongsTo/i.test(decorator)) {
+            relationships.push(`${className} relation via @${decorator}`);
+            isDbEntity = true;
+          }
+
+          if (propName && !fields.some(f => f.name === propName)) {
+            fields.push({ name: propName, type: 'Property' });
+          }
+        }
+
+        structs.push({ name: className, fields, relationships, isDbEntity });
+        classRegex.lastIndex = match.index + fullBlock.length;
+      }
+    }
+
     return structs;
   }
 
-  // Detect Framework
+  // Detect Detected Backend Patterns
   function detectFramework(content, imports) {
-    if (imports.some(i => i.includes('labstack/echo'))) return 'Echo';
-    if (imports.some(i => i.includes('gin-gonic/gin'))) return 'Gin';
-    if (imports.some(i => i.includes('gofiber/fiber'))) return 'Fiber';
-    if (imports.some(i => i.includes('net/http'))) return 'net/http';
-    if (/e\.(GET|POST|PUT|DELETE|PATCH)\s*\(/.test(content)) return 'Echo';
-    if (/r\.(GET|POST|PUT|DELETE|PATCH)\s*\(|router\.(GET|POST)/.test(content)) return 'Gin';
-    return 'Unknown';
+    const patterns = [];
+
+    // Go Patterns
+    if (imports.some(i => i.includes('labstack/echo')) || /e\.(GET|POST|PUT|DELETE|PATCH)\s*\(/.test(content)) patterns.push('Echo style routing');
+    if (imports.some(i => i.includes('gin-gonic/gin')) || /r\.(GET|POST|PUT|DELETE|PATCH)\s*\(/i.test(content)) patterns.push('Gin style routing');
+    if (imports.some(i => i.includes('gofiber/fiber'))) patterns.push('Fiber style routing');
+    if (imports.some(i => i.includes('net/http')) || /http\.HandleFunc/.test(content)) patterns.push('net/http pattern');
+
+    // Node / JS / TS Patterns
+    if (imports.some(i => i.includes('express')) || /app\.(get|post|put|delete|patch|use)\s*\(/i.test(content)) patterns.push('Express style routing');
+    if (imports.some(i => i.includes('@nestjs')) || /@Controller|@Get|@Post|@Put|@Delete/i.test(content)) patterns.push('NestJS style routing');
+    if (imports.some(i => i.includes('fastify'))) patterns.push('Fastify style routing');
+
+    // Python Patterns
+    if (imports.some(i => i.includes('fastapi')) || /@app\.(get|post|put|delete|patch)/i.test(content)) patterns.push('FastAPI style routing');
+    if (imports.some(i => i.includes('flask')) || /@app\.route/i.test(content)) patterns.push('Flask style routing');
+    if (imports.some(i => i.includes('django'))) patterns.push('Django pattern');
+
+    // PHP Patterns
+    if (/Route::(get|post|put|delete|patch|resource)/i.test(content)) patterns.push('Laravel style routing');
+
+    return patterns.length > 0 ? patterns.join(', ') : 'Generic Backend Pattern';
   }
 
-  // Stage 1 & 2: Extract Routes
+  // Stage 1 & 2: Extract Routes via Multi-framework Pattern Matching
   function extractRoutes(content) {
     const routes = [];
-    const routeRegex = /(?:e|r|router|app|group|g|api|v1)\.(GET|POST|PUT|PATCH|DELETE)\s*\(\s*["']([^"']+)["']\s*,\s*(.*?)\)/gi;
     let match;
 
+    // Pattern 1: Chain/Router Calls (e.g. e.GET, router.post, app.get, Route::get)
+    const routeRegex = /(?:e|r|router|app|group|g|api|v1|Route)\.(GET|POST|PUT|PATCH|DELETE|get|post|put|patch|delete)\s*\(\s*["']([^"']+)["']\s*,\s*(.*?)\)/gi;
     while ((match = routeRegex.exec(content)) !== null) {
       const method = match[1].toUpperCase();
       const path = match[2];
       const rest = match[3].split(',').map(s => s.trim());
-      const handler = rest[rest.length - 1];
+      const handler = rest[rest.length - 1] || 'AnonymousHandler';
       const middleware = rest.slice(0, rest.length - 1);
 
       routes.push({
         method,
         path,
-        handler: handler.replace(/^[a-zA-Z0-9_]+\./, ''),
+        handler: handler.replace(/^[a-zA-Z0-9_]+\./, '').replace(/['"]/g, ''),
         middleware: middleware.length > 0 ? middleware.join(', ') : null
       });
     }
 
-    // net/http HandleFunc support
-    const httpRegex = /http\.HandleFunc\s*\(\s*["']([^"']+)["']\s*,\s*([a-zA-Z0-9_.]+)\)/g;
+    // Pattern 2: Decorator-based Routing (NestJS, FastAPI, Python)
+    const decoratorRegex = /@(Get|Post|Put|Patch|Delete|route)\s*\(\s*["']([^"']+)["']\s*\)[\s\S]*?(?:async\s+)?def\s+([a-zA-Z0-9_]+)|@(Get|Post|Put|Patch|Delete)\s*\(\s*["']([^"']+)["']\s*\)[\s\S]*?([a-zA-Z0-9_]+)\s*\(/gi;
+    while ((match = decoratorRegex.exec(content)) !== null) {
+      const method = (match[1] || match[4]).toUpperCase();
+      const path = match[2] || match[5];
+      const handler = match[3] || match[6];
+
+      routes.push({
+        method: method === 'ROUTE' ? 'ALL' : method,
+        path,
+        handler,
+        middleware: null
+      });
+    }
+
+    // Pattern 3: Standard net/http or basic Function mappings
+    const httpRegex = /(?:http\.HandleFunc|app\.use)\s*\(\s*["']([^"']+)["']\s*,\s*([a-zA-Z0-9_.]+)\)/g;
     while ((match = httpRegex.exec(content)) !== null) {
       routes.push({
         method: 'ALL',
@@ -157,20 +270,23 @@
     return routes;
   }
 
-  // Extract Database Operations inside function body
+  // Extract Database Operations inside function body universally
   function extractDatabaseOperations(body) {
     const dbOps = [];
 
     const normalizeEntity = (raw) => {
       if (!raw) return 'Unknown';
-      const clean = raw.replace(/^&/, '');
+      const clean = raw.replace(/^[&*(]+|[()]+$/g, '').split('.')[0];
       return clean.charAt(0).toUpperCase() + clean.slice(1);
     };
 
-    if (/db\.(?:Where\(.*?\)\.)?Find\s*\(\s*&?([a-zA-Z0-9_]+)/i.test(body) || /SELECT\s+.*?\s+FROM/i.test(body)) {
-      const entityMatch = body.match(/db\.(?:Where\(.*?\)\.)?Find\s*\(\s*&?([a-zA-Z0-9_]+)/i) || body.match(/FROM\s+([a-zA-Z0-9_]+)/i);
-      const whereMatch = body.match(/Where\s*\(\s*["']([^"']+)["']/i);
-      const orderMatch = body.match(/Order\s*\(\s*["']([^"']+)["']/i);
+    // Generic READ Operations (GORM, Prisma, Sequelize, SQLAlchemy, Django ORM, Raw SQL)
+    if (/\b(?:Find|First|findMany|findUnique|findAll|findOne|query|filter|select|all)\b/i.test(body) || /SELECT\s+.*?\s+FROM/i.test(body) || /\.objects\./i.test(body)) {
+      const entityMatch = body.match(/(?:Find|First|findMany|findUnique|findAll|findOne)\s*\(\s*&?([a-zA-Z0-9_]+)/i) || 
+                          body.match(/FROM\s+([a-zA-Z0-9_]+)/i) ||
+                          body.match(/([a-zA-Z0-9_]+)\.(?:findMany|findUnique|findAll|findOne|objects)/i);
+      const whereMatch = body.match(/(?:Where|where|filter)\s*\(\s*["']?([^"']+)["']?/i);
+      const orderMatch = body.match(/(?:Order|orderBy|order_by)\s*\(\s*["']?([^"']+)["']?/i);
       
       dbOps.push({
         type: 'READ',
@@ -180,36 +296,34 @@
       });
     }
 
-    if (/db\.(?:Where\(.*?\)\.)?First\s*\(\s*&?([a-zA-Z0-9_]+)/i.test(body)) {
-      const entityMatch = body.match(/db\.(?:Where\(.*?\)\.)?First\s*\(\s*&?([a-zA-Z0-9_]+)/i);
-      const whereMatch = body.match(/Where\s*\(\s*["']([^"']+)["']/i);
-      
-      dbOps.push({
-        type: 'READ (FIRST)',
-        entity: normalizeEntity(entityMatch ? entityMatch[1] : null),
-        filter: whereMatch ? whereMatch[1] : null
-      });
-    }
-
-    if (/db\.Create\s*\(\s*&?([a-zA-Z0-9_]+)/i.test(body) || /INSERT\s+INTO\s+([a-zA-Z0-9_]+)/i.test(body)) {
-      const entityMatch = body.match(/db\.Create\s*\(\s*&?([a-zA-Z0-9_]+)/i) || body.match(/INSERT\s+INTO\s+([a-zA-Z0-9_]+)/i);
+    // Generic CREATE Operations (GORM, Prisma, Sequelize, Django, Raw SQL)
+    if (/\b(?:Create|Save|create|insert|save|add)\b/i.test(body) || /INSERT\s+INTO\s+([a-zA-Z0-9_]+)/i.test(body)) {
+      const entityMatch = body.match(/(?:Create|Save|create|insert)\s*\(\s*&?([a-zA-Z0-9_]+)/i) || 
+                          body.match(/INSERT\s+INTO\s+([a-zA-Z0-9_]+)/i) ||
+                          body.match(/([a-zA-Z0-9_]+)\.create/i);
       dbOps.push({ type: 'CREATE', entity: normalizeEntity(entityMatch ? entityMatch[1] : null) });
     }
 
-    if (/db\.Save\s*\(\s*&?([a-zA-Z0-9_]+)/i.test(body) || /db\.Update/i.test(body) || /UPDATE\s+([a-zA-Z0-9_]+)/i.test(body)) {
-      const entityMatch = body.match(/db\.Save\s*\(\s*&?([a-zA-Z0-9_]+)/i) || body.match(/UPDATE\s+([a-zA-Z0-9_]+)/i);
+    // Generic UPDATE Operations
+    if (/\b(?:Update|Save|update|updateMany|save)\b/i.test(body) || /UPDATE\s+([a-zA-Z0-9_]+)/i.test(body)) {
+      const entityMatch = body.match(/(?:Update|Save|update|updateMany)\s*\(\s*&?([a-zA-Z0-9_]+)/i) || 
+                          body.match(/UPDATE\s+([a-zA-Z0-9_]+)/i) ||
+                          body.match(/([a-zA-Z0-9_]+)\.update/i);
       dbOps.push({ type: 'UPDATE', entity: normalizeEntity(entityMatch ? entityMatch[1] : null) });
     }
 
-    if (/db\.Delete\s*\(\s*&?([a-zA-Z0-9_]+)/i.test(body) || /DELETE\s+FROM\s+([a-zA-Z0-9_]+)/i.test(body)) {
-      const entityMatch = body.match(/db\.Delete\s*\(\s*&?([a-zA-Z0-9_]+)/i) || body.match(/DELETE\s+FROM\s+([a-zA-Z0-9_]+)/i);
+    // Generic DELETE Operations
+    if (/\b(?:Delete|Remove|delete|destroy|deleteMany|remove)\b/i.test(body) || /DELETE\s+FROM\s+([a-zA-Z0-9_]+)/i.test(body)) {
+      const entityMatch = body.match(/(?:Delete|Remove|delete|destroy|deleteMany)\s*\(\s*&?([a-zA-Z0-9_]+)/i) || 
+                          body.match(/DELETE\s+FROM\s+([a-zA-Z0-9_]+)/i) ||
+                          body.match(/([a-zA-Z0-9_]+)\.(?:delete|destroy)/i);
       dbOps.push({ type: 'DELETE', entity: normalizeEntity(entityMatch ? entityMatch[1] : null) });
     }
 
     return dbOps;
   }
 
-  // Extract Security/Auth within function body or middleware
+  // Extract Security/Auth within function body or middleware universally
   function extractAuthFlow(content) {
     const auth = {
       authentication: null,
@@ -219,31 +333,30 @@
       authorizations: []
     };
 
-    if (/Cookie|SetCookie|Set-Cookie/i.test(content)) {
+    if (/Cookie|SetCookie|Set-Cookie|req\.cookies|cookies\.get/i.test(content)) {
       auth.authentication = 'Cookie based';
-      const cookieNameMatches = content.matchAll(/(?:Name|Cookie)\s*:\s*["']([^"']+)["']/g);
+      const cookieNameMatches = content.matchAll(/(?:Name|Cookie|cookie)\s*[:=]\s*["']([^"']+)["']/gi);
       for (const cm of cookieNameMatches) {
         if (cm[1] && !auth.cookies.includes(cm[1])) {
           auth.cookies.push(cm[1]);
         }
       }
-    } else if (/jwt|Bearer|SigningKey|Claims/i.test(content)) {
-      auth.authentication = 'JWT';
-    } else if (/Session|GetSession/i.test(content)) {
+    } else if (/jwt|Bearer|SigningKey|Claims|verifyToken|passport/i.test(content)) {
+      auth.authentication = 'JWT / Bearer Token';
+    } else if (/Session|GetSession|req\.session/i.test(content)) {
       auth.authentication = 'Session based';
     }
 
-    if (/bcrypt|CompareHashAndPassword|GenerateFromPassword/i.test(content)) {
-      auth.password = 'bcrypt validation';
+    if (/bcrypt|CompareHashAndPassword|GenerateFromPassword|check_password|Hash::check|argon2|scrypt/i.test(content)) {
+      auth.password = 'Hash verification pattern';
     }
 
-    const roleMatches = content.matchAll(/(?:Role|role)\s*==\s*["']([^"']+)["']|RequireRole\s*\(\s*["']([^"']+)["']/g);
+    const roleMatches = content.matchAll(/(?:Role|role|hasRole)\s*(?:==|===|\().*?["']([^"']+)["']/gi);
     for (const rm of roleMatches) {
-      const role = rm[1] || rm[2];
-      if (role) auth.roles.add(role);
+      if (rm[1]) auth.roles.add(rm[1]);
     }
 
-    const authCheckMatches = content.matchAll(/if\s+!?\s*([a-zA-Z0-9_]+(?:Can|Has|Is|Check|Modify|Access|Permission)[a-zA-Z0-9_]*\([^)]*\))/g);
+    const authCheckMatches = content.matchAll(/if\s+!?\s*([a-zA-Z0-9_.]+(?:Can|Has|Is|Check|Modify|Access|Permission|Guard|Authorize)[a-zA-Z0-9_]*\([^)]*\))/gi);
     for (const ac of authCheckMatches) {
       auth.authorizations.push({
         check: ac[1],
@@ -254,34 +367,35 @@
     return auth;
   }
 
-  // Extract Side Effects in function body
+  // Extract Side Effects in function body universally
   function extractSideEffects(body) {
     const sideEffects = [];
 
-    if (/os\.WriteFile|ioutil\.WriteFile|os\.Create/i.test(body)) {
+    if (/os\.WriteFile|ioutil\.WriteFile|os\.Create|fs\.writeFile|fs\.writeFileSync|open\([^)]+['"]w['"]\)/i.test(body)) {
       sideEffects.push('File write operation');
     }
-    if (/os\.Remove|os\.RemoveAll/i.test(body)) {
+    if (/os\.Remove|os\.RemoveAll|fs\.unlink|fs\.rmdir|os\.remove/i.test(body)) {
       sideEffects.push('File deletion');
     }
-    if (/exec\.Command|exec\.CommandContext/i.test(body)) {
+    if (/exec\.Command|exec\.CommandContext|child_process|subprocess\.run|shell_exec/i.test(body)) {
       sideEffects.push('External system command execution');
     }
-    if (/smtp\.SendMail|SendEmail|mail\.Send/i.test(body)) {
+    if (/smtp\.SendMail|SendEmail|mail\.Send|transporter\.sendMail|mailgun|sendgrid/i.test(body)) {
       sideEffects.push('Send email notification');
     }
-    if (/RecordActivity|AuditLog|LogActivity/i.test(body)) {
+    if (/RecordActivity|AuditLog|LogActivity|logger\.info|\baudit\b/i.test(body)) {
       sideEffects.push('Record audit logging activity');
     }
 
     return sideEffects;
   }
 
-  // Extract API Responses from body
+  // Extract API Responses from body universally
   function extractAPIResponses(body) {
     const responses = [];
-    const statusMatches = body.matchAll(/(?:c\.JSON|c\.Status|http\.Error|json\.NewEncoder)\s*\(\s*(?:http\.)?(Status[a-zA-Z0-9]+|[0-9]{3})/g);
 
+    // HTTP Status Codes / Enum Matches
+    const statusMatches = body.matchAll(/(?:status|Status|c\.JSON|c\.Status|res\.status|http\.Error|json\.NewEncoder|JSONResponse)\s*\(\s*(?:http\.)?(Status[a-zA-Z0-9]+|[0-9]{3})/gi);
     for (const sm of statusMatches) {
       let status = sm[1];
       if (status.startsWith('Status')) {
@@ -290,42 +404,53 @@
       if (!responses.includes(status)) responses.push(status);
     }
 
+    // Pattern Response Types
+    if (/res\.json|c\.JSON|JSONResponse|return\s+jsonify/i.test(body) && !responses.includes('JSON response')) {
+      responses.push('JSON response');
+    }
+    if (/res\.redirect|c\.Redirect|http\.Redirect|redirect\(/i.test(body) && !responses.includes('Redirect')) {
+      responses.push('Redirect');
+    }
+    if (/res\.render|c\.Render|render_template/i.test(body) && !responses.includes('HTML Render')) {
+      responses.push('HTML Render');
+    }
+
     return responses;
   }
 
-  // Summarize function operation logic into concise semantic steps
+  // Summarize function operation logic into concise semantic steps universally
   function summarizeFunctionIntent(body) {
     const inputs = [];
     const processSteps = [];
 
-    // Inputs
-    const paramMatches = body.matchAll(/(?:QueryParam|Param|FormValue)\s*\(\s*["']([^"']+)["']\)/g);
+    // Universal Inputs Detection
+    const paramMatches = body.matchAll(/(?:QueryParam|Param|FormValue|req\.query|req\.params|req\.body|request\.get|args\.get)\s*\(?\s*["']([^"']+)["']\)?/gi);
     for (const pm of paramMatches) {
       if (!inputs.includes(pm[1])) inputs.push(pm[1]);
     }
-    if (/c\.Bind\s*\(|json\.NewDecoder/i.test(body)) {
-      inputs.push('Request Body');
+    if (/c\.Bind|json\.NewDecoder|req\.body|request\.json|bodyParser/i.test(body)) {
+      inputs.push('Request Body Payload');
     }
 
-    // Process Steps
-    if (/Validate|Struct|checkValidity/i.test(body)) processSteps.push('Validate input');
-    if (/bcrypt|CompareHashAndPassword/i.test(body)) processSteps.push('Authenticate credentials');
+    // Process Steps Analysis
+    if (/Validate|Struct|checkValidity|validator|Joi|zod/i.test(body)) processSteps.push('Validate input payload');
+    if (/bcrypt|CompareHashAndPassword|check_password|Hash::check/i.test(body)) processSteps.push('Authenticate credentials');
     
-    if (/is_active\s*=\s*false|IsActive\s*=\s*false/i.test(body)) {
-      processSteps.push('Deactivate previous active record');
+    if (/is_active\s*=\s*false|IsActive\s*=\s*false|status\s*=\s*['"]disabled['"]/i.test(body)) {
+      processSteps.push('Deactivate target record state');
     }
 
     const dbOps = extractDatabaseOperations(body);
     dbOps.forEach(op => {
-      if (op.type === 'READ' || op.type === 'READ (FIRST)') processSteps.push(`Fetch ${op.entity} data`);
-      if (op.type === 'CREATE') processSteps.push(`Create ${op.entity} entity and save to database`);
-      if (op.type === 'UPDATE') processSteps.push(`Update ${op.entity} entity in database`);
-      if (op.type === 'DELETE') processSteps.push(`Delete ${op.entity} entity from database`);
+      if (op.type === 'READ') processSteps.push(`Fetch ${op.entity} data`);
+      if (op.type === 'CREATE') processSteps.push(`Create ${op.entity} entity in persistent storage`);
+      if (op.type === 'UPDATE') processSteps.push(`Update ${op.entity} entity in persistent storage`);
+      if (op.type === 'DELETE') processSteps.push(`Delete ${op.entity} entity from persistent storage`);
     });
 
-    if (/c\.Redirect|http\.Redirect/i.test(body)) processSteps.push('Redirect response');
-    if (/c\.JSON|c\.String|json\.NewEncoder/i.test(body)) processSteps.push('Return API response');
-    if (/c\.Render|HTML/i.test(body)) processSteps.push('Render view output');
+    if (/c\.Redirect|http\.Redirect|res\.redirect|redirect\(/i.test(body)) processSteps.push('Redirect response');
+    if (/c\.JSON|res\.json|json\.NewEncoder|JSONResponse|jsonify/i.test(body)) processSteps.push('Return API response');
+    if (/c\.Render|res\.render|HTML|render_template/i.test(body)) processSteps.push('Render view output');
 
     return {
       inputs,
@@ -334,13 +459,50 @@
     };
   }
 
-  // Extract functions
+  // Extract functions universally (Go, JS/TS, Python, PHP)
   function extractFunctions(content) {
     const functions = [];
-    const funcRegex = /func\s+(?:\((?:[a-zA-Z0-9_*\s]+)\)\s+)?([a-zA-Z0-9_]+)\s*\(([^)]*)\)\s*(?:\([^)]*\)|[^{]*)\s*\{/g;
+
+    // Go / C-Style / Python / PHP Function Pattern
+    const funcRegex = /(?:func|function|def)\s+(?:\((?:[a-zA-Z0-9_*\s]+)\)\s+)?([a-zA-Z0-9_]+)\s*\(([^)]*)\)\s*(?:\([^)]*\)|[^{:]*)\s*[{:]/g;
     let match;
 
     while ((match = funcRegex.exec(content)) !== null) {
+      const fnName = match[1];
+      const fnParams = match[2];
+      const matchEndPos = match.index + match[0].length;
+      
+      let fullBlock = null;
+      if (content[matchEndPos - 1] === '{') {
+        const blockStart = matchEndPos - 1;
+        fullBlock = extractBalancedBlock(content, blockStart);
+      } else {
+        fullBlock = extractPythonBlock(content, match.index);
+      }
+
+      if (fullBlock) {
+        const body = fullBlock;
+        const intent = summarizeFunctionIntent(body);
+        const responses = extractAPIResponses(body);
+        const sideEffects = extractSideEffects(body);
+
+        functions.push({
+          name: fnName,
+          params: fnParams,
+          inputs: intent.inputs,
+          processSteps: intent.processSteps,
+          dbOps: intent.dbOps,
+          responses,
+          sideEffects
+        });
+
+        funcRegex.lastIndex = match.index + fullBlock.length;
+      }
+    }
+
+    // ES6 Arrow / Method Assignment Pattern
+    const arrowRegex = /(?:const|let|var)\s+([a-zA-Z0-9_]+)\s*=\s*(?:async\s*)?\(([^)]*)\)\s*=>\s*\{/g;
+    while ((match = arrowRegex.exec(content)) !== null) {
       const fnName = match[1];
       const fnParams = match[2];
       const blockStart = match.index + match[0].length - 1;
@@ -362,7 +524,7 @@
           sideEffects
         });
 
-        funcRegex.lastIndex = blockStart + fullBlock.length;
+        arrowRegex.lastIndex = blockStart + fullBlock.length;
       }
     }
 
@@ -371,9 +533,9 @@
 
   // Pipeline Stage 1 & 2 Main Execution
   function parseBackendAST(content, fileName) {
-    // Imports
+    // Imports / Dependencies
     const imports = [];
-    const importRegex = /import\s*\(([\s\S]*?)\)|import\s+["']([^"']+)["']/g;
+    const importRegex = /(?:import\s*\(([\s\S]*?)\)|import\s+["']([^"']+)["']|require\s*\(\s*["']([^"']+)["']\s*\)|use\s+([^;]+);)/g;
     let impMatch;
     while ((impMatch = importRegex.exec(content)) !== null) {
       if (impMatch[1]) {
@@ -381,8 +543,9 @@
           const clean = line.replace(/"/g, '').trim();
           if (clean && !clean.startsWith('//')) imports.push(clean);
         });
-      } else if (impMatch[2]) {
-        imports.push(impMatch[2]);
+      } else {
+        const detected = impMatch[2] || impMatch[3] || impMatch[4];
+        if (detected) imports.push(detected.trim());
       }
     }
 
@@ -409,7 +572,7 @@
     output += "SEMANTIC LIR COMPRESSED\n";
     output += `FILE: ${ast.fileName}\n`;
     output += "TYPE: Backend Core Module\n";
-    output += `FRAMEWORK: ${ast.framework}\n`;
+    output += `PATTERNS DETECTED: ${ast.framework}\n`;
     output += `PURPOSE: Service, Route & Data Semantics Extraction\n`;
     output += "==================================================\n\n";
 
@@ -418,7 +581,7 @@
     output += "Application\n";
     const modules = new Set();
     ast.functions.forEach(f => {
-      const inferredModule = inferBusinessModule(f.name);
+      const inferredModule = inferBusinessModule(f.name, ast.fileName);
       if (inferredModule) modules.add(inferredModule);
     });
 
@@ -436,8 +599,8 @@
     // GLOBAL SERVICES
     output += "GLOBAL SERVICES\n";
     output += "==================================================\n";
-    output += `Database: ${ast.structs.length > 0 ? 'Detected ORM / Relational DB' : 'None / Not Detected'}\n`;
-    output += `Framework: ${ast.framework}\n`;
+    output += `Database: ${ast.structs.length > 0 ? 'Detected ORM / Relational DB Entities' : 'None / Not Detected'}\n`;
+    output += `Detected Patterns: ${ast.framework}\n`;
     output += "==================================================\n\n";
 
     // UTILITY & HANDLER FUNCTIONS
@@ -460,7 +623,7 @@
           });
         }
         if (fn.responses.length > 0) {
-          output += `API Response Status: ${fn.responses.join(', ')}\n`;
+          output += `API Response Status / Pattern: ${fn.responses.join(', ')}\n`;
         }
         if (idx < ast.functions.length - 1) {
           output += "--------------------------------------------------\n";
@@ -562,9 +725,9 @@
     output += "- input validation rules\n";
     output += "- side effect operations (file I/O, external commands, email)\n";
     output += "Ignore:\n";
-    output += "- Go language specific syntax\n";
-    output += "- Framework specific route handlers/bindings\n";
-    output += "- Specific ORM method call signatures\n";
+    output += "- Source language specific syntax\n";
+    output += "- Specific framework route bindings\n";
+    output += "- Specific ORM call signatures\n";
     output += "==================================================";
 
     return output;
