@@ -8,7 +8,7 @@
     return text ? text.replace(/\s+/g, ' ').trim() : '';
   }
 
-  // Helper: Infer human-readable intent from DOM element characteristics
+  // Helper: Infer generic structural semantic from DOM element characteristics
   function inferElementSemantic(node) {
     const tag = (node.name || '').toLowerCase();
     const role = (node.role || '').toLowerCase();
@@ -41,13 +41,6 @@
     }
 
     if (tag === 'button' || role === 'button' || cls.includes('btn')) {
-      if (node.action) {
-        const actLower = node.action.toLowerCase();
-        if (actLower.includes('print')) return 'Execute Print Button';
-        if (actLower.includes('select') || actLower.includes('batch')) return 'Batch Select Mode Button';
-        if (actLower.includes('cancel')) return 'Cancel Mode Button';
-        if (actLower.includes('filter') || actLower.includes('search')) return 'Search Filter Button';
-      }
       if (text) return `${text} Button`;
       return 'Action Button';
     }
@@ -63,11 +56,11 @@
     return tag.toUpperCase();
   }
 
-  // Helper: Summarize JavaScript function behavior into operation statements
+  // Helper: Summarize JavaScript function behavior objectively without over-interpretation
   function summarizeFunctionBehavior(body) {
     const operations = [];
 
-    // State Mutations: Show/Hide
+    // State & DOM Mutations
     const hides = [];
     const shows = [];
     const toggles = [];
@@ -87,31 +80,33 @@
 
     // Selection & Checkboxes
     if (/document.querySelectorAll\s*\(['"`].*checkbox/i.test(body) || /\.checked\s*=/i.test(body)) {
-      operations.push('selection:\n  batch checkbox state update');
+      operations.push('selection:\n  checkbox state modification');
     }
 
-    // Table Filtering
+    // Table / List Filtering
     if (/indexOf\b|includes\b|filterTable|\.rows/i.test(body)) {
-      operations.push('table filtering:\n  filter rows matching input query');
+      operations.push('data filtering:\n  filter elements matching query');
     }
 
-    // DOM / Style Updates
+    // Direct DOM Content Updates
     if (/innerText\s*=|textContent\s*=|innerHTML\s*=/i.test(body)) {
-      operations.push('DOM updates:\n  modify node content');
+      operations.push('DOM updates:\n  modify text or element tree');
     }
 
-    // Navigation / Print
-    if (/window.open\b|location.href\s*=/i.test(body)) {
-      if (/print/i.test(body)) operations.push('printing:\n  trigger window print view');
-      else operations.push('navigation:\n  redirect route location');
+    // Browser APIs & Navigation
+    const calls = [];
+    if (/window\.print\s*\(/i.test(body)) calls.push('window.print()');
+    if (/window\.open\s*\(/i.test(body)) calls.push('window.open()');
+    if (/location\.href\s*=/i.test(body)) calls.push('location.href assignment');
+    if (calls.length > 0) {
+      operations.push(`browser calls:\n  ${calls.join(', ')}`);
     }
 
-    // Form Submit
+    // Form Interactions
     if (/\.submit\s*\(\)/i.test(body)) {
-      operations.push('submit:\n  dispatch form submission');
+      operations.push('submit:\n  dispatch form submit');
     }
 
-    // Form Reset
     if (/\.reset\s*\(\)/i.test(body)) {
       operations.push('reset:\n  clear form inputs');
     }
@@ -121,9 +116,9 @@
       operations.push('API trigger:\n  dispatch network request');
     }
 
-    // Validation
+    // User Prompt / Dialogs
     if (/\balert\b|\bconfirm\b|checkValidity/i.test(body)) {
-      operations.push('validation:\n  verify user input constraints');
+      operations.push('dialog / validation:\n  trigger user prompt or validity check');
     }
 
     return operations.length > 0 ? operations.join('\n') : null;
@@ -150,7 +145,13 @@
     return endPos !== -1 ? text.substring(startPos, endPos + 1) : null;
   }
 
-  // Helper: Infer Primary Route using Evidence-based Scoring Algorithm
+  // Helper: Detect mutation verbs dynamically from route string or method
+  function detectVerbRoute(path, method) {
+    const mutationVerbRegex = /\/(?:delete|destroy|remove|update|edit|add|create|store|insert|post)(?:\/|$|\?)/i;
+    return method === 'POST' || method === 'PUT' || method === 'DELETE' || mutationVerbRegex.test(path);
+  }
+
+  // Helper: Infer Primary Route using Objective Evidence-based Scoring Algorithm
   function inferPrimaryRoute(semantic) {
     if (!semantic.actionRoutes || semantic.actionRoutes.length === 0) {
       return '';
@@ -163,45 +164,21 @@
 
       const method = route.httpMethod;
       const path = route.route;
+      const isMutation = detectVerbRoute(path, method);
 
-      // Form submit adalah identitas halaman lebih kuat
-      if (method === 'POST') {
-        score += 5;
+      // GET page route gets higher priority
+      if (method === 'GET' && !isMutation) {
+        score += 3;
       }
 
-      // GET halaman langsung
-      if (method === 'GET') {
-        score += 2;
+      // Root path or non-action page route
+      if (path === '/' || path === '') {
+        score += 1;
       }
 
-      // Route navigasi umum
-      if (
-        path === '/dashboard' ||
-        path === '/' ||
-        path === '/logout'
-      ) {
-        score -= 3;
-      }
-
-      // Dynamic action bukan halaman
-      if (
-        path.includes('/delete/') ||
-        path.includes('/update') ||
-        path.includes('/add')
-      ) {
-        score -= 2;
-      }
-
-      // Klasifikasi mutation route vs page route
-      if (
-        method === 'POST' &&
-        (
-          path.includes('/add') ||
-          path.includes('/update') ||
-          path.includes('/delete')
-        )
-      ) {
-        score -= 5;
+      // Pure mutation endpoints (add, delete, update, post) get lower score for primary page identity
+      if (isMutation) {
+        score -= 4;
       }
 
       scores.set(
@@ -223,12 +200,12 @@
     return bestRoute;
   }
 
-  // Helper: Derive Next.js Page Identity from semantic information
-  function getNextjsPageIdentity(semantic) {
+  // Helper: Derive Page Identity cleanly without framework target assumptions
+  function getPageIdentity(semantic) {
     const fileName = semantic.fileName || '';
     const baseName = fileName.replace(/\.[^/.]+$/, '');
 
-    // Determine primary route via scoring algorithm
+    // Determine primary route via objective evidence scoring
     let primaryRoute = inferPrimaryRoute(semantic);
 
     if (!primaryRoute) {
@@ -251,17 +228,6 @@
         const clean = p.replace(/[:{}[\].]/g, '');
         if (clean && !params.includes(clean)) params.push(clean);
       });
-    }
-
-    // Build Next App Router path
-    let appRouterPath = 'app';
-    if (primaryRoute === '/' || primaryRoute === '') {
-      appRouterPath = 'app/page.tsx';
-    } else {
-      const segments = primaryRoute.split('/').filter(Boolean).map(seg => {
-        return seg.replace(/[:{]([a-zA-Z0-9_]+)[}]?|{{\.?([a-zA-Z0-9_]+)}}/, '[$1$2]');
-      });
-      appRouterPath = 'app/' + segments.join('/') + '/page.tsx';
     }
 
     // Infer PascalCase Name with safe fallback prioritization
@@ -301,7 +267,6 @@
       sourceFile: fileName,
       backendHandler: handlerName,
       primaryRoute: primaryRoute,
-      nextAppRouter: appRouterPath,
       pageName: pageName,
       routeParams: params.length > 0 ? params.join(', ') : null
     };
@@ -336,25 +301,15 @@
       ast.metadata.handlerName = handlerMatch[1];
     }
 
-    // Extract External Dependencies
+    // Extract External Dependencies neutrally from asset links
     const depRegex = /<(?:link|script)[^>]+(?:href|src)=["']([^"']+)["'][^>]*>/gi;
     let depMatch;
     while ((depMatch = depRegex.exec(content)) !== null) {
       const src = depMatch[1];
-      if (/font-awesome|fontawesome|fa-/i.test(src)) {
-        if (!ast.imports.includes('Font Awesome icons')) ast.imports.push('Font Awesome icons');
-      } else if (/bootstrap/i.test(src)) {
-        if (!ast.imports.includes('Bootstrap UI Library')) ast.imports.push('Bootstrap UI Library');
-      } else if (/tailwind/i.test(src)) {
-        if (!ast.imports.includes('Tailwind CSS Framework')) ast.imports.push('Tailwind CSS Framework');
-      } else if (/jquery/i.test(src)) {
-        if (!ast.imports.includes('jQuery Library')) ast.imports.push('jQuery Library');
-      } else {
-        const parts = src.split('/');
-        const fileNameDep = parts[parts.length - 1];
-        if (fileNameDep && !ast.imports.includes(fileNameDep)) {
-          ast.imports.push(fileNameDep);
-        }
+      const parts = src.split('/');
+      const fileNameDep = parts[parts.length - 1];
+      if (fileNameDep && !ast.imports.includes(fileNameDep)) {
+        ast.imports.push(fileNameDep);
       }
     }
 
@@ -407,7 +362,7 @@
       }
     }
 
-    // Extract Go Template Syntaxes, Variables, and Hierarchical Data Models
+    // Extract Template Syntaxes, Variables, and Data Models neutrally
     const goTagRegex = /{{[\s\S]*?}}/g;
     let goMatch;
     let currentRangeCollection = null;
@@ -416,7 +371,7 @@
       const raw = goMatch[0];
       ast.goTemplates.push(raw);
 
-      // Detect Loop Range Collection {{ range .Labels }} or {{- range .Labels }}
+      // Detect Loop Collection
       const rangeMatch = raw.match(/{{-?\s*range\s+(?:\$[a-zA-Z0-9_]+,\s*\$[a-zA-Z0-9_]+\s*:=\s*)?\.([a-zA-Z0-9_]+)/);
       if (rangeMatch) {
         currentRangeCollection = rangeMatch[1];
@@ -448,7 +403,7 @@
         });
       }
 
-      // Extract User Roles
+      // Extract User Roles neutrally
       const roleMatch = raw.match(/(?:hasRole|role)\s+([^}]+)/i) || raw.match(/role\s*==\s*["']([^"']+)["']/i);
       if (roleMatch) {
         const roleString = roleMatch[1].replace(/[()"']/g, '');
@@ -635,7 +590,7 @@
     return root;
   }
 
-  // Dynamic Semantic Model Extractor
+  // Universal Dynamic Semantic Model Extractor
   function extractSemanticKnowledge(ast, content) {
     const domTree = parseHTMLTree(content);
 
@@ -656,13 +611,13 @@
         responsive: ast.css.mediaQueries
       },
       dependencies: ast.imports,
-      migrationEssentials: {
-        preserve: [],
-        ignore: [
-          'raw HTML syntax',
-          'inline DOM manipulation details',
-          'duplicated styling declarations'
-        ]
+      detectedFeatures: {
+        layout: false,
+        roles: false,
+        tables: false,
+        routes: false,
+        apiInteraction: false,
+        stateMutation: false
       }
     };
 
@@ -726,7 +681,7 @@
 
     extractRoutesFromNode(mainNode);
 
-    // Extract Rich Table Semantics
+    // Extract Rich Table Semantics across template & loop paradigms
     function findTables(node) {
       if ((node.name || '').toLowerCase() === 'table') {
         const cols = [];
@@ -741,14 +696,33 @@
         extractCols(node);
 
         const detectedLoops = [];
+
+        // Go Range Loops
         ast.goTemplates.forEach(gt => {
           if (gt.includes('range')) {
             const m = gt.match(/range\s+(?:\$[a-zA-Z0-9_]+,\s*\$[a-zA-Z0-9_]+\s*:=\s*)?\.([a-zA-Z0-9_]+)/);
-            if (m) detectedLoops.push(`${m[1]}.map()`);
+            if (m) detectedLoops.push(`range .${m[1]}`);
           }
         });
 
-        // Extract Conditional Row Expressions & Computed Values from Table Context
+        // Universal JS/React .map / Vue v-for / Angular *ngFor detection in content
+        const mapMatches = content.match(/([a-zA-Z0-9_]+)\.map\s*\(/g);
+        if (mapMatches) {
+          mapMatches.forEach(m => {
+            const src = m.replace('.map(', '').trim();
+            if (!detectedLoops.includes(`map ${src}`)) detectedLoops.push(`map ${src}`);
+          });
+        }
+
+        const vForMatches = content.match(/v-for=["']([^"']+)["']/g);
+        if (vForMatches) {
+          vForMatches.forEach(vf => {
+            const clean = vf.replace(/v-for=["']|["']/g, '');
+            if (!detectedLoops.includes(`v-for ${clean}`)) detectedLoops.push(`v-for ${clean}`);
+          });
+        }
+
+        // Extract Conditional Expressions & Computed Values
         const conditionalRows = [];
         const computedValues = [];
 
@@ -757,11 +731,7 @@
             const condMatch = gt.match(/if\s+([^}]+)/);
             if (condMatch) {
               const expr = condMatch[1].trim();
-              if (/class|status|expired|dirty|active/i.test(expr)) {
-                conditionalRows.push(`if ${expr}`);
-              } else {
-                computedValues.push(expr);
-              }
+              conditionalRows.push(`if ${expr}`);
             }
           }
         });
@@ -781,35 +751,35 @@
 
     findTables(mainNode);
 
-    // Reconstruct Migration Essentials strictly from evidence
-    if (semantic.pageStructure.length > 0) semantic.migrationEssentials.preserve.push('layout hierarchy');
-    if (ast.roles.size > 0) semantic.migrationEssentials.preserve.push('role conditions');
-    if (semantic.tableSemantic) semantic.migrationEssentials.preserve.push('table mapping');
-    if (semantic.actionRoutes.length > 0) semantic.migrationEssentials.preserve.push('routes');
-    if (semantic.apiContract.length > 0) semantic.migrationEssentials.preserve.push('API interaction');
-    if (ast.clientBehaviors.length > 0) semantic.migrationEssentials.preserve.push('state flow');
-    if (ast.css.classes.length > 0 || ast.css.variables.length > 0) semantic.migrationEssentials.preserve.push('CSS appearance');
+    // Record detected technical features objectively
+    semantic.detectedFeatures = {
+      layout: semantic.pageStructure.length > 0,
+      roles: ast.roles.size > 0,
+      tables: Boolean(semantic.tableSemantic),
+      routes: semantic.actionRoutes.length > 0,
+      apiInteraction: semantic.apiContract.length > 0,
+      stateMutation: ast.clientBehaviors.length > 0
+    };
 
     return semantic;
   }
 
-  // Stage 3: Clean Semantic LIR Formatting Engine
-  function formatSemanticLIR(semantic) {
+  // Stage 3: Universal Frontend Semantic IR Formatting Engine
+  function formatSemanticIR(semantic) {
     let output = "==================================================\n";
-    output += "SEMANTIC LIR COMPRESSED\n";
+    output += "FRONTEND SEMANTIC IR\n";
     output += `FILE: ${semantic.fileName}\n`;
     output += `TYPE: ${semantic.type}\n`;
     output += `PURPOSE: ${semantic.purpose}\n`;
     output += "==================================================\n\n";
 
-    // NEXTJS PAGE IDENTITY
-    const identity = getNextjsPageIdentity(semantic);
-    output += "NEXTJS PAGE IDENTITY\n";
+    // PAGE IDENTITY
+    const identity = getPageIdentity(semantic);
+    output += "PAGE IDENTITY\n";
     output += "==================================================\n\n";
     output += `SOURCE FILE:\n${identity.sourceFile}\n\n`;
     output += `BACKEND HANDLER:\n${identity.backendHandler}\n\n`;
     output += `PRIMARY ROUTE:\n${identity.primaryRoute}\n\n`;
-    output += `NEXT APP ROUTER:\n${identity.nextAppRouter}\n\n`;
     output += `PAGE NAME:\n${identity.pageName}\n\n`;
     if (identity.routeParams) {
       output += `ROUTE PARAMS:\n${identity.routeParams}\n\n`;
@@ -876,13 +846,13 @@
       output += "TABLE SEMANTIC\n";
       output += "==================================================\n";
       if (semantic.tableSemantic.loop) {
-        output += `Loop:\n${semantic.tableSemantic.loop}\n\n`;
+        output += `Iteration Source:\n${semantic.tableSemantic.loop}\n\n`;
       }
-      if (semantic.tableSemantic.computed) {
+      if (semantic.tableSemantic.computed && semantic.tableSemantic.computed.length > 0) {
         output += `Computed:\n${semantic.tableSemantic.computed}\n\n`;
       }
       if (semantic.tableSemantic.rowCondition) {
-        output += `Row:\n${semantic.tableSemantic.rowCondition}\n\n`;
+        output += `Row Condition:\n${semantic.tableSemantic.rowCondition}\n\n`;
       }
       if (semantic.tableSemantic.columns.length > 0) {
         output += `Columns:\n${semantic.tableSemantic.columns.join('\n')}\n`;
@@ -962,12 +932,13 @@
       output += "==================================================\n\n";
     }
 
-    // MIGRATION ESSENTIALS
-    if (semantic.migrationEssentials && (semantic.migrationEssentials.preserve.length > 0 || semantic.migrationEssentials.ignore.length > 0)) {
-      output += "MIGRATION ESSENTIALS\n";
+    // DETECTED FEATURES
+    if (semantic.detectedFeatures) {
+      output += "DETECTED FEATURES\n";
       output += "==================================================\n";
-      if (semantic.migrationEssentials.preserve.length > 0) output += `Preserve: - ${semantic.migrationEssentials.preserve.join(', ')}\n`;
-      if (semantic.migrationEssentials.ignore.length > 0) output += `Ignore: - ${semantic.migrationEssentials.ignore.join(', ')}\n`;
+      Object.entries(semantic.detectedFeatures).forEach(([feat, present]) => {
+        output += `${feat}: ${present ? 'yes' : 'no'}\n`;
+      });
       output += "==================================================";
     }
 
@@ -995,12 +966,12 @@
       // 1. AST Parsing
       const ast = parseFrontendAST(content, fileName, ext);
 
-      // 2. Generic Semantic Analysis
+      // 2. Generic Universal Semantic Analysis
       const semantic = extractSemanticKnowledge(ast, content);
 
-      // 3. Format to Clean Semantic LIR Output
-      const lirOutput = formatSemanticLIR(semantic);
-      outputs.push(lirOutput);
+      // 3. Format to Clean Frontend Semantic IR
+      const irOutput = formatSemanticIR(semantic);
+      outputs.push(irOutput);
     }
 
     const finalOutput = outputs.join('\n\n=========================================\n\n');
