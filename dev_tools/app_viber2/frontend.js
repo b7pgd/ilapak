@@ -464,8 +464,22 @@
   function extractSemanticKnowledge(ast, content) {
     const domTree = parseHTMLTree(content);
 
+    let pageRoute = null;
+    const normalizedPath = (ast.metadata.fileName || '').replace(/\\/g, '/');
+    const appRouteMatch = normalizedPath.match(/(?:^|\/)app\/(.+?)\/page\.[a-z0-9]+$/i);
+    if (appRouteMatch) {
+      pageRoute = '/' + appRouteMatch[1];
+    } else if (/(?:^|\/)app\/page\.[a-z0-9]+$/i.test(normalizedPath)) {
+      pageRoute = '/';
+    }
+
+    pageRoute = pageRoute
+      ?.replace(/\/\([^)]+\)/g, '')
+      .replace(/\/+/g, '/');
+
     const semantic = {
       fileName: ast.metadata.fileName,
+      route: pageRoute,
       type: ast.goTemplates.length > 0 ? 'Go HTML Template' : 'HTML Frontend Component',
       purpose: ast.metadata.title || ast.metadata.fileName,
       pageStructure: [],
@@ -630,6 +644,9 @@
     let output = "==================================================\n";
     output += "SEMANTIC LIR COMPRESSED\n";
     output += `FILE: ${semantic.fileName}\n`;
+    if (semantic.route) {
+      output += `ROUTE: ${semantic.route}\n`;
+    }
     output += `TYPE: ${semantic.type}\n`;
     output += `PURPOSE: ${semantic.purpose}\n`;
     output += "==================================================\n\n";
@@ -807,7 +824,7 @@
         reader.readAsText(file);
       });
 
-      const fileName = file.name;
+      const fileName = file.webkitRelativePath || file.name;
       const ext = fileName.includes('.') ? fileName.split('.').pop().toLowerCase() : '';
 
       // 1. AST Parsing
@@ -833,11 +850,11 @@
   }
 
   // Automatic Pipeline Stage Registration
-if (typeof window !== 'undefined' && window.LirEngineRegistry) {
+  if (typeof window !== 'undefined' && window.LirEngineRegistry) {
     window.LirEngineRegistry.registerStage(
-        'frontend',
-        frontendSemanticStage
+      'frontend',
+      frontendSemanticStage
     );
-}
-  
+  }
+
 })();
