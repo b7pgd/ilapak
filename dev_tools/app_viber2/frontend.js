@@ -150,6 +150,72 @@
     return endPos !== -1 ? text.substring(startPos, endPos + 1) : null;
   }
 
+  // Helper: Derive Next.js Page Identity from semantic information
+  function getNextjsPageIdentity(semantic) {
+    const fileName = semantic.fileName || '';
+    const baseName = fileName.replace(/\.[^/.]+$/, '');
+
+    // Determine primary route
+    let primaryRoute = '';
+    if (semantic.actionRoutes && semantic.actionRoutes.length > 0) {
+      primaryRoute = semantic.actionRoutes[0].route;
+    }
+
+    if (!primaryRoute) {
+      if (baseName.toLowerCase() === 'index' || baseName.toLowerCase() === 'login') {
+        primaryRoute = '/';
+      } else {
+        primaryRoute = '/' + baseName.toLowerCase();
+      }
+    }
+
+    if (!primaryRoute.startsWith('/')) {
+      primaryRoute = '/' + primaryRoute;
+    }
+
+    // Extract route parameters
+    const paramMatches = primaryRoute.match(/[:{]([a-zA-Z0-9_]+)[}]?|\[([a-zA-Z0-9_]+)\]|{{\.?([a-zA-Z0-9_]+)}}/g);
+    const params = [];
+    if (paramMatches) {
+      paramMatches.forEach(p => {
+        const clean = p.replace(/[:{}[\].]/g, '');
+        if (clean && !params.includes(clean)) params.push(clean);
+      });
+    }
+
+    // Build Next App Router path
+    let appRouterPath = 'app';
+    if (primaryRoute === '/' || primaryRoute === '') {
+      appRouterPath = 'app/page.tsx';
+    } else {
+      const segments = primaryRoute.split('/').filter(Boolean).map(seg => {
+        return seg.replace(/[:{]([a-zA-Z0-9_]+)[}]?|{{\.?([a-zA-Z0-9_]+)}}/, '[$1$2]');
+      });
+      appRouterPath = 'app/' + segments.join('/') + '/page.tsx';
+    }
+
+    // Infer PascalCase Name
+    let rawName = semantic.purpose || baseName;
+    let pascalBase = rawName
+      .replace(/[^a-zA-Z0-9\s_-]/g, '')
+      .split(/[\s_-]+/)
+      .filter(Boolean)
+      .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+      .join('');
+
+    let pageName = pascalBase.endsWith('Page') ? pascalBase : pascalBase + 'Page';
+    let handlerName = pascalBase.replace(/Page$/, '');
+
+    return {
+      sourceFile: fileName,
+      backendHandler: handlerName,
+      primaryRoute: primaryRoute,
+      nextAppRouter: appRouterPath,
+      pageName: pageName,
+      routeParams: params.length > 0 ? params.join(', ') : null
+    };
+  }
+
   // Stage 1: AST Parser & Dynamic Semantic Analysis
   function parseFrontendAST(content, fileName, ext) {
     const ast = {
@@ -638,6 +704,20 @@
     output += `PURPOSE: ${semantic.purpose}\n`;
     output += "==================================================\n\n";
 
+    // NEXTJS PAGE IDENTITY
+    const identity = getNextjsPageIdentity(semantic);
+    output += "NEXTJS PAGE IDENTITY\n";
+    output += "==================================================\n\n";
+    output += `SOURCE FILE:\n${identity.sourceFile}\n\n`;
+    output += `BACKEND HANDLER:\n${identity.backendHandler}\n\n`;
+    output += `PRIMARY ROUTE:\n${identity.primaryRoute}\n\n`;
+    output += `NEXT APP ROUTER:\n${identity.nextAppRouter}\n\n`;
+    output += `PAGE NAME:\n${identity.pageName}\n\n`;
+    if (identity.routeParams) {
+      output += `ROUTE PARAMS:\n${identity.routeParams}\n\n`;
+    }
+    output += "==================================================\n\n";
+
     // PAGE STRUCTURE
     if (semantic.pageStructure && semantic.pageStructure.length > 0) {
       output += "[PAGE STRUCTURE]\n";
@@ -837,11 +917,11 @@
   }
 
   // Automatic Pipeline Stage Registration
-if (typeof window !== 'undefined' && window.LirEngineRegistry) {
+  if (typeof window !== 'undefined' && window.LirEngineRegistry) {
     window.LirEngineRegistry.registerStage(
-        'frontend',
-        frontendSemanticStage
+      'frontend',
+      frontendSemanticStage
     );
-}
-  
+  }
+
 })();
