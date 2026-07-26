@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python ZIP Runner</title>
+    <!-- Pyodide CDN -->
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --primary-light: #eff6ff;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --code-bg: #0f172a;
+            --code-text: #f8fafc;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            padding-bottom: 60px;
+            min-height: 100vh;
+        }
+
+        /* Sticky Header */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background-color: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 24px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .header-title h1 {
+            font-size: 1.25rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-title p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            background-color: var(--border);
+            color: var(--text-muted);
+            transition: all 0.3s ease;
+        }
+
+        .status-badge.loading { background-color: #fef3c7; color: #b45309; }
+        .status-badge.ready { background-color: #d1fae5; color: #047857; }
+        .status-badge.running { background-color: #dbeafe; color: #1e40af; }
+        .status-badge.error { background-color: #fee2e2; color: #b91c1c; }
+
+        .spinner {
+            width: 12px;
+            height: 12px;
+            border: 2px solid currentColor;
+            border-bottom-color: transparent;
+            border-radius: 50%;
+            display: inline-block;
+            animation: rotation 1s linear infinite;
+        }
+
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1000px;
+            margin: 24px auto;
+            padding: 0 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            padding: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Editor Section */
+        .editor-wrapper {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+        }
+
+        .drop-zone {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(37, 99, 235, 0.9);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 600;
+            font-size: 1.2rem;
+            z-index: 10;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+
+        .editor-wrapper.drag-over .drop-zone {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        textarea {
+            width: 100%;
+            height: 280px;
+            background: transparent;
+            color: var(--code-text);
+            border: none;
+            padding: 16px;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            resize: vertical;
+            outline: none;
+        }
+
+        /* Button Groups */
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+            touch-action: manipulation;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        .btn-primary:hover:not(:disabled) { background-color: var(--primary-hover); }
+
+        .btn-secondary {
+            background-color: var(--primary-light);
+            color: var(--primary);
+        }
+        .btn-secondary:hover:not(:disabled) { background-color: #dbeafe; }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-main);
+        }
+        .btn-outline:hover:not(:disabled) { background-color: var(--bg); }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Console Output */
+        .console-output {
+            background-color: var(--code-bg);
+            color: var(--code-text);
+            font-family: "SFMono-Regular", Consolas, monospace;
+            font-size: 0.85rem;
+            padding: 16px;
+            border-radius: 8px;
+            height: 180px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .console-output .stderr { color: #fca5a5; }
+        .console-output .system { color: #93c5fd; font-style: italic; }
+
+        /* Generated Files Grid */
+        .files-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .file-card {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background: var(--bg);
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .file-card.zip-highlight {
+            border: 2px solid var(--primary);
+            background: var(--primary-light);
+        }
+
+        .file-card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .file-icon {
+            font-size: 1.5rem;
+        }
+
+        .file-info {
+            overflow: hidden;
+        }
+
+        .file-name {
+            font-weight: 600;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-size {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .no-files {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-style: italic;
+            padding: 12px 0;
+        }
+
+        .timer {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: normal;
+        }
+
+        /* Utilities */
+        .file-input-hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-title">
+            <h1>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                Python ZIP Runner
+            </h1>
+            <p>Execute AI-generated Python and download real generated files instantly in web browser.</p>
+        </div>
+        <div id="statusBadge" class="status-badge loading">
+            <span class="spinner"></span>
+            <span id="statusText">Initializing Pyodide...</span>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Section 1 & 2: Editor & Controls -->
+        <div class="card">
+            <div class="card-title">
+                <span>Python Code Editor</span>
+                <span id="timer" class="timer"></span>
+            </div>
+            
+            <div class="editor-wrapper" id="editorWrapper">
+                <div class="drop-zone">Drop .py file here</div>
+                <textarea id="codeEditor" spellcheck="false" placeholder="Paste Python code generated by AI here..."></textarea>
+            </div>
+
+            <div class="controls">
+                <button id="runBtn" class="btn btn-primary" disabled>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                    Run Python
+                </button>
+                <button id="clearBtn" class="btn btn-outline">Clear</button>
+                <button id="pasteBtn" class="btn btn-outline">Paste</button>
+                <button id="copyPromptBtn" class="btn btn-outline">Copy Prompt</button>
+                <button id="importBtn" class="btn btn-secondary">Import .py</button>
+                <button id="exportBtn" class="btn btn-secondary">Export .py</button>
+                <input type="file" id="fileInput" class="file-input-hidden" accept=".py">
+            </div>
+        </div>
+
+        <!-- Section 4: Console Output -->
+        <div class="card">
+            <div class="card-title">
+                <span>Console Output</span>
+                <div style="display: flex; gap: 8px;">
+                    <button id="clearConsoleBtn" class="btn btn-outline" style="padding: 4px 8px; font-size: 0.75rem;">Clear Log</button>
+                    <button id="downloadConsoleBtn" class="btn btn-outline" style="padding: 4px 8px; font-size: 0.75rem;">Download Log</button>
+                </div>
+            </div>
+            <div id="consoleOutput" class="console-output"></div>
+        </div>
+
+        <!-- Section 5: Generated Files -->
+        <div class="card">
+            <div class="card-title">
+                <span>Generated Files</span>
+            </div>
+            <div id="filesContainer" class="files-grid">
+                <div class="no-files">No generated files detected yet. Run code to output files.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const codeEditor = document.getElementById('codeEditor');
+        const runBtn = document.getElementById('runBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const pasteBtn = document.getElementById('pasteBtn');
+        const copyPromptBtn = document.getElementById('copyPromptBtn');
+        const importBtn = document.getElementById('importBtn');
+        const exportBtn = document.getElementById('exportBtn');
+        const fileInput = document.getElementById('fileInput');
+        const statusBadge = document.getElementById('statusBadge');
+        const statusText = document.getElementById('statusText');
+        const consoleOutput = document.getElementById('consoleOutput');
+        const filesContainer = document.getElementById('filesContainer');
+        const clearConsoleBtn = document.getElementById('clearConsoleBtn');
+        const downloadConsoleBtn = document.getElementById('downloadConsoleBtn');
+        const editorWrapper = document.getElementById('editorWrapper');
+        const timerDisplay = document.getElementById('timer');
+
+        let pyodide = null;
+        const DEFAULT_CODE = "";
+
+        const SYSTEM_PROMPT = `Untuk tugas ini, jangan tampilkan hasil akhirnya sebagai teks atau file terpisah. Sebagai gantinya, selalu kembalikan hasil dalam bentuk satu script Python yang dapat dijalankan langsung pada Python Runner (Pyodide/browser). Jangan kirim penjelasan, Markdown, placeholder, HTML, atau file lain. Script harus sepenuhnya mandiri, menggunakan library Python standar bila memungkinkan, menghasilkan seluruh output yang diminta (file, folder, ZIP, TXT, JSON, HTML, CSV, Markdown, atau aset lainnya), membuat struktur direktori yang diperlukan secara otomatis, memberi nama file yang sesuai, dan menyimpan semua hasil ke filesystem sehingga Python Runner dapat mendeteksi serta menampilkan file tersebut untuk diunduh. Jika tugas memerlukan banyak file, script harus membuat semuanya secara otomatis dan, bila relevan, mengemasnya menjadi satu file ZIP. Output harus berupa kode Python saja, tanpa teks tambahan sebelum maupun sesudahnya.`;
+
+        // Local Storage Key
+        const STORAGE_KEY = 'py_zip_runner_code';
+
+        // Initialize App
+        window.addEventListener('DOMContentLoaded', async () => {
+            // Restore code from LocalStorage or Set Default
+            const savedCode = localStorage.getItem(STORAGE_KEY);
+            codeEditor.value = savedCode !== null ? savedCode : DEFAULT_CODE;
+
+            // Load Pyodide
+            try {
+                pyodide = await loadPyodide();
+                setStatus('ready', 'Ready');
+                runBtn.disabled = false;
+                appendConsole('[System] Pyodide loaded successfully. WebAssembly environment ready.\n', 'system');
+            } catch (err) {
+                setStatus('error', 'Pyodide Load Failed');
+                appendConsole(`[System Error] Failed to load Pyodide: ${err.message}\n`, 'stderr');
+            }
+        });
+
+        // Save editor content on input
+        codeEditor.addEventListener('input', () => {
+            localStorage.setItem(STORAGE_KEY, codeEditor.value);
+        });
+
+        // Set UI Status
+        function setStatus(state, message) {
+            statusBadge.className = `status-badge ${state}`;
+            let spinner = state === 'loading' || state === 'running' ? '<span class="spinner"></span>' : '';
+            statusBadge.innerHTML = `${spinner}<span>${message}</span>`;
+        }
+
+        // Console logger
+        function appendConsole(text, type = 'stdout') {
+            const span = document.createElement('span');
+            span.className = type;
+            span.textContent = text;
+            consoleOutput.appendChild(span);
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+
+        // Execute Python Code
+        runBtn.addEventListener('click', async () => {
+            if (!pyodide) return;
+
+            // Reset Output UI
+            consoleOutput.innerHTML = '';
+            filesContainer.innerHTML = '';
+            timerDisplay.textContent = '';
+            setStatus('running', 'Running Python...');
+            runBtn.disabled = true;
+
+            const code = codeEditor.value;
+            const startTime = performance.now();
+
+            // Track existing filesystem entries to detect new/modified files
+            let initialFiles = new Set();
+            try {
+                initialFiles = new Set(pyodide.FS.readdir('.'));
+            } catch (e) {}
+
+            try {
+                // Setup Stdout/Stderr Captures
+                pyodide.setStdout({
+                    batched: (str) => appendConsole(str + '\n', 'stdout')
+                });
+                pyodide.setStderr({
+                    batched: (str) => appendConsole(str + '\n', 'stderr')
+                });
+
+                setStatus('running', 'Executing...');
+                await pyodide.runPythonAsync(code);
+
+                const endTime = performance.now();
+                const duration = ((endTime - startTime) / 1000).toFixed(2);
+                timerDisplay.textContent = `Executed in ${duration}s`;
+
+                setStatus('running', 'Scanning Files...');
+                await scanAndDisplayFiles(initialFiles);
+
+                setStatus('ready', 'Success');
+            } catch (err) {
+                appendConsole(`\nTraceback (most recent call last):\n${err.message}\n`, 'stderr');
+                setStatus('error', 'Execution Error');
+            } finally {
+                runBtn.disabled = false;
+            }
+        });
+
+        // Scan virtual filesystem for generated files
+        async function scanAndDisplayFiles(initialFiles) {
+            let currentFiles = [];
+            try {
+                currentFiles = pyodide.FS.readdir('.');
+            } catch (e) {
+                filesContainer.innerHTML = '<div class="no-files">Unable to scan virtual filesystem.</div>';
+                return;
+            }
+
+            // Exclude systemic virtual files/directories
+            const ignored = new Set(['.', '..', 'tmp', 'home', 'dev', 'proc', 'lib']);
+            const detectedFiles = currentFiles.filter(f => !ignored.has(f));
+
+            if (detectedFiles.length === 0) {
+                filesContainer.innerHTML = '<div class="no-files">No files created by script.</div>';
+                return;
+            }
+
+            filesContainer.innerHTML = ''; // Clear container
+
+            let count = 0;
+            for (const filename of detectedFiles) {
+                try {
+                    const stat = pyodide.FS.stat(filename);
+                    // Check if it's a regular file
+                    if (pyodide.FS.isFile(stat.mode)) {
+                        const fileData = pyodide.FS.readFile(filename, { encoding: 'binary' });
+                        createDownloadCard(filename, fileData, stat.size);
+                        count++;
+                    }
+                } catch (e) {
+                    console.error(`Error processing file ${filename}`, e);
+                }
+            }
+
+            if (count === 0) {
+                filesContainer.innerHTML = '<div class="no-files">No output files detected.</div>';
+            }
+        }
+
+        // Generate download card for file
+        function createDownloadCard(filename, binaryData, sizeBytes) {
+            const ext = filename.split('.').pop().toLowerCase();
+            const isZip = ext === 'zip';
+
+            const card = document.createElement('div');
+            card.className = `file-card ${isZip ? 'zip-highlight' : ''}`;
+
+            const iconMap = {
+                'zip': '📦',
+                'txt': '📄',
+                'json': '📋',
+                'csv': '📊',
+                'html': '🌐',
+                'md': '📝',
+                'pdf': '📕'
+            };
+
+            const icon = iconMap[ext] || '📁';
+            const formattedSize = formatBytes(sizeBytes);
+
+            card.innerHTML = `
+                <div class="file-card-header">
+                    <span class="file-icon">${icon}</span>
+                    <div class="file-info">
+                        <div class="file-name" title="${filename}">${filename}</div>
+                        <div class="file-size">${formattedSize}</div>
+                    </div>
+                </div>
+                <button class="btn btn-secondary" style="width: 100%; margin-top: 4px; padding: 6px 12px; font-size: 0.8rem;">
+                    Download File
+                </button>
+            `;
+
+            // Setup real Blob Download Link
+            const downloadBtn = card.querySelector('button');
+            downloadBtn.addEventListener('click', () => {
+                const blob = new Blob([binaryData], { type: 'application/octet-stream' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            });
+
+            filesContainer.appendChild(card);
+        }
+
+        // Format Byte Sizes
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        // Editor Action Buttons
+        clearBtn.addEventListener('click', () => {
+            codeEditor.value = '';
+            localStorage.removeItem(STORAGE_KEY);
+        });
+
+        pasteBtn.addEventListener('click', async () => {
+            try {
+                const text = await navigator.clipboard.readText();
+                codeEditor.value = text;
+                localStorage.setItem(STORAGE_KEY, codeEditor.value);
+                const originalText = pasteBtn.textContent;
+                pasteBtn.textContent = 'Pasted!';
+                setTimeout(() => pasteBtn.textContent = originalText, 1500);
+            } catch (err) {
+                alert('Gagal membaca clipboard. Pastikan izin akses clipboard telah diberikan.');
+            }
+        });
+
+        copyPromptBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(SYSTEM_PROMPT).then(() => {
+                const originalText = copyPromptBtn.textContent;
+                copyPromptBtn.textContent = 'Copied Prompt!';
+                setTimeout(() => copyPromptBtn.textContent = originalText, 1500);
+            });
+        });
+
+        importBtn.addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    codeEditor.value = e.target.result;
+                    localStorage.setItem(STORAGE_KEY, codeEditor.value);
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        exportBtn.addEventListener('click', () => {
+            const blob = new Blob([codeEditor.value], { type: 'text/x-python' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'script.py';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        // Console Actions
+        clearConsoleBtn.addEventListener('click', () => {
+            consoleOutput.innerHTML = '';
+        });
+
+        downloadConsoleBtn.addEventListener('click', () => {
+            const blob = new Blob([consoleOutput.textContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'console.log';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        // Drag and Drop .py files onto Editor
+        ['dragenter', 'dragover'].forEach(eventName => {
+            editorWrapper.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                editorWrapper.classList.add('drag-over');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            editorWrapper.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                editorWrapper.classList.remove('drag-over');
+            }, false);
+        });
+
+        editorWrapper.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.name.endsWith('.py') || file.type.includes('text')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        codeEditor.value = e.target.result;
+                        localStorage.setItem(STORAGE_KEY, codeEditor.value);
+                    };
+                    reader.readAsText(file);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
