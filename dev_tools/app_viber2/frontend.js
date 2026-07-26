@@ -150,16 +150,86 @@
     return endPos !== -1 ? text.substring(startPos, endPos + 1) : null;
   }
 
+  // Helper: Infer Primary Route using Evidence-based Scoring Algorithm
+  function inferPrimaryRoute(semantic) {
+    if (!semantic.actionRoutes || semantic.actionRoutes.length === 0) {
+      return '';
+    }
+
+    const scores = new Map();
+
+    semantic.actionRoutes.forEach(route => {
+      let score = 0;
+
+      const method = route.httpMethod;
+      const path = route.route;
+
+      // Form submit adalah identitas halaman lebih kuat
+      if (method === 'POST') {
+        score += 5;
+      }
+
+      // GET halaman langsung
+      if (method === 'GET') {
+        score += 2;
+      }
+
+      // Route navigasi umum
+      if (
+        path === '/dashboard' ||
+        path === '/' ||
+        path === '/logout'
+      ) {
+        score -= 3;
+      }
+
+      // Dynamic action bukan halaman
+      if (
+        path.includes('/delete/') ||
+        path.includes('/update') ||
+        path.includes('/add')
+      ) {
+        score -= 2;
+      }
+
+      // Klasifikasi mutation route vs page route
+      if (
+        method === 'POST' &&
+        (
+          path.includes('/add') ||
+          path.includes('/update') ||
+          path.includes('/delete')
+        )
+      ) {
+        score -= 5;
+      }
+
+      scores.set(
+        path,
+        (scores.get(path) || 0) + score
+      );
+    });
+
+    let bestRoute = '';
+    let bestScore = -Infinity;
+
+    scores.forEach((score, route) => {
+      if (score > bestScore) {
+        bestScore = score;
+        bestRoute = route;
+      }
+    });
+
+    return bestRoute;
+  }
+
   // Helper: Derive Next.js Page Identity from semantic information
   function getNextjsPageIdentity(semantic) {
     const fileName = semantic.fileName || '';
     const baseName = fileName.replace(/\.[^/.]+$/, '');
 
-    // Determine primary route
-    let primaryRoute = '';
-    if (semantic.actionRoutes && semantic.actionRoutes.length > 0) {
-      primaryRoute = semantic.actionRoutes[0].route;
-    }
+    // Determine primary route via scoring algorithm
+    let primaryRoute = inferPrimaryRoute(semantic);
 
     if (!primaryRoute) {
       if (baseName.toLowerCase() === 'index' || baseName.toLowerCase() === 'login') {
@@ -194,8 +264,28 @@
       appRouterPath = 'app/' + segments.join('/') + '/page.tsx';
     }
 
-    // Infer PascalCase Name
-    let rawName = semantic.purpose || baseName;
+    // Infer PascalCase Name with safe fallback prioritization
+    let rawName = '';
+
+    if (semantic.actionRoutes && semantic.actionRoutes.length > 0) {
+      const route = inferPrimaryRoute(semantic);
+
+      if (route && route !== '/') {
+        rawName = route
+          .split('/')
+          .filter(Boolean)
+          .pop();
+      }
+    }
+
+    if (!rawName && semantic.backendHandler) {
+      rawName = semantic.backendHandler;
+    }
+
+    if (!rawName) {
+      rawName = baseName;
+    }
+
     let pascalBase = rawName
       .replace(/[^a-zA-Z0-9\s_-]/g, '')
       .split(/[\s_-]+/)
@@ -204,7 +294,8 @@
       .join('');
 
     let pageName = pascalBase.endsWith('Page') ? pascalBase : pascalBase + 'Page';
-    let handlerName = pascalBase.replace(/Page$/, '');
+    let inferredHandlerName = pascalBase.replace(/Page$/, '');
+    let handlerName = semantic.backendHandler || inferredHandlerName;
 
     return {
       sourceFile: fileName,
@@ -219,7 +310,7 @@
   // Stage 1: AST Parser & Dynamic Semantic Analysis
   function parseFrontendAST(content, fileName, ext) {
     const ast = {
-      metadata: { fileName, ext, title: '' },
+      metadata: { fileName, ext, title: '', handlerName: null },
       imports: [],
       css: { variables: [], classes: [], mediaQueries: [] },
       scripts: [],
@@ -237,6 +328,12 @@
     const titleMatch = content.match(/<title[^>]*>(.*?)<\/title>/i);
     if (titleMatch) {
       ast.metadata.title = cleanText(titleMatch[1]);
+    }
+
+    // Extract Backend Handler Name from comments/metadata if available
+    const handlerMatch = content.match(/(?:@handler|handler|controller)\s*:\s*([a-zA-Z0-9_]+)/i);
+    if (handlerMatch) {
+      ast.metadata.handlerName = handlerMatch[1];
     }
 
     // Extract External Dependencies
@@ -546,6 +643,7 @@
       fileName: ast.metadata.fileName,
       type: ast.goTemplates.length > 0 ? 'Go HTML Template' : 'HTML Frontend Component',
       purpose: ast.metadata.title || ast.metadata.fileName,
+      backendHandler: ast.metadata.handlerName || null,
       pageStructure: [],
       dataModel: ast.dataModel,
       tableSemantic: null,
