@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> FULLSTACK PROJECT VALIDATOR</title>
+    <title>⚡ FULLSTACK PROJECT VALIDATOR</title>
     <style>
         :root {
             --primary: #2563eb;
@@ -173,12 +173,12 @@
 <body>
 
     <div class="app-wrapper">
-        <h2> FULLSTACK PROJECT VALIDATOR</h2>
+        <h2>⚡ FULLSTACK PROJECT VALIDATOR</h2>
 
         <div class="setup-box">
             <div><strong>Step 1: Impor Folder Project:</strong></div>
             <label class="file-input-btn">
-                 ADD PROJECT FOLDER
+                📂 ADD PROJECT FOLDER
                 <input type="file" id="folderPicker" webkitdirectory directory multiple>
             </label>
             <div id="statusText" style="color: var(--text-muted); font-size: 14px;">Belum ada folder yang dipilih</div>
@@ -194,11 +194,11 @@
 
             <div class="output-box">
                 <div class="btn-group">
-                    <button id="btnRunValidation" style="background:#9333ea;" disabled> RUN PROJECT VALIDATION</button>
+                    <button id="btnRunValidation" style="background:#9333ea;" disabled>⚡ RUN PROJECT VALIDATION</button>
                 </div>
                 <div class="btn-group" style="margin-top: 5px;">
-                    <button id="btnCopy" style="background: #4f46e5;"> COPY REPORT</button>
-                    <button id="btnDownload" style="background: #0284c7;"> DOWNLOAD REPORT</button>
+                    <button id="btnCopy" style="background: #4f46e5;">📋 COPY REPORT</button>
+                    <button id="btnDownload" style="background: #0284c7;">💾 DOWNLOAD REPORT</button>
                 </div>
                 <div class="path-banner" id="pathBanner" style="margin-top: 15px;">Workspace siap dianalisis...</div>
                 <textarea id="outputArea" readonly placeholder="Hasil Fullstack Project Validation Report akan muncul di sini..."></textarea>
@@ -1110,7 +1110,7 @@
 
             const btn = document.getElementById('btnCopy');
             const originalText = btn.innerText;
-            btn.innerText = ' COPIED!';
+            btn.innerText = '✅ COPIED!';
             btn.style.background = '#22c55e';
             setTimeout(() => {
                 btn.innerText = originalText;
