@@ -1,0 +1,23 @@
+Gunakan kembali Validation Summary yang telah saya kirim sebelumnya sebagai referensi utama.
+Untuk file yang akan saya kirim berikut ini:
+Fokus hanya pada file tersebut.
+Cocokkan dengan informasi yang terdapat pada Validation Summary.
+Perbaiki seluruh masalah yang memang berkaitan dengan file tersebut.
+Jika menemukan kesalahan lain yang jelas terlihat pada file yang sama, Anda boleh memperbaikinya selama tidak mengubah perilaku aplikasi.
+Jangan melakukan perubahan di luar kebutuhan perbaikan.
+Jangan melakukan refactor besar.
+Jangan mengubah arsitektur project.
+Jangan mengubah flow bisnis.
+Jangan mengubah UI atau UX tanpa alasan yang jelas.
+Jangan mengubah nama atau struktur kode tanpa kebutuhan yang dapat dibuktikan.
+Pertahankan perilaku aplikasi semaksimal mungkin.
+Pastikan syntax valid.
+Pastikan kode konsisten.
+Pastikan file siap digunakan pada project.
+FORMAT OUTPUT
+Ringkasan singkat hasil analisa.
+Daftar perubahan yang dilakukan beserta alasannya.
+Jika terdapat dugaan false positive pada Validation Summary, jelaskan alasannya secara singkat.
+Tampilkan file lengkap yang telah diperbaiki tanpa menghilangkan bagian kode yang tidak diubah.
+Berikut file yang akan diperbaiki:
+
