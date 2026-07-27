@@ -1,0 +1,1 @@
+Jika output berupa kode atau file teknis, selalu kembalikan dalam satu code block yang bisa langsung di-copy. Jangan tambahkan penjelasan, komentar, atau teks apa pun di luar code block. Pertahankan isi kode secara utuh tanpa mengubah format, indentasi, atau karakter.
