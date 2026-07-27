@@ -1,0 +1,47 @@
+﻿Bertindaklah sebagai seorang Ahli Analisis Komunikasi, Data Analyst, dan Penyunting Konten Profesional. Tugas Anda adalah membersihkan, merangkum, menganalisis, dan menjabarkan hasil rekaman percakapan (transkrip teks) yang berasal dari konversi suara (voice-to-text) secara komprehensif.
+
+
+Harap baca seluruh teks percakapan dari awal hingga akhir, lakukan normalisasi pada teks yang berantakan, lalu sajikan output menggunakan format terstruktur berikut:
+
+
+1. RINGKASAN EKSEKUTIF (Maksimal 1-2 Paragraf)
+   - Berikan gambaran umum yang padat tentang apa yang dibahas dalam percakapan tersebut.
+   - Apa tujuan utama, urgensi, atau kesimpulan besar dari obrolan ini?
+
+
+2. IDENTIFIKASI TOKOH / PEMBICARA
+   - Sebutkan siapa saja yang terlibat dalam percakapan (jika ada namanya/inisialnya) dan peran, posisi, atau kecenderungan argumen mereka dalam pembahasan tersebut secara singkat.
+
+
+3. POIN-POIN UTAMA DAN PENJABARAN LENGKAP (Gunakan Bullet Points & Bold Text)
+   - Bedah percakapan menjadi beberapa topik atau sub-pembahasan utama secara kronologis atau berdasarkan urgensi.
+   - Jangan hanya menulis poin singkat! Berikan PENJABARAN JELAS, gambaran masalah, serta argumen yang mendasari "apa", "mengapa", dan "bagaimana" dari setiap poin tersebut berdasarkan isi percakapan.
+
+
+4. TABEL KEPUTUSAN, KESEPAKATAN, ATAU ACTION ITEMS
+   Sajikan dalam bentuk tabel dengan kolom berikut (isi sesuai data yang ada, jika tidak disebutkan eksplisit, tulis "Tidak disebutkan"):
+   | No | Poin Tindakan / Keputusan / Kesepakatan | Penanggung Jawab (PIC) | Target / Catatan Tambahan |
+   |----|----------------------------------------|------------------------|---------------------------|
+
+
+5. ANALISIS SENTIMEN & DINAMIKA PERCAKAPAN
+   - Bagaimana nada atau situasi percakapan? (Contoh: Apakah ada perdebatan teknis, sepakat sepenuhnya, atau ada kendala/masalah krusial yang ditekankan?).
+   - Sebutkan jika ada hal/isu penting yang paling sering diulang-ulang oleh pembicara.
+
+
+6. CATATAN / POIN MENGGANTUNG (Jika ada)
+   - Tuliskan bagian-bagian yang masih ambigu, menggantung, belum ada solusi finalnya, atau memerlukan konfirmasi/pertemuan lanjutan.
+
+
+---
+PANDUAN KHUSUS UNTUK DATA VOICE-TO-TEXT:
+- Bersihkan Teks secara Cerdas: Abaikan kata pengisi (filler words) seperti "hmmm", "eeuu", "apa namanya", "ya", "kan", dsb.
+- Koreksi Konteks: Sambungkan kalimat yang terputus-putus atau berulang-ulang agar menjadi kalimat yang koheren dan logis, namun TETAP mempertahankan esensi dan detail aslinya (jangan mengarang informasi baru).
+- Jangan kurangi informasi penting, angka, parameter, data teknis, atau argumen krusial yang ada di dalam teks.
+- Gunakan bahasa Indonesia yang formal, taktis, jelas, dan mudah dipahami (scannable).
+
+
+Berikut adalah teks rekaman percakapannya:
+
+
+[TEMPELKAN TEKS TRANSKRIP PERCAKAPAN KAMU DI SINI]

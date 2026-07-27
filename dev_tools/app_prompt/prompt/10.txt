@@ -1,0 +1,262 @@
+﻿# TUGAS
+
+
+Analisis **SELURUH metadata frontend** yang diberikan.
+
+
+Metadata tersebut berasal dari proyek dengan arsitektur:
+
+
+* **Frontend:** Next.js App Router
+* **Backend:** Golang Echo
+* **Backend Base URL:** `http://localhost:3174`
+
+
+Tujuan satu-satunya adalah menghasilkan file `next.route.js`.
+
+
+Metadata yang diberikan merupakan **source of truth**. Jangan mencari informasi lain, jangan melakukan asumsi di luar metadata, dan jangan menambahkan route yang tidak ada pada metadata.
+
+
+---
+
+
+# TUJUAN
+
+
+Bangun file `next.route.js` yang berisi konfigurasi `rewrites()` Next.js agar seluruh request frontend diteruskan (reverse proxy) ke backend Golang Echo.
+
+
+Gunakan pola berikut:
+
+
+```ts
+import type { NextConfig } from "next";
+
+
+const BACKEND = "http://localhost:8080";
+
+
+const nextConfig: NextConfig = {
+  async rewrites() {
+    return [
+      ...
+    ];
+  },
+};
+
+
+export default nextConfig;
+```
+
+
+Seluruh `destination` HARUS menggunakan konstanta `BACKEND`.
+
+
+Contoh:
+
+
+```ts
+{
+  source: "/login",
+  destination: `${BACKEND}/login`,
+}
+```
+
+
+---
+
+
+# RULES
+
+
+* Gunakan **HANYA** metadata yang diberikan.
+* Jangan mengubah endpoint.
+* Jangan mengubah HTTP method.
+* Jangan mengubah nama route.
+* Jangan mengubah dynamic parameter.
+* Jangan membuat route yang tidak berasal dari metadata.
+* Jangan menghapus endpoint yang ada.
+* Jangan melakukan normalisasi nama endpoint.
+* Jangan melakukan refactor.
+* Abaikan URL eksternal (CDN, Font Awesome, Google Fonts, dll). URL eksternal **bukan** rewrite backend.
+
+
+---
+
+
+# OPTIMASI REWRITE
+
+
+Optimalkan jumlah rewrite tanpa mengubah perilaku routing.
+
+
+Apabila beberapa endpoint memiliki prefix yang sama, gabungkan menjadi **satu wildcard rewrite** menggunakan `:path*`.
+
+
+Contoh:
+
+
+```
+/admin/settings
+/admin/users
+/admin/category/add
+/admin/category/update
+/admin/restore/zip
+```
+
+
+↓
+
+
+```ts
+{
+  source: "/admin/:path*",
+  destination: `${BACKEND}/admin/:path*`,
+}
+```
+
+
+Contoh lain:
+
+
+```
+/label/create
+/label/save
+/label/preview
+/label/preview-kotor
+```
+
+
+↓
+
+
+```ts
+{
+  source: "/label/:path*",
+  destination: `${BACKEND}/label/:path*`,
+}
+```
+
+
+Contoh:
+
+
+```
+/scanner
+```
+
+
+↓
+
+
+```ts
+{
+  source: "/scanner/:path*",
+  destination: `${BACKEND}/scanner/:path*`,
+}
+```
+
+
+Contoh:
+
+
+```
+/api/audit-time/{id}
+/api/verify-pemeriksa
+```
+
+
+↓
+
+
+```ts
+{
+  source: "/api/:path*",
+  destination: `${BACKEND}/api/:path*`,
+}
+```
+
+
+Gunakan wildcard hanya jika seluruh endpoint memang berada pada namespace yang sama.
+
+
+Jangan membuat rewrite yang redundan atau duplikat.
+
+
+Gunakan jumlah rewrite seminimal mungkin tanpa mengubah perilaku routing.
+
+
+---
+
+
+# INTERPRETASI METADATA
+
+
+Setiap blok:
+
+
+```
+FILE:
+ROUTE:
+```
+
+
+menunjukkan page frontend yang menggunakan endpoint di bawahnya.
+
+
+Contoh:
+
+
+```
+FILE: app/login/page.tsx
+ROUTE: /login
+
+
+FETCH, POST /login
+```
+
+
+berarti endpoint `/login` harus tersedia melalui rewrite menuju backend.
+
+
+Contoh:
+
+
+```
+FILE: app/dashboard/page.tsx
+ROUTE: /dashboard
+
+
+LINK, GET /logout
+```
+
+
+berarti route `/logout` juga harus memiliki rewrite menuju backend.
+
+
+Semua endpoint internal yang ditemukan pada metadata merupakan endpoint backend Golang Echo dan harus diarahkan ke `http://localhost:8080`.
+
+
+---
+
+
+# OUTPUT
+
+
+Output HARUS berupa SATU file TypeScript `next.config.ts`.
+
+
+Tanpa penjelasan.
+
+
+Tanpa markdown.
+
+
+Tanpa analisis.
+
+
+Tanpa ringkasan.
+
+
+Keluarkan hanya isi file `next.config.ts`.

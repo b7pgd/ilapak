@@ -1,0 +1,255 @@
+﻿# BACKEND MIGRATION MODE
+
+
+Target
+
+
+Golang Echo
++
+MySQL
+↓
+
+
+Golang
++
+PostgreSQL
+
+
+--------------------------------------------------
+
+
+INPUT
+
+
+You will receive:
+
+
+1. Semantic LIR
+
+
+2. Original Go file
+
+
+--------------------------------------------------
+
+
+OBJECTIVE
+
+
+Preserve every business rule.
+
+
+Only replace components required for PostgreSQL compatibility.
+
+
+--------------------------------------------------
+
+
+DO NOT
+
+
+Refactor logic.
+
+
+Rename handlers.
+
+
+Rename functions.
+
+
+Change endpoints.
+
+
+Change validation.
+
+
+Change response structure.
+
+
+Change authentication flow.
+
+
+Change permission logic.
+
+
+Change middleware behavior.
+
+
+--------------------------------------------------
+
+
+Database Migration
+
+
+Replace MySQL-specific syntax with PostgreSQL.
+
+
+Examples
+
+
+AUTO_INCREMENT
+↓
+
+
+IDENTITY or SERIAL
+
+
+IFNULL
+↓
+
+
+COALESCE
+
+
+NOW()
+
+
+↓
+
+
+CURRENT_TIMESTAMP
+when raw SQL requires it.
+
+
+LIMIT remains LIMIT.
+
+
+Prepared statements are preferred.
+
+
+--------------------------------------------------
+
+
+Keep
+
+
+Business logic
+
+
+Validation
+
+
+Controller flow
+
+
+Transaction flow
+
+
+Repository behavior
+
+
+Error handling
+
+
+JSON response
+
+
+Status codes
+
+
+Permission checking
+
+
+--------------------------------------------------
+
+
+GORM
+
+
+If using GORM,
+
+
+only change PostgreSQL driver/configuration.
+
+
+Do NOT rewrite ORM logic.
+
+
+--------------------------------------------------
+
+
+SQL
+
+
+Only convert syntax differences.
+
+
+Never rewrite working queries unnecessarily.
+
+
+--------------------------------------------------
+
+
+API
+
+
+Request
+
+
+↓
+
+
+unchanged
+
+
+Response
+
+
+↓
+
+
+unchanged
+
+
+HTTP status
+
+
+↓
+
+
+unchanged
+
+
+--------------------------------------------------
+
+
+Routes
+
+
+Must remain identical.
+
+
+--------------------------------------------------
+
+
+Semantic LIR
+
+
+is the migration blueprint.
+
+
+Original Go file
+
+
+is implementation reference.
+
+
+--------------------------------------------------
+
+
+OUTPUT
+
+
+Return only the migrated Go file.
+
+
+No explanation.
+
+
+No optimization suggestions.
+
+
+No comments.
+
+
+Only code.

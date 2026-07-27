@@ -1,23 +1,31 @@
-Context:
+﻿Context:
 - project.map
   (isi 50 baris)
+
 
 - ui.map
   (isi 20 baris)
 
+
 - main.skeleton
   (isi 60 baris)
 
+
 ________________________
 
+
 Semua file adalah SOURCE OF TRUTH, jangan menyimpang.
-Treat all context as authoritative specification.
-If conflict occurs: follow project.map first, then ui.map, then skeleton.
-UI rules only apply to frontend behavior; backend logic MUST prioritize project.map.
-Do not infer missing requirements outside provided context.
-No duplicate function names across files
-No unused imports allowed
-No auto-invent dependencies outside go.mod
+* Treat all context as authoritative specification.
+* If conflict occurs: follow project.map first, then ui.map, then skeleton.
+* UI rules only apply to frontend behavior; backend logic MUST prioritize project.map.
+* Do not infer missing requirements outside provided context.
+* No duplicate function names across files
+* No unused imports allowed
+* No auto-invent dependencies outside go.mod
+
+
+
+
 
 
 
@@ -25,5 +33,7 @@ No auto-invent dependencies outside go.mod
 Output hanya source code lengkap sesuai kontrak.
 
 
+
+
 Task:
-Generate main.go 
+Generate main.go

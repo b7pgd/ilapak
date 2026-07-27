@@ -1,0 +1,310 @@
+﻿# FRONTEND MIGRATION MODE
+
+
+Target:
+
+
+Golang Echo SSR
+↓
+
+
+Next.js App Router
+
+
+--------------------------------------------------
+
+
+INPUT
+
+
+You will receive:
+
+
+1. Semantic LIR
+2. Original HTML Template
+
+
+--------------------------------------------------
+
+
+OBJECTIVE
+
+
+Recreate the page inside Next.js.
+
+
+The visual result must be nearly identical.
+
+
+--------------------------------------------------
+
+
+MIGRATION RULES
+
+
+Convert:
+
+
+Go Template
+↓
+
+
+React JSX
+
+
+--------------------------------------------------
+
+
+Template Variables
+
+
+{{ .User }}
+
+
+↓
+
+
+props / state
+
+
+--------------------------------------------------
+
+
+{{ range }}
+
+
+↓
+
+
+map()
+
+
+--------------------------------------------------
+
+
+{{ if }}
+
+
+↓
+
+
+conditional rendering
+
+
+--------------------------------------------------
+
+
+Route Links
+
+
+Echo
+
+
+↓
+
+
+next/link
+
+
+--------------------------------------------------
+
+
+Forms
+
+
+Echo POST
+
+
+↓
+
+
+fetch()
+
+
+or Server Actions when appropriate.
+
+
+--------------------------------------------------
+
+
+Preserve exactly:
+
+
+Layout hierarchy
+
+
+Sidebar
+
+
+Header
+
+
+Table
+
+
+Cards
+
+
+Buttons
+
+
+Spacing
+
+
+Colors
+
+
+Typography
+
+
+Responsive behavior
+
+
+--------------------------------------------------
+
+
+Do NOT redesign UI.
+
+
+Do NOT modernize UI.
+
+
+Do NOT replace components.
+
+
+Do NOT simplify layout.
+
+
+--------------------------------------------------
+
+
+Keep:
+
+
+CSS class names
+
+
+DOM hierarchy
+
+
+Visual spacing
+
+
+Table structure
+
+
+Icon placement
+
+
+--------------------------------------------------
+
+
+Role-based rendering
+
+
+must remain identical.
+
+
+--------------------------------------------------
+
+
+Loops
+
+
+must produce identical rows.
+
+
+--------------------------------------------------
+
+
+Conditions
+
+
+must produce identical visibility.
+
+
+--------------------------------------------------
+
+
+State flow
+
+
+must remain identical.
+
+
+--------------------------------------------------
+
+
+Actions
+
+
+Buttons
+
+
+Search
+
+
+Print
+
+
+Delete
+
+
+Preview
+
+
+Barcode
+
+
+must preserve behavior.
+
+
+--------------------------------------------------
+
+
+Routes
+
+
+Convert Echo routes into Next routing without changing functionality.
+
+
+--------------------------------------------------
+
+
+If backend endpoint is required,
+
+
+keep the request exactly the same.
+
+
+Only adapt the frontend call.
+
+
+--------------------------------------------------
+
+
+Use Semantic LIR as the primary migration guide.
+
+
+Original HTML is implementation reference only.
+
+
+--------------------------------------------------
+
+
+OUTPUT
+
+
+Return only the migrated Next.js file.
+
+
+No explanation.
+
+
+No comments.
+
+
+No markdown.
+
+
+Only code.
