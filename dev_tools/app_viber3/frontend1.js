@@ -752,14 +752,17 @@
                 ? 'Navigation Routes\n  ' + Array.from(sm.navigationLinks).join('\n  ') 
                 : 'None';
 
-            // Collect explicit JS Functions + Inline Invoked Functions for Client Functions
-            const clientFns = new Set(Object.keys(sm.jsFunctions).map(f => `${f}()`));
+            // Map Client Functions with their source file location
+            const ext = this.getFileExtension(data.filePath);
+            const sourceLocation = ext === 'js' ? data.filePath : 'inline <script>';
+
+            const clientFns = new Set(Object.keys(sm.jsFunctions).map(f => `${f}() -> ${sourceLocation}`));
             sm.inlineEvents.forEach(e => {
                 const match = e.handler.match(/^([a-zA-Z0-9_$]+)\s*\(/);
                 if (match) {
-                    clientFns.add(`${match[1]}()`);
+                    clientFns.add(`${match[1]}() -> ${sourceLocation}`);
                 } else if (/^[a-zA-Z0-9_$]+$/.test(e.handler.trim())) {
-                    clientFns.add(`${e.handler.trim()}()`);
+                    clientFns.add(`${e.handler.trim()}() -> ${sourceLocation}`);
                 }
             });
 
