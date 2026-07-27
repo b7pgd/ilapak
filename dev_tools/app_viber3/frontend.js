@@ -532,17 +532,34 @@
         extractWrites(code, symbolModel) {
             const writes = [];
 
-            const mutatedStates = new Set();
-            Object.keys(symbolModel.stateMap).forEach(setter => {
-                if (code.includes(`${setter}(`)) {
-                    mutatedStates.add(symbolModel.stateMap[setter]);
+            const fnWrites = [];
+            Object.keys(symbolModel.functions).forEach(fn => {
+                const fnBody = symbolModel.functions[fn].body;
+                const mutatedInFn = [];
+                Object.keys(symbolModel.stateMap).forEach(setter => {
+                    if (fnBody.includes(`${setter}(`)) {
+                        mutatedInFn.push(symbolModel.stateMap[setter]);
+                    }
+                });
+                if (mutatedInFn.length > 0) {
+                    fnWrites.push(`${fn}:\n    ${mutatedInFn.join('\n    ')}`);
                 }
             });
 
-            if (mutatedStates.size > 0) {
-                writes.push(`React State / Context\n    ${Array.from(mutatedStates).join('\n    ')}`);
+            if (fnWrites.length > 0) {
+                writes.push(`React State / Context\n  ${fnWrites.join('\n  ')}`);
             } else {
-                writes.push('React State / Context\n    None');
+                const mutatedStates = new Set();
+                Object.keys(symbolModel.stateMap).forEach(setter => {
+                    if (code.includes(`${setter}(`)) {
+                        mutatedStates.add(symbolModel.stateMap[setter]);
+                    }
+                });
+                if (mutatedStates.size > 0) {
+                    writes.push(`React State / Context\n    ${Array.from(mutatedStates).join('\n    ')}`);
+                } else {
+                    writes.push('React State / Context\n    None');
+                }
             }
 
             if (symbolModel.storageWrites.size > 0) {
@@ -680,14 +697,15 @@
             // Construct rich State Lifecycle Flow with Writer Functions & Data Flow
             const stateFlows = sm.stateVars.map(s => {
                 const initialVal = s.initialVal !== '' ? s.initialVal : 'undefined';
-                let writerFn = 'None / Component Render';
+                const writerFns = [];
                 Object.keys(sm.functions).forEach(fn => {
                     if (sm.functions[fn].body.includes(s.setter)) {
-                        writerFn = `${fn}()`;
+                        writerFns.push(`${fn}()`);
                     }
                 });
+                let writerOutput = writerFns.length > 0 ? writerFns.join('\n    ') : (s.setter ? `${s.setter}()` : 'None / Inline');
 
-                return `${s.varName}\n  TYPE:\n    ${s.inferredType}\n  WRITER:\n    ${writerFn}\n  FLOW:\n    ${initialVal}\n    ↓ ${s.setter || 'setter'}\n    ↓\n    updated ${s.inferredType}`;
+                return `${s.varName}\n  TYPE:\n    ${s.inferredType}\n  INITIALIZER:\n    ${sm.mainComponent}\n  WRITER:\n    ${writerOutput}\n  FLOW:\n    ${initialVal}\n    ↓ ${s.setter || 'setter'}\n    ↓\n    updated ${s.inferredType}`;
             });
 
             // Format UI Tree hierarchy
