@@ -215,14 +215,25 @@
                 }
             }
 
-            // Extract Template Data Map (.Variable -> HTML Element)
-            const templateDataMatches = code.matchAll(/(<([a-zA-Z0-9-]+)[^>]*?(?:class=["']([^"']*)["'])?[^>]*?>)([\s\S]*?)\{\{\s*(\$?[a-zA-Z0-9_$.]+)\s*\}\}/g);
+            // Extract Template Data Map (.Variable -> Specific HTML Element Tag/Class/ID)
+            const templateDataMatches = code.matchAll(/(<([a-zA-Z0-9-]+)[^>]*?(?:id=["']([^"']*)["'])?[^>]*?(?:class=["']([^"']*)["'])?[^>]*?>)([\s\S]*?)\{\{\s*(\$?[a-zA-Z0-9_$.]+)\s*\}\}/g);
             for (const m of templateDataMatches) {
                 const tag = m[2];
-                const className = m[3] ? `.${m[3].split(/\s+/)[0]}` : '';
-                const varName = m[5];
+                const idAttr = m[3] ? `#${m[3].trim().split(/\s+/)[0]}` : '';
+                const classAttr = m[4] ? `.${m[4].trim().split(/\s+/)[0]}` : '';
+                const varName = m[6];
+
+                let elementTarget = tag;
+                if (idAttr) {
+                    elementTarget = `${tag}${idAttr}`;
+                } else if (classAttr) {
+                    elementTarget = `${tag}${classAttr}`;
+                } else {
+                    elementTarget = `<${tag}>`;
+                }
+
                 if (!goBuiltins.includes(varName) && (varName.startsWith('.') || varName.startsWith('$'))) {
-                    templateDataMap.push(`${varName}\n  ↓\n  ${tag}${className}`);
+                    templateDataMap.push(`${varName}\n  ↓\n  ${elementTarget}`);
                 }
             }
 
@@ -284,12 +295,18 @@
                 });
             }
 
-            // Extract addEventListener calls from JavaScript
-            const addListenerMatches = code.matchAll(/(?:document|window|\$|\b[a-zA-Z0-9_$]+\b)\s*(?:\.\s*querySelector\s*\(\s*["']([^"']+)["']\s*\))?\s*\.\s*addEventListener\s*\(\s*["']([^"']+)["']\s*,\s*([^,\s\)]+)/g);
+            // Extract addEventListener calls from JavaScript (Fixed Callback Detection)
+            const addListenerMatches = code.matchAll(/(?:document|window|\$|\b[a-zA-Z0-9_$]+\b)\s*(?:\.\s*querySelector\s*\(\s*["']([^"']+)["']\s*\))?\s*\.\s*addEventListener\s*\(\s*["']([^"']+)["']\s*,\s*([^,\n\)]+)/g);
             for (const m of addListenerMatches) {
                 const selector = m[1] || 'Target Element';
                 const eventName = 'on' + m[2];
-                const handlerName = m[3].trim();
+                let rawHandler = m[3].trim();
+
+                let handlerName = rawHandler;
+                if (/^(?:async\s*)?(?:\(\s*\)|[a-zA-Z0-9_$]+|\([^)]+\))\s*=>|function/i.test(rawHandler) || rawHandler.startsWith('(')) {
+                    handlerName = 'anonymous callback';
+                }
+
                 inlineEvents.push({
                     event: eventName,
                     handler: handlerName,
@@ -311,7 +328,13 @@
             for (const m of jqEventMatches) {
                 const selector = m[1];
                 const eventName = 'on' + (m[2] || m[4]);
-                const handler = (m[3] || m[5] || '').trim();
+                const rawHandler = (m[3] || m[5] || '').trim();
+                let handler = rawHandler;
+
+                if (/^(?:async\s*)?(?:\(\s*\)|[a-zA-Z0-9_$]+|\([^)]+\))\s*=>|function/i.test(rawHandler) || rawHandler.startsWith('(')) {
+                    handler = 'anonymous callback';
+                }
+
                 if (handler) {
                     inlineEvents.push({
                         event: eventName,
@@ -499,15 +522,19 @@
 
             const clientSteps = [];
             if (code.includes('DOMContentLoaded') || code.includes('window.onload')) {
-                clientSteps.push('DOMContentLoaded()\n  ↓\n  bind events');
+                clientSteps.push('DOMContentLoaded()\n  ↓\n  anonymous callback');
             }
 
             if (symbolModel.inlineEvents.length > 0) {
                 symbolModel.inlineEvents.forEach(evt => {
-                    const cleanFn = evt.handler.replace(/\(.*\)/, '').trim();
+                    let cleanFn = evt.handler.trim();
+                    if (/^[a-zA-Z0-9_$]+\(.*\)$/.test(cleanFn)) {
+                        cleanFn = cleanFn.replace(/\(.*\)/, '()').trim();
+                    }
+
                     const chain = [
                         `EVENT\n  ${evt.event}`,
-                        `↓\n  ${cleanFn || evt.handler}`,
+                        `↓\n  ${cleanFn}`,
                         `↓\n  DOM Update`
                     ];
                     flows.push(chain.join('\n  '));
@@ -722,8 +749,19 @@
                 : 'None';
 
             const routeGraphOutput = sm.navigationLinks.size > 0 
-                ? Array.from(sm.navigationLinks).join('\n  ↓\n  ') 
+                ? 'Navigation Routes\n  ' + Array.from(sm.navigationLinks).join('\n  ') 
                 : 'None';
+
+            // Collect explicit JS Functions + Inline Invoked Functions for Client Functions
+            const clientFns = new Set(Object.keys(sm.jsFunctions).map(f => `${f}()`));
+            sm.inlineEvents.forEach(e => {
+                const match = e.handler.match(/^([a-zA-Z0-9_$]+)\s*\(/);
+                if (match) {
+                    clientFns.add(`${match[1]}()`);
+                } else if (/^[a-zA-Z0-9_$]+$/.test(e.handler.trim())) {
+                    clientFns.add(`${e.handler.trim()}()`);
+                }
+            });
 
             return [
                 '==================================================',
@@ -739,6 +777,7 @@
                 `GO BLOCKS:\n  ${sm.goBlocks.length > 0 ? sm.goBlocks.map(b => `${b.type.toUpperCase()}:\n    ${b.expression}` + (b.depends.length > 0 ? `\n    depends:\n      ${b.depends.join(', ')}` : '')).join('\n  ') : 'None'}`,
                 `FORMS:\n  ${sm.forms.length > 0 ? sm.forms.map(f => `[${f.method}] ${f.action}` + (f.boundHandler ? ` (Handler: ${f.boundHandler})` : '')).join('\n  ') : 'None'}`,
                 `FUNCTIONS:\n  ${Object.keys(sm.jsFunctions).length > 0 ? Object.keys(sm.jsFunctions).join('\n  ') : 'None'}`,
+                `CLIENT FUNCTIONS:\n  ${clientFns.size > 0 ? Array.from(clientFns).join('\n  ') : 'None'}`,
                 `API ENDPOINTS:\n  ${sm.apiEndpoints.size > 0 ? Array.from(sm.apiEndpoints).join('\n  ') : 'None'}`,
                 '================================================== TEMPLATE DATA MAP',
                 `${sm.templateDataMap.length > 0 ? sm.templateDataMap.join('\n\n') : 'None'}`,
