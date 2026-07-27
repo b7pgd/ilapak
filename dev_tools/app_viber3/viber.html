@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ DEBUG LIR ENGINE</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-main: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --code-bg: #0f172a;
+            --code-text: #38bdf8;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-main);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .app-wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h2 {
+            color: var(--primary);
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+            margin-top: 0;
+            font-size: 24px;
+        }
+
+        .setup-box {
+            background: var(--bg-card);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            border: 1px dashed var(--primary);
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .file-box {
+            background: var(--bg-card);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .file-box h3 {
+            margin-top: 0;
+            font-size: 16px;
+            color: var(--text-main);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+        }
+
+        .output-box {
+            background: var(--bg-card);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        ul { list-style: none; padding: 0; margin: 0; }
+
+        li {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+            font-family: monospace;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        li:hover { background: #f1f5f9; color: var(--primary); }
+        li input[type="checkbox"] { cursor: pointer; transform: scale(1.1); }
+
+        .active { background: #dbeafe !important; color: var(--primary) !important; font-weight: bold; }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        button {
+            background: #16a34a;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            flex: 1;
+            min-width: 200px;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        button:hover { background: #15803d; }
+        button:disabled { background: var(--text-muted); cursor: not-allowed; }
+
+        textarea {
+            flex: 1;
+            background: var(--code-bg);
+            color: var(--code-text);
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 13px;
+            padding: 15px;
+            border: 1px solid var(--code-bg);
+            border-radius: 6px;
+            resize: none;
+            min-height: 400px;
+            margin-top: 10px;
+            line-height: 1.5;
+        }
+
+        .path-banner {
+            color: #d97706;
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-family: monospace;
+            font-size: 13px;
+        }
+
+        .file-input-btn {
+            background: var(--primary);
+            padding: 10px 15px;
+            color: white;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            display: inline-block;
+            transition: background 0.2s;
+        }
+
+        .file-input-btn:hover { background: var(--primary-hover); }
+        input[type="file"] { display: none; }
+
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .setup-box { flex-direction: column; align-items: flex-start; }
+            textarea { min-height: 300px; }
+            button { width: 100%; flex: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-wrapper">
+        <h2>⚡ DEBUG LIR ENGINE</h2>
+
+        <div class="setup-box">
+            <div><strong>Step 1: Pilih Folder Project Lo:</strong></div>
+            <label class="file-input-btn">
+                📂 PILIH FOLDER PROJECT
+                <input type="file" id="folderPicker" webkitdirectory directory multiple>
+            </label>
+            <div id="statusText" style="color: var(--text-muted); font-size: 14px;">Belum ada folder yang dipilih</div>
+        </div>
+
+        <div class="container">
+            <div class="file-box">
+                <h3>Daftar File Project (<span id="fileCount">0</span>) [Selected: <span id="selectedCount">0</span>]</h3>
+                <div class="btn-group" style="margin-bottom: 10px;">
+                    <button id="btnSelectAll" style="background: #475569; min-width: 120px; padding: 6px 12px;" disabled>🗹 SELECT ALL</button>
+                    <button id="btnUnselectAll" style="background: #64748b; min-width: 120px; padding: 6px 12px;" disabled>☐ UNSELECT ALL</button>
+                </div>
+                <ul id="fileList">
+                    <li style="color: var(--text-muted); cursor: default; background: none;">Silakan pilih folder terlebih dahulu...</li>
+                </ul>
+            </div>
+
+            <div class="output-box">
+                <div class="btn-group">
+                    <button id="btnExtractFrontend" disabled>🔍 EXTRACT FRONTEND DEBUG LIR</button>
+                    <button id="btnExtractBackend" disabled>🔍 EXTRACT BACKEND DEBUG LIR</button>
+                    <button id="btnExtractFullstack" style="background:#9333ea;" disabled>🚀 EXTRACT FULLSTACK DEBUG LIR</button>
+                </div>
+                <div class="btn-group" style="margin-top: 5px;">
+                    <button id="btnCopy" style="background: #4f46e5;">📋 COPY OUTPUT</button>
+                    <button id="btnDownload" style="background: #0284c7;">💾 DOWNLOAD .TXT</button>
+                </div>
+                <div class="path-banner" id="pathBanner" style="margin-top: 15px;">Pilih file dari daftar di atas...</div>
+                <textarea id="outputArea" readonly placeholder="Hasil ekstraksi DEBUG LIR untuk konteks AI debugging akan muncul di sini..."></textarea>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    window.onerror = function(message, source, lineno, colno, error) {
+        console.error("SOURCE:", source);
+        console.error("LINE:", lineno);
+        console.error("COL:", colno);
+        console.error("MSG:", message);
+    };
+
+        // Global Registries & Pipeline State Management
+        window.LirEngineRegistry = window.LirEngineRegistry || {
+            registerStage(targetEngine, stageFn) {
+                if (!this[targetEngine]) {
+                    this[targetEngine] = [];
+                }
+                if (!this[targetEngine].includes(stageFn)) {
+                    this[targetEngine].push(stageFn);
+                }
+            }
+        };
+
+        let projectFiles = {};
+        let selectedFileKeys = [];
+        const loadedScripts = new Set();
+
+        const IGNORED_EXTENSIONS = new Set([
+            'txt', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'pdf',
+            'zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'iso',
+            'png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'svg', 'ico', 'tiff',
+            'mp4', 'mp3', 'wav', 'avi', 'mkv', 'mov', 'flv', 'ogg', 'aac',
+            'exe', 'dll', 'so', 'dylib', 'bin', 'dat', 'db', 'sqlite', 'log'
+        ]);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('folderPicker').addEventListener('change', readProject);
+            document.getElementById('btnSelectAll').addEventListener('click', selectAllFiles);
+            document.getElementById('btnUnselectAll').addEventListener('click', unselectAllFiles);
+            document.getElementById('btnExtractFrontend').addEventListener('click', () => launchEngine('frontend'));
+            document.getElementById('btnExtractBackend').addEventListener('click', () => launchEngine('backend'));
+            document.getElementById('btnExtractFullstack').addEventListener('click', () => launchFullstack());
+            document.getElementById('btnCopy').addEventListener('click', copyToClipboard);
+            document.getElementById('btnDownload').addEventListener('click', downloadAsTxt);
+        });
+
+        function isIgnoredFile(filename) {
+            const parts = filename.split('.');
+            if (parts.length <= 1) return false;
+            const ext = parts.pop().toLowerCase();
+            return IGNORED_EXTENSIONS.has(ext);
+        }
+
+        function readProject(e) {
+            const files = e.target.files;
+            if (!files || files.length === 0) return;
+
+            let addedCount = 0;
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const path = file.webkitRelativePath || file.name;
+
+                if (isIgnoredFile(path)) continue;
+
+                projectFiles[path] = file;
+                addedCount++;
+            }
+
+            renderFileListUI();
+
+            document.getElementById('statusText').innerText = `Berhasil memuat folder! (${addedCount} file ditambahkan)`;
+            updateActionButtons();
+        }
+
+        function renderFileListUI() {
+            const fileListUI = document.getElementById('fileList');
+            fileListUI.innerHTML = '';
+            
+            const paths = Object.keys(projectFiles);
+
+            if (paths.length === 0) {
+                fileListUI.innerHTML = '<li style="color: var(--text-muted); cursor: default; background: none;">Silakan pilih folder terlebih dahulu...</li>';
+                document.getElementById('fileCount').innerText = 0;
+                document.getElementById('btnSelectAll').disabled = true;
+                document.getElementById('btnUnselectAll').disabled = true;
+                return;
+            }
+
+            paths.forEach(path => {
+                const li = document.createElement('li');
+                const chk = document.createElement('input');
+                chk.type = 'checkbox';
+                chk.value = path;
+                chk.checked = selectedFileKeys.includes(path);
+                chk.onclick = function(event) { 
+                    event.stopPropagation(); 
+                    toggleFileSelect(this.checked, path); 
+                };
+                
+                const label = document.createElement('span');
+                label.textContent = path;
+                
+                li.appendChild(chk);
+                li.appendChild(label);
+                li.title = path;
+                if (chk.checked) li.classList.add('active');
+
+                li.onclick = function() {
+                    const checkbox = this.querySelector('input[type="checkbox"]');
+                    checkbox.checked = !checkbox.checked;
+                    toggleFileSelect(checkbox.checked, path);
+                };
+                
+                fileListUI.appendChild(li);
+            });
+
+            document.getElementById('fileCount').innerText = paths.length;
+            document.getElementById('btnSelectAll').disabled = false;
+            document.getElementById('btnUnselectAll').disabled = false;
+        }
+
+        function toggleFileSelect(isChecked, fileKey) {
+            const listItems = document.querySelectorAll('#fileList li');
+            let targetLi = null;
+
+            for (let li of listItems) {
+                if (li.title === fileKey) {
+                    targetLi = li;
+                    break;
+                }
+            }
+
+            if (isChecked) {
+                if (!selectedFileKeys.includes(fileKey)) {
+                    selectedFileKeys.push(fileKey);
+                }
+                if (targetLi) targetLi.classList.add('active');
+            } else {
+                selectedFileKeys = selectedFileKeys.filter(k => k !== fileKey);
+                if (targetLi) targetLi.classList.remove('active');
+            }
+
+            document.getElementById('selectedCount').innerText = selectedFileKeys.length;
+            if (selectedFileKeys.length > 0) {
+                document.getElementById('pathBanner').innerText = `Target Aktif: ${selectedFileKeys.length} File terpilih`;
+            } else {
+                document.getElementById('pathBanner').innerText = 'Pilih file dari daftar di atas...';
+            }
+            updateActionButtons();
+        }
+
+        function selectAllFiles() {
+            selectedFileKeys = [];
+            const checkboxes = document.querySelectorAll('#fileList li input[type="checkbox"]');
+            checkboxes.forEach(chk => {
+                chk.checked = true;
+                const path = chk.value;
+                if (!selectedFileKeys.includes(path)) {
+                    selectedFileKeys.push(path);
+                }
+            });
+
+            const listItems = document.querySelectorAll('#fileList li');
+            listItems.forEach(li => li.classList.add('active'));
+
+            document.getElementById('selectedCount').innerText = selectedFileKeys.length;
+            document.getElementById('pathBanner').innerText = `Target Aktif: ${selectedFileKeys.length} File terpilih`;
+            updateActionButtons();
+        }
+
+        function unselectAllFiles() {
+            selectedFileKeys = [];
+            const checkboxes = document.querySelectorAll('#fileList li input[type="checkbox"]');
+            checkboxes.forEach(chk => {
+                chk.checked = false;
+            });
+
+            const listItems = document.querySelectorAll('#fileList li');
+            listItems.forEach(li => li.classList.remove('active'));
+
+            document.getElementById('selectedCount').innerText = 0;
+            document.getElementById('pathBanner').innerText = 'Pilih file dari daftar di atas...';
+            updateActionButtons();
+        }
+
+        function updateActionButtons() {
+            const hasSelection = selectedFileKeys.length > 0;
+            document.getElementById('btnExtractFrontend').disabled = !hasSelection;
+            document.getElementById('btnExtractBackend').disabled = !hasSelection;
+            document.getElementById('btnExtractFullstack').disabled = !hasSelection;
+        }
+
+        async function launchEngine(engineType) {
+            if (selectedFileKeys.length === 0) return;
+
+            document.getElementById('outputArea').value =
+                `Executing ${engineType.toUpperCase()} DEBUG LIR pipeline...`;
+
+            const stages = window.LirEngineRegistry[engineType];
+
+            if (!stages || stages.length === 0) {
+                document.getElementById('outputArea').value =
+                    `Error: No registered stages found for ${engineType}. Ensure ${engineType}.js is loaded and calls registerStage.`;
+                return;
+            }
+
+            let currentOutput = null;
+
+            try {
+                for (const stageFn of stages) {
+                    currentOutput = await stageFn({
+                        projectFiles,
+                        selectedFiles: selectedFileKeys
+                    });
+                }
+
+                renderOutput(
+                    (currentOutput && currentOutput.finalOutput !== undefined)
+                        ? currentOutput.finalOutput
+                        : JSON.stringify(currentOutput, null, 2)
+                );
+            } catch (err) {
+                console.error(`Error executing ${engineType} pipeline:`, err);
+                document.getElementById('outputArea').value = `Pipeline Execution Error: ${err.message}`;
+            }
+        }
+
+        async function scoreFileHeuristic(path) {
+            const p = path.toLowerCase();
+            let feScore = 0;
+            let beScore = 0;
+
+            const feExts = ['.tsx', '.jsx', '.vue', '.svelte', '.html', '.css', '.scss', '.less', '.dart', '.swift'];
+            const beExts = ['.go', '.py', '.java', '.kt', '.rs', '.cpp', '.c', '.cs', '.php', '.rb'];
+
+            feExts.forEach(ext => { if (p.endsWith(ext)) feScore += 4; });
+            beExts.forEach(ext => { if (p.endsWith(ext)) beScore += 4; });
+
+            if (p.endsWith('.js') || p.endsWith('.ts')) {
+                feScore += 1;
+                beScore += 1;
+            }
+
+            const feDirs = ['frontend', 'components', 'pages', 'views', 'ui', 'hooks', 'layouts', 'widgets', 'screens', 'styles', 'public'];
+            const beDirs = ['backend', 'server', 'api', 'controllers', 'routes', 'router', 'models', 'entities', 'services', 'repositories', 'migrations', 'middleware', 'db', 'database'];
+
+            feDirs.forEach(dir => { if (p.includes(`/${dir}/`) || p.includes(`${dir}/`)) feScore += 3; });
+            beDirs.forEach(dir => { if (p.includes(`/${dir}/`) || p.includes(`${dir}/`)) beScore += 3; });
+
+            try {
+                const file = projectFiles[path];
+                if (file) {
+                    const text = await file.text();
+                    const head = text.substring(0, 2000).toLowerCase();
+
+                    const feKeywords = ['import react', 'from "react"', "from 'react'", 'vue', 'svelte', 'render()', 'jsx', 'usestate', 'useeffect', 'component', 'template', 'document.getelementbyid', '@component', 'widget'];
+                    const beKeywords = ['express', 'laravel', 'spring', 'django', 'flask', 'gin', 'fiber', 'gorm', 'mongoose', 'sequelize', 'typeorm', 'app.get(', 'app.post(', 'router.', 'controller', 'repository', 'db.', 'select ', 'insert into'];
+
+                    feKeywords.forEach(kw => { if (head.includes(kw)) feScore += 2; });
+                    beKeywords.forEach(kw => { if (head.includes(kw)) beScore += 2; });
+                }
+            } catch (e) {
+                console.warn(`Failed reading text content for heuristics on ${path}`, e);
+            }
+
+            return { feScore, beScore };
+        }
+
+        async function launchFullstack() {
+            if (selectedFileKeys.length === 0) return;
+
+            document.getElementById('outputArea').value = "Detecting project architecture & generating DEBUG LIR...";
+
+            const frontendFiles = [];
+            const backendFiles = [];
+
+            for (const path of selectedFileKeys) {
+                const { feScore, beScore } = await scoreFileHeuristic(path);
+
+                if (feScore > beScore) {
+                    frontendFiles.push(path);
+                } else if (beScore > feScore) {
+                    backendFiles.push(path);
+                } else {
+                    frontendFiles.push(path);
+                    backendFiles.push(path);
+                }
+            }
+
+            let frontendResult = null;
+            let backendResult = null;
+
+            if (frontendFiles.length > 0) {
+                const stages = window.LirEngineRegistry.frontend;
+                if (stages && stages.length > 0) {
+                    let output = null;
+                    for (const stageFn of stages) {
+                        output = await stageFn({
+                            projectFiles,
+                            selectedFiles: frontendFiles
+                        });
+                    }
+                    frontendResult = output?.finalOutput ?? output;
+                }
+            }
+
+            if (backendFiles.length > 0) {
+                const stages = window.LirEngineRegistry.backend;
+                if (stages && stages.length > 0) {
+                    let output = null;
+                    for (const stageFn of stages) {
+                        output = await stageFn({
+                            projectFiles,
+                            selectedFiles: backendFiles
+                        });
+                    }
+                    backendResult = output?.finalOutput ?? output;
+                }
+            }
+
+            let combinedOutput = "=== DEBUG LIR ENGINE: FULLSTACK SUMMARY ===\n\n";
+
+            combinedOutput += "==================== FRONTEND DEBUG LIR ====================\n";
+            combinedOutput += frontendResult ? (typeof frontendResult === 'string' ? frontendResult : JSON.stringify(frontendResult, null, 2)) : "No frontend components detected or processed.";
+            combinedOutput += "\n\n";
+
+            combinedOutput += "==================== BACKEND DEBUG LIR ====================\n";
+            combinedOutput += backendResult ? (typeof backendResult === 'string' ? backendResult : JSON.stringify(backendResult, null, 2)) : "No backend components detected or processed.";
+
+            renderOutput(combinedOutput);
+        }
+
+        function renderOutput(output) {
+            document.getElementById('outputArea').value = output || '';
+        }
+
+        function copyToClipboard() {
+            const copyText = document.getElementById("outputArea");
+            if (!copyText.value) return;
+
+            copyText.select();
+            copyText.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(copyText.value);
+
+            const btn = document.getElementById('btnCopy');
+            const originalText = btn.innerText;
+            btn.innerText = '✅ COPIED!';
+            btn.style.background = '#22c55e';
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.style.background = '#4f46e5';
+            }, 1500);
+        }
+
+        function downloadAsTxt() {
+            const outputText = document.getElementById("outputArea").value;
+            if (!outputText) {
+                alert("Tidak ada output untuk di-download. Silakan jalankan extract terlebih dahulu.");
+                return;
+            }
+
+            const blob = new Blob([outputText], { type: "text/plain;charset=utf-8" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "debug_lir_output.txt";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+    <script src="./frontend.js"></script>
+    <script src="./backend.js"></script>
+</body>
+</html>
