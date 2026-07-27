@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> FULLSTACK PROJECT VALIDATOR</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-main: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --code-bg: #0f172a;
+            --code-text: #38bdf8;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-main);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .app-wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h2 {
+            color: var(--primary);
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+            margin-top: 0;
+            font-size: 24px;
+        }
+
+        .setup-box {
+            background: var(--bg-card);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            border: 1px dashed var(--primary);
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .file-box {
+            background: var(--bg-card);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .file-box h3 {
+            margin-top: 0;
+            font-size: 16px;
+            color: var(--text-main);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+        }
+
+        .output-box {
+            background: var(--bg-card);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        ul { list-style: none; padding: 0; margin: 0; }
+
+        li {
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+            font-family: monospace;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        button {
+            background: #16a34a;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            flex: 1;
+            min-width: 200px;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        button:hover { background: #15803d; }
+        button:disabled { background: var(--text-muted); cursor: not-allowed; }
+
+        textarea {
+            flex: 1;
+            background: var(--code-bg);
+            color: var(--code-text);
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 13px;
+            padding: 15px;
+            border: 1px solid var(--code-bg);
+            border-radius: 6px;
+            resize: none;
+            min-height: 400px;
+            margin-top: 10px;
+            line-height: 1.5;
+        }
+
+        .path-banner {
+            color: #d97706;
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-family: monospace;
+            font-size: 13px;
+        }
+
+        .file-input-btn {
+            background: var(--primary);
+            padding: 10px 15px;
+            color: white;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            display: inline-block;
+            transition: background 0.2s;
+        }
+
+        .file-input-btn:hover { background: var(--primary-hover); }
+        input[type="file"] { display: none; }
+
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .setup-box { flex-direction: column; align-items: flex-start; }
+            textarea { min-height: 300px; }
+            button { width: 100%; flex: none; }
+        }
+    </style>
+    <!-- Official TypeScript Compiler for Real AST & Syntax Diagnostic Parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/typescript/5.3.3/typescript.min.js"></script>
+</head>
+<body>
+
+    <div class="app-wrapper">
+        <h2> FULLSTACK PROJECT VALIDATOR</h2>
+
+        <div class="setup-box">
+            <div><strong>Step 1: Impor Folder Project:</strong></div>
+            <label class="file-input-btn">
+                 ADD PROJECT FOLDER
+                <input type="file" id="folderPicker" webkitdirectory directory multiple>
+            </label>
+            <div id="statusText" style="color: var(--text-muted); font-size: 14px;">Belum ada folder yang dipilih</div>
+        </div>
+
+        <div class="container">
+            <div class="file-box">
+                <h3>Workspace Files (<span id="fileCount">0</span>)</h3>
+                <ul id="fileList">
+                    <li style="color: var(--text-muted); cursor: default; background: none;">Silakan pilih folder terlebih dahulu...</li>
+                </ul>
+            </div>
+
+            <div class="output-box">
+                <div class="btn-group">
+                    <button id="btnRunValidation" style="background:#9333ea;" disabled> RUN PROJECT VALIDATION</button>
+                </div>
+                <div class="btn-group" style="margin-top: 5px;">
+                    <button id="btnCopy" style="background: #4f46e5;"> COPY REPORT</button>
+                    <button id="btnDownload" style="background: #0284c7;"> DOWNLOAD REPORT</button>
+                </div>
+                <div class="path-banner" id="pathBanner" style="margin-top: 15px;">Workspace siap dianalisis...</div>
+                <textarea id="outputArea" readonly placeholder="Hasil Fullstack Project Validation Report akan muncul di sini..."></textarea>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    window.onerror = function(message, source, lineno, colno, error) {
+        console.error("SOURCE:", source);
+        console.error("LINE:", lineno);
+        console.error("COL:", colno);
+        console.error("MSG:", message);
+    };
+
+        let workspaceFiles = {};
+        let workspaceFolders = new Set();
+        const ALLOWED_EXTS = ['.tsx', '.go'];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('folderPicker').addEventListener('change', addFolderToWorkspace);
+            document.getElementById('btnRunValidation').addEventListener('click', runProjectValidation);
+            document.getElementById('btnCopy').addEventListener('click', copyToClipboard);
+            document.getElementById('btnDownload').addEventListener('click', downloadAsTxt);
+        });
+
+        function addFolderToWorkspace(e) {
+            const files = e.target.files;
+            if (!files || files.length === 0) return;
+
+            let addedCount = 0;
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const fullPath = file.webkitRelativePath || file.name;
+                const ext = '.' + fullPath.split('.').pop().toLowerCase();
+                
+                if (ALLOWED_EXTS.some(e => fullPath.toLowerCase().endsWith(e))) {
+                    workspaceFiles[fullPath] = file;
+                    const rootFolder = fullPath.split('/')[0];
+                    if (rootFolder) workspaceFolders.add(rootFolder);
+                    addedCount++;
+                }
+            }
+
+            e.target.value = '';
+            renderWorkspaceUI();
+        }
+
+        function clearWorkspace() {
+            workspaceFiles = {};
+            workspaceFolders.clear();
+            renderWorkspaceUI();
+            document.getElementById('outputArea').value = '';
+            document.getElementById('pathBanner').innerText = 'Workspace dibersihkan.';
+        }
+
+        function renderWorkspaceUI() {
+            const fileListUI = document.getElementById('fileList');
+            fileListUI.innerHTML = '';
+            const paths = Object.keys(workspaceFiles);
+
+            if (paths.length === 0) {
+                fileListUI.innerHTML = '<li style="color: var(--text-muted); cursor: default; background: none;">Silakan pilih folder terlebih dahulu...</li>';
+                document.getElementById('statusText').innerText = 'Belum ada folder yang dipilih';
+                document.getElementById('fileCount').innerText = '0';
+                document.getElementById('btnRunValidation').disabled = true;
+                return;
+            }
+
+            paths.forEach(path => {
+                const li = document.createElement('li');
+                li.textContent = path;
+                li.title = path;
+                fileListUI.appendChild(li);
+            });
+
+            document.getElementById('statusText').innerText = `Workspace aktif: ${Array.from(workspaceFolders).join(', ')}`;
+            document.getElementById('fileCount').innerText = paths.length;
+            document.getElementById('btnRunValidation').disabled = false;
+        }
+
+        // ==========================================
+        // SIMPLIFIED RESOLVER & CORE ENGINES
+        // ==========================================
+
+        // Helper: Sederhana resolver untuk @/, ~/, ./ dan ../
+        function resolveModulePath(importPath, currentFilePath, fileContents) {
+            if (importPath.startsWith('.')) {
+                const fileDirParts = currentFilePath.split('/').slice(0, -1);
+                const targetParts = importPath.split('/');
+                const resolvedParts = [...fileDirParts];
+                for (const part of targetParts) {
+                    if (part === '.') continue;
+                    else if (part === '..') resolvedParts.pop();
+                    else resolvedParts.push(part);
+                }
+                const resolvedBasePath = resolvedParts.join('/').toLowerCase();
+                for (const ext of ALLOWED_EXTS) {
+                    if (workspaceFiles[resolvedBasePath + ext]) return resolvedBasePath + ext;
+                    if (workspaceFiles[resolvedBasePath]) return resolvedBasePath;
+                    if (workspaceFiles[resolvedBasePath + '/index' + ext]) return resolvedBasePath + '/index' + ext;
+                }
+                return null;
+            }
+
+            if (importPath.startsWith('@/') || importPath.startsWith('~/')) {
+                const clean = importPath.substring(2);
+                const rootFolder = currentFilePath.split('/')[0];
+                const candidates = [
+                    `${rootFolder}/src/${clean}`,
+                    `${rootFolder}/${clean}`
+                ];
+                for (const cand of candidates) {
+                    const candLower = cand.toLowerCase();
+                    for (const ext of ALLOWED_EXTS) {
+                        if (workspaceFiles[candLower + ext]) return candLower + ext;
+                        if (workspaceFiles[candLower]) return candLower;
+                        if (workspaceFiles[candLower + '/index' + ext]) return candLower + '/index' + ext;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        // Helper: Levenshtein Distance untuk saran typo (Possible Match)
+        function findPossibleMatch(target, candidateList) {
+            let bestMatch = null;
+            let minDistance = Infinity;
+
+            const levenshtein = (a, b) => {
+                const matrix = Array.from({ length: a.length + 1 }, () => Array(b.length + 1).fill(0));
+                for (let i = 0; i <= a.length; i++) matrix[i][0] = i;
+                for (let j = 0; j <= b.length; j++) matrix[0][j] = j;
+                for (let i = 1; i <= a.length; i++) {
+                    for (let j = 1; j <= b.length; j++) {
+                        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+                        matrix[i][j] = Math.min(
+                            matrix[i - 1][j] + 1,
+                            matrix[i][j - 1] + 1,
+                            matrix[i - 1][j - 1] + cost
+                        );
+                    }
+                }
+                return matrix[a.length][b.length];
+            };
+
+            for (const candidate of candidateList) {
+                const dist = levenshtein(target.toLowerCase(), candidate.toLowerCase());
+                if (dist < minDistance && dist <= 3) {
+                    minDistance = dist;
+                    bestMatch = candidate;
+                }
+            }
+            return bestMatch;
+        }
+
+        // Engine 1: Workspace Scanner
+        async function scanWorkspaceEngine(paths) {
+            const fileContents = {};
+            for (const path of paths) {
+                try {
+                    fileContents[path] = await workspaceFiles[path].text();
+                } catch (err) {
+                    fileContents[path] = '';
+                }
+            }
+            return fileContents;
+        }
+
+        // Engine 2: Language Parser (TypeScript Compiler Diagnostic for TS / Go Precision Syntax Engine)
+        function languageParserEngine(path, code, allFileContents) {
+            const lower = path.toLowerCase();
+            const lines = code.split('\n');
+
+            if (lower.endsWith('.tsx') || lower.endsWith('.ts') || lower.endsWith('.jsx') || lower.endsWith('.js')) {
+                if (typeof ts !== 'undefined') {
+                    const scriptKind = lower.endsWith('.tsx') ? ts.ScriptKind.TSX :
+                                       lower.endsWith('.jsx') ? ts.ScriptKind.JSX :
+                                       lower.endsWith('.ts') ? ts.ScriptKind.TS : ts.ScriptKind.JS;
+
+                    if (allFileContents) {
+                        try {
+                            const compilerOptions = {
+                                target: ts.ScriptTarget.ES2020,
+                                module: ts.ModuleKind.CommonJS,
+                                jsx: ts.JsxEmit.React,
+                                allowJs: true,
+                                noEmit: true
+                            };
+
+                            const host = ts.createCompilerHost(compilerOptions);
+                            const origGetSourceFile = host.getSourceFile;
+                            host.getSourceFile = (fileName, languageVersion) => {
+                                if (allFileContents[fileName] !== undefined) {
+                                    return ts.createSourceFile(fileName, allFileContents[fileName], languageVersion, true);
+                                }
+                                return origGetSourceFile(fileName, languageVersion);
+                            };
+
+                            const program = ts.createProgram([path], compilerOptions, host);
+                            const sourceFile = program.getSourceFile(path);
+
+                            if (sourceFile) {
+                                const diagnostics = [
+                                    ...program.getSyntacticDiagnostics(sourceFile),
+                                    ...program.getSemanticDiagnostics(sourceFile)
+                                ];
+
+                                if (diagnostics.length > 0) {
+                                    const diag = diagnostics[0];
+                                    if (diag.file && diag.start !== undefined) {
+                                        const pos = diag.file.getLineAndCharacterOfPosition(diag.start);
+                                        const lineNum = pos.line + 1;
+                                        const colNum = pos.character + 1;
+                                        const lineText = lines[pos.line] || '';
+                                        const msgText = typeof diag.messageText === 'string' ? diag.messageText : diag.messageText.messageText;
+
+                                        let errorType = 'Syntax Error';
+                                        if (diag.category === ts.DiagnosticCategory.Error) {
+                                            if (msgText.toLowerCase().includes('jsx')) errorType = 'JSX Error';
+                                            else if (msgText.includes('Cannot find name') || msgText.includes('Type') || msgText.includes('is not assignable')) errorType = 'Type Error';
+                                            else if (msgText.includes('Cannot find module')) errorType = 'Import Error';
+                                        }
+
+                                        return {
+                                            hasError: true,
+                                            type: errorType,
+                                            detail: {
+                                                type: errorType,
+                                                line: lineNum,
+                                                col: colNum,
+                                                msg: msgText,
+                                                source: lineText.trim(),
+                                                code: lineText + '\n' + ' '.repeat(Math.max(0, pos.character)) + '^'
+                                            },
+                                            ast: sourceFile
+                                        };
+                                    }
+                                }
+                                return { hasError: false, ast: sourceFile };
+                            }
+                        } catch (e) {}
+                    }
+
+                    const sourceFile = ts.createSourceFile(path, code, ts.ScriptTarget.Latest, true, scriptKind);
+                    if (sourceFile.parseDiagnostics && sourceFile.parseDiagnostics.length > 0) {
+                        const diag = sourceFile.parseDiagnostics[0];
+                        const pos = sourceFile.getLineAndCharacterOfPosition(diag.start);
+                        const lineNum = pos.line + 1;
+                        const colNum = pos.character + 1;
+                        const lineText = lines[pos.line] || '';
+                        const msgText = typeof diag.messageText === 'string' ? diag.messageText : diag.messageText.messageText;
+
+                        let errorType = 'Syntax Error';
+                        if (msgText.toLowerCase().includes('jsx')) errorType = 'JSX Error';
+
+                        return {
+                            hasError: true,
+                            type: errorType,
+                            detail: {
+                                type: errorType,
+                                line: lineNum,
+                                col: colNum,
+                                msg: msgText,
+                                source: lineText.trim(),
+                                code: lineText + '\n' + ' '.repeat(Math.max(0, pos.character)) + '^'
+                            },
+                            ast: sourceFile
+                        };
+                    }
+                    return { hasError: false, ast: sourceFile };
+                }
+            }
+
+            if (lower.endsWith('.go')) {
+                // Stripping string literals and comments for robust checking
+                let cleanCode = '';
+                let inString = false;
+                let stringChar = '';
+                let inLineComment = false;
+                let inBlockComment = false;
+
+                for (let i = 0; i < code.length; i++) {
+                    const char = code[i];
+                    const next = code[i + 1];
+
+                    if (inLineComment) {
+                        if (char === '\n') { inLineComment = false; cleanCode += '\n'; }
+                        else cleanCode += ' ';
+                        continue;
+                    }
+                    if (inBlockComment) {
+                        if (char === '*' && next === '/') { inBlockComment = false; i++; cleanCode += '  '; }
+                        else if (char === '\n') cleanCode += '\n';
+                        else cleanCode += ' ';
+                        continue;
+                    }
+                    if (inString) {
+                        if (char === stringChar) { inString = false; cleanCode += ' '; }
+                        else if (char === '\n') cleanCode += '\n';
+                        else cleanCode += ' ';
+                        continue;
+                    }
+
+                    if (char === '/' && next === '/') { inLineComment = true; i++; cleanCode += '  '; continue; }
+                    if (char === '/' && next === '*') { inBlockComment = true; i++; cleanCode += '  '; continue; }
+                    if (char === '"' || char === "'" || char === '`') { inString = true; stringChar = char; cleanCode += ' '; continue; }
+
+                    cleanCode += char;
+                }
+
+                const cleanLines = cleanCode.split('\n');
+                for (let i = 0; i < cleanLines.length; i++) {
+                    const line = cleanLines[i].trim();
+                    if (!line) continue;
+
+                    // Incomplete statements / binary operators at line end
+                    if (/(?:==|!=|<=|>=|&&|\|\||:=|<-|,)\s*$/.test(line)) {
+                        const rawLine = lines[i] || '';
+                        return {
+                            hasError: true,
+                            type: 'Syntax Error',
+                            detail: {
+                                type: 'Syntax Error',
+                                line: i + 1,
+                                col: rawLine.length || 1,
+                                msg: 'Incomplete expression or dangling operator in Go statement',
+                                source: rawLine.trim(),
+                                code: rawLine + '\n' + ' '.repeat(Math.max(0, rawLine.length - 1)) + '^'
+                            }
+                        };
+                    }
+
+                    // Go keywords expecting condition or block body
+                    if (/^(?:if|for|switch)\b/.test(line)) {
+                        const body = line.replace(/^(?:if|for|switch)\b/, '').trim();
+                        if (!body || (body.endsWith('{') === false && /(?:==|!=|<=|>=|&&|\|\||\+|\-|\*|\/|%|=|:=|<|>)$/.test(body))) {
+                            const rawLine = lines[i] || '';
+                            return {
+                                hasError: true,
+                                type: 'Syntax Error',
+                                detail: {
+                                    type: 'Syntax Error',
+                                    line: i + 1,
+                                    col: rawLine.length || 1,
+                                    msg: 'Malformed Go control structure statement',
+                                    source: rawLine.trim(),
+                                    code: rawLine + '\n' + ' '.repeat(Math.max(0, rawLine.length - 1)) + '^'
+                                }
+                            };
+                        }
+                    }
+                }
+            }
+
+            // Fallback AST-lite bracket parser (berguna juga untuk Go)
+            const stack = [];
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                for (let j = 0; j < line.length; j++) {
+                    const char = line[j];
+                    if (char === '{' || char === '(' || char === '[') {
+                        stack.push({ char, line: i + 1, col: j + 1 });
+                    } else if (char === '}' || char === ')' || char === ']') {
+                        const last = stack.pop();
+                        const expected = char === '}' ? '{' : char === ')' ? '(' : '[';
+                        if (!last || last.char !== expected) {
+                            return {
+                                hasError: true,
+                                type: 'Syntax Error',
+                                detail: {
+                                    type: 'Syntax Error',
+                                    line: i + 1,
+                                    col: j + 1,
+                                    msg: `Unexpected token '${char}'`,
+                                    source: line.trim(),
+                                    code: line + '\n' + ' '.repeat(Math.max(0, j)) + '^'
+                                }
+                            };
+                        }
+                    }
+                }
+            }
+            return { hasError: false };
+        }
+
+        // Engine 3: Dependency Graph Builder
+        function dependencyGraphBuilderEngine(paths, fileContents, parseResults) {
+            const graph = {
+                feRoutes: new Set(),
+                feRouteOrigins: [],
+                feApiCalls: [],
+                beRoutes: [],
+                imports: [],
+                linkHrefs: [],
+                pushNavs: [],
+                unusedImports: [],
+                appFolders: new Map() // Folder app untuk cek missing page.tsx
+            };
+
+            for (const path of paths) {
+                const code = fileContents[path];
+                const lower = path.toLowerCase();
+                const parseRes = parseResults[path];
+
+                // Check Next.js App Router folders
+                if (lower.startsWith('app/') || lower.includes('/app/')) {
+                    const appIndex = lower.startsWith('app/') ? 0 : lower.indexOf('/app/') + 1;
+                    const relativePath = path.substring(appIndex + 4);
+                    const parts = relativePath.split('/');
+                    const filename = parts.pop();
+                    const folderPath = parts.join('/');
+
+                    if (!graph.appFolders.has(folderPath)) {
+                        graph.appFolders.set(folderPath, []);
+                    }
+                    graph.appFolders.get(folderPath).push({ filename, path });
+
+                    if (filename.startsWith('page.') || filename.startsWith('route.')) {
+                        let routePath = '/' + folderPath;
+                        routePath = routePath.split('/').filter(segment => !segment.startsWith('(') || !segment.endsWith(')')).join('/');
+                        if (routePath === '' || routePath === '/page' || routePath === '/route') routePath = '/';
+                        if (!routePath.startsWith('/')) routePath = '/' + routePath;
+                        graph.feRoutes.add(routePath);
+                        graph.feRouteOrigins.push({ route: routePath, file: path });
+                    }
+                }
+
+                // AST Walk for TypeScript / JavaScript
+                if (parseRes && parseRes.ast && typeof ts !== 'undefined') {
+                    function visit(node) {
+                        // Link href / router.push extraction
+                        if (ts.isCallExpression(node)) {
+                            const callText = node.expression.getText(parseRes.ast);
+                            if (callText.endsWith('.push') || callText.endsWith('.replace') || callText === 'redirect') {
+                                if (node.arguments.length > 0 && ts.isStringLiteral(node.arguments[0])) {
+                                    graph.pushNavs.push({ file: path, url: node.arguments[0].text });
+                                }
+                            }
+                        }
+
+                        if (ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node)) {
+                            const tagName = ts.isJsxElement(node) ? node.openingElement.tagName.getText(parseRes.ast) : node.tagName.getText(parseRes.ast);
+                            if (tagName === 'Link') {
+                                const attrs = ts.isJsxElement(node) ? node.openingElement.attributes.properties : node.attributes.properties;
+                                for (const attr of attrs) {
+                                    if (ts.isJsxAttribute(attr) && attr.name.getText(parseRes.ast) === 'href') {
+                                        if (attr.initializer && ts.isStringLiteral(attr.initializer)) {
+                                            graph.linkHrefs.push({ file: path, href: attr.initializer.text });
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Imports Analysis
+                        if (ts.isImportDeclaration(node) && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
+                            const importPath = node.moduleSpecifier.text;
+                            const lineNum = parseRes.ast.getLineAndCharacterOfPosition(node.getStart()).line + 1;
+                            graph.imports.push({ file: path, specifier: importPath, line: lineNum });
+
+                            if (node.importClause) {
+                                const bindings = [];
+                                if (node.importClause.name) bindings.push(node.importClause.name.getText(parseRes.ast));
+                                if (node.importClause.namedBindings) {
+                                    if (ts.isNamedImports(node.importClause.namedBindings)) {
+                                        node.importClause.namedBindings.elements.forEach(e => bindings.push(e.name.getText(parseRes.ast)));
+                                    } else if (ts.isNamespaceImport(node.importClause.namedBindings)) {
+                                        bindings.push(node.importClause.namedBindings.name.getText(parseRes.ast));
+                                    }
+                                }
+                                bindings.forEach(symbol => {
+                                    const reg = new RegExp(`\\b${symbol}\\b`, 'g');
+                                    const matches = code.match(reg);
+                                    if (!matches || matches.length <= 1) {
+                                        graph.unusedImports.push({ file: path, symbol, line: lineNum });
+                                    }
+                                });
+                            }
+                        }
+
+                        // Frontend API Call Analysis (Method & URL Detection)
+                        if (ts.isCallExpression(node)) {
+                            const exprText = node.expression.getText(parseRes.ast);
+                            let method = 'GET';
+                            let url = null;
+
+                            if (exprText.includes('axios.post') || exprText.includes('fetch') && code.includes('POST')) method = 'POST';
+                            else if (exprText.includes('axios.put') || code.includes('PUT')) method = 'PUT';
+                            else if (exprText.includes('axios.delete') || code.includes('DELETE')) method = 'DELETE';
+
+                            if (exprText === 'fetch' || exprText.startsWith('axios') || exprText.includes('client.') || exprText.includes('api.')) {
+                                if (node.arguments.length > 0) {
+                                    const firstArg = node.arguments[0];
+                                    if (ts.isStringLiteral(firstArg)) {
+                                        url = firstArg.text;
+                                    } else if (ts.isIdentifier(firstArg)) {
+                                        const varMatch = code.match(new RegExp(`(?:const|let|var)\\s+${firstArg.text}\\s*=\\s*["'\`]([^"'\`]+)["'\`]`));
+                                        if (varMatch) url = varMatch[1];
+                                    }
+
+                                    if (node.arguments.length > 1 && ts.isObjectLiteralExpression(node.arguments[1])) {
+                                        node.arguments[1].properties.forEach(p => {
+                                            if (p.name && p.name.getText(parseRes.ast) === 'method' && p.initializer && ts.isStringLiteral(p.initializer)) {
+                                                method = p.initializer.text.toUpperCase();
+                                            }
+                                        });
+                                    }
+                                }
+                            }
+
+                            if (url) {
+                                graph.feApiCalls.push({ file: path, url, method });
+                            }
+                        }
+
+                        ts.forEachChild(node, visit);
+                    }
+                    visit(parseRes.ast);
+                } else {
+                    // Fallback regex scanner
+                    if (lower.endsWith('.tsx') || lower.endsWith('.ts') || lower.endsWith('.jsx') || lower.endsWith('.js')) {
+                        const fetchMatches = code.matchAll(/(?:fetch|axios(?:\.get|\.post|\.put|\.delete|\.patch)?)\s*\(\s*["'`]([^"'`]+)["'`]/g);
+                        for (const m of fetchMatches) {
+                            graph.feApiCalls.push({ file: path, url: m[1], method: 'GET' });
+                        }
+
+                        const importMatches = code.matchAll(/from\s+["'`]([^"'`]+)["'`]/g);
+                        for (const m of importMatches) {
+                            graph.imports.push({ file: path, specifier: m[1] });
+                        }
+                    }
+                }
+
+                // Backend Routes Parser (Go Echo/Gin/Fiber, JS, Py)
+                if (lower.endsWith('.go') || lower.endsWith('.js') || lower.endsWith('.ts') || lower.endsWith('.py')) {
+                    const groupPrefixes = {};
+                    const groupMatches = code.matchAll(/(\w+)\s*:=\s*\w+\.Group\s*\(\s*["'`]([^"'`]+)["'`]\s*\)/g);
+                    for (const gm of groupMatches) {
+                        groupPrefixes[gm[1]] = gm[2];
+                    }
+
+                    const beMatches = code.matchAll(/(\w+)\.(GET|POST|PUT|DELETE|PATCH|HandleFunc|Handle)\s*\(\s*["'`]([^"'`]+)["'`]/gi);
+                    for (const m of beMatches) {
+                        const varName = m[1];
+                        const method = m[2].toUpperCase();
+                        const subPath = m[3];
+                        let fullRoute = subPath;
+
+                        if (groupPrefixes[varName]) {
+                            const prefix = groupPrefixes[varName];
+                            fullRoute = (prefix + '/' + subPath).replace(/\/+/g, '/');
+                        }
+
+                        graph.beRoutes.push({ method, route: fullRoute, file: path });
+                    }
+                }
+            }
+
+            return graph;
+        }
+
+        // Engine 4: Validator & Reporter
+        async function runProjectValidation() {
+            const paths = Object.keys(workspaceFiles);
+            if (paths.length === 0) return;
+
+            const outputArea = document.getElementById('outputArea');
+            const pathBanner = document.getElementById('pathBanner');
+
+            const logProgress = (msg) => {
+                pathBanner.innerText = msg;
+                outputArea.value = msg + '\n';
+            };
+
+            logProgress('Scanning Workspace...');
+            await new Promise(r => setTimeout(r, 50));
+            const fileContents = await scanWorkspaceEngine(paths);
+
+            logProgress('Parsing Languages & AST...');
+            await new Promise(r => setTimeout(r, 50));
+            const parseResults = {};
+            for (const path of paths) {
+                parseResults[path] = languageParserEngine(path, fileContents[path], fileContents);
+            }
+
+            logProgress('Building Dependency Graph...');
+            await new Promise(r => setTimeout(r, 50));
+            const depGraph = dependencyGraphBuilderEngine(paths, fileContents, parseResults);
+
+            logProgress('Running Core Validators...');
+            await new Promise(r => setTimeout(r, 50));
+
+            const fileReports = [];
+            let totalSuccess = 0;
+            let totalFailed = 0;
+
+            let countSyntaxError = 0;
+            let countImportError = 0;
+            let countTypeError = 0;
+            let countJsxError = 0;
+            let countRouteError = 0;
+            let countApiError = 0;
+            let countWarning = 0;
+
+            const hasBackendWorkspace = depGraph.beRoutes.length > 0 || paths.some(p => p.toLowerCase().includes('backend') || p.toLowerCase().endsWith('.go'));
+
+            const isRouteMatch = (targetUrl, routeSet) => {
+                if (routeSet.has(targetUrl)) return true;
+                const targetSegments = targetUrl.split('/').filter(Boolean);
+                for (const route of routeSet) {
+                    const routeSegments = route.split('/').filter(Boolean);
+                    if (routeSegments.length !== targetSegments.length) continue;
+                    let match = true;
+                    for (let i = 0; i < routeSegments.length; i++) {
+                        if (routeSegments[i].startsWith('[') && routeSegments[i].endsWith(']')) continue;
+                        if (routeSegments[i] !== targetSegments[i]) { match = false; break; }
+                    }
+                    if (match) return true;
+                }
+                return false;
+            };
+
+            // Check Duplicate Frontend Routes
+            const routeCounts = {};
+            depGraph.feRouteOrigins.forEach(o => { routeCounts[o.route] = (routeCounts[o.route] || 0) + 1; });
+
+            // Check Duplicate Backend Endpoints
+            const beEndpointCounts = {};
+            depGraph.beRoutes.forEach(r => {
+                const key = `${r.method}:${r.route}`;
+                beEndpointCounts[key] = (beEndpointCounts[key] || 0) + 1;
+            });
+
+            // Tracking dead pages & unused endpoints
+            const allNavTargets = new Set([...depGraph.linkHrefs.map(l => l.href), ...depGraph.pushNavs.map(p => p.url)]);
+            const allBeRouteUrls = depGraph.beRoutes.map(r => r.route);
+
+            // Per-file Validation Execution
+            for (const path of paths) {
+                const code = fileContents[path];
+                const lines = code.split('\n');
+                const parseRes = parseResults[path];
+                let hasError = false;
+                let isWarningOnly = false;
+                let errorDetail = null;
+
+                // 1 & 2. TSX/Go Syntax Check
+                if (parseRes && parseRes.hasError) {
+                    hasError = true;
+                    errorDetail = parseRes.detail;
+                    if (parseRes.type === 'JSX Error') countJsxError++;
+                    else if (parseRes.type === 'Type Error') countTypeError++;
+                    else if (parseRes.type === 'Import Error') countImportError++;
+                    else countSyntaxError++;
+                }
+
+                // 3. Broken Imports & Broken Dependency Propagation (Page.tsx -> imported component has syntax error)
+                if (!hasError) {
+                    const fileImports = depGraph.imports.filter(i => i.file === path);
+                    for (const imp of fileImports) {
+                        if (imp.specifier.startsWith('.') || imp.specifier.startsWith('@/') || imp.specifier.startsWith('~/')) {
+                            const resolvedFile = resolveModulePath(imp.specifier, path, fileContents);
+                            if (!resolvedFile) {
+                                hasError = true;
+                                countImportError++;
+                                errorDetail = {
+                                    type: 'Import Error',
+                                    line: imp.line || 1,
+                                    col: 1,
+                                    msg: `Cannot find module '${imp.specifier}'`,
+                                    source: lines[(imp.line || 1) - 1] || '',
+                                    code: (lines[(imp.line || 1) - 1] || '') + '\n^'
+                                };
+                                break;
+                            } else if (parseResults[resolvedFile] && parseResults[resolvedFile].hasError) {
+                                hasError = true;
+                                countImportError++;
+                                errorDetail = {
+                                    type: 'Import Error',
+                                    line: imp.line || 1,
+                                    col: 1,
+                                    msg: `Imported module '${imp.specifier}' (${resolvedFile}) has syntax/parse errors`,
+                                    source: lines[(imp.line || 1) - 1] || '',
+                                    code: (lines[(imp.line || 1) - 1] || '') + '\n^'
+                                };
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // 4. Missing Page Route (404 Navigation with Typo Suggestions)
+                if (!hasError) {
+                    const fileLinks = [...depGraph.linkHrefs.filter(l => l.file === path), ...depGraph.pushNavs.filter(p => p.file === path)];
+                    for (const link of fileLinks) {
+                        const targetUrl = link.href || link.url;
+                        if (targetUrl && targetUrl.startsWith('/')) {
+                            if (!isRouteMatch(targetUrl, depGraph.feRoutes)) {
+                                hasError = true;
+                                countRouteError++;
+                                const possibleMatch = findPossibleMatch(targetUrl, Array.from(depGraph.feRoutes));
+                                const suggestion = possibleMatch ? ` | Possible match: '${possibleMatch}'` : '';
+                                errorDetail = {
+                                    type: '404 Route Error',
+                                    line: 1,
+                                    col: 1,
+                                    msg: `Missing page route for navigation target: '${targetUrl}'${suggestion}`,
+                                    source: lines[0] || '',
+                                    code: (lines[0] || '') + '\n^'
+                                };
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // 5 & 6. Missing Backend Endpoint & Method Mismatch Detection with Typo Suggestions
+                if (!hasError) {
+                    const fileApiCalls = depGraph.feApiCalls.filter(c => c.file === path);
+                    for (const call of fileApiCalls) {
+                        if (call.url && call.url.startsWith('/api/')) {
+                            if (hasBackendWorkspace) {
+                                const matchedRoute = depGraph.beRoutes.find(r => r.route === call.url);
+                                if (!matchedRoute) {
+                                    hasError = true;
+                                    countApiError++;
+                                    const possibleMatch = findPossibleMatch(call.url, allBeRouteUrls);
+                                    const suggestion = possibleMatch ? ` | Possible match: '${possibleMatch}'` : '';
+                                    errorDetail = {
+                                        type: 'Missing API Handler Error',
+                                        line: 1,
+                                        col: 1,
+                                        msg: `Frontend call to '${call.url}' has no matching backend endpoint${suggestion}`,
+                                        source: lines[0] || '',
+                                        code: (lines[0] || '') + '\n^'
+                                    };
+                                    break;
+                                } else if (matchedRoute.method !== call.method && matchedRoute.method !== 'HANDLEFUNC' && matchedRoute.method !== 'HANDLE') {
+                                    hasError = true;
+                                    countApiError++;
+                                    errorDetail = {
+                                        type: 'Method Mismatch Error',
+                                        line: 1,
+                                        col: 1,
+                                        msg: `Frontend calls '${call.url}' with [${call.method}], but Backend expects [${matchedRoute.method}]`,
+                                        source: lines[0] || '',
+                                        code: (lines[0] || '') + '\n^'
+                                    };
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 7. Duplicate Endpoint
+                if (!hasError && (path.toLowerCase().endsWith('.go') || path.toLowerCase().endsWith('.ts') || path.toLowerCase().endsWith('.js'))) {
+                    const match = depGraph.beRoutes.find(r => r.file === path && beEndpointCounts[`${r.method}:${r.route}`] > 1);
+                    if (match) {
+                        hasError = true;
+                        countApiError++;
+                        errorDetail = {
+                            type: 'Duplicate Endpoint Error',
+                            line: 1,
+                            col: 1,
+                            msg: `Duplicate backend endpoint detected: [${match.method}] '${match.route}'`,
+                            source: lines[0] || '',
+                            code: (lines[0] || '') + '\n^'
+                        };
+                    }
+                }
+
+                // 8. Duplicate Page
+                if (!hasError && (path.toLowerCase().startsWith('app/') || path.toLowerCase().includes('/app/'))) {
+                    const origin = depGraph.feRouteOrigins.find(o => o.file === path);
+                    if (origin && routeCounts[origin.route] > 1) {
+                        hasError = true;
+                        countRouteError++;
+                        errorDetail = {
+                            type: 'Duplicate Route Error',
+                            line: 1,
+                            col: 1,
+                            msg: `Duplicate route path detected: '${origin.route}'`,
+                            source: lines[0] || '',
+                            code: (lines[0] || '') + '\n^'
+                        };
+                    }
+                }
+
+                // 10. Next.js App Router Structure Rules
+                if (!hasError && (path.toLowerCase().startsWith('app/') || path.toLowerCase().includes('/app/'))) {
+                    if (path.toLowerCase().endsWith('layout.tsx') || path.toLowerCase().endsWith('layout.jsx')) {
+                        if (!code.includes('children')) {
+                            hasError = true;
+                            countRouteError++;
+                            errorDetail = {
+                                type: 'Route Error',
+                                line: 1,
+                                col: 1,
+                                msg: 'Invalid layout component: missing children prop',
+                                source: lines[0] || '',
+                                code: (lines[0] || '') + '\n^'
+                            };
+                        }
+                    }
+                }
+
+                // Check Unused Imports
+                if (!hasError) {
+                    const unused = depGraph.unusedImports.find(u => u.file === path);
+                    if (unused) {
+                        countWarning++;
+                        isWarningOnly = true;
+                        errorDetail = {
+                            type: 'Unused Import Warning',
+                            line: unused.line,
+                            col: 1,
+                            msg: `'${unused.symbol}' is imported but never used`,
+                            source: lines[unused.line - 1] || '',
+                            code: (lines[unused.line - 1] || '') + '\n^'
+                        };
+                    }
+                }
+
+                if (hasError) {
+                    totalFailed++;
+                    fileReports.push({ path, status: 'FAILED', detail: errorDetail });
+                } else if (isWarningOnly) {
+                    fileReports.push({ path, status: 'WARNING', detail: errorDetail });
+                } else {
+                    totalSuccess++;
+                    fileReports.push({ path, status: 'SUCCESS' });
+                }
+            }
+
+            // Route Page Without page.tsx Warnings
+            depGraph.appFolders.forEach((filesInFolder, folderPath) => {
+                const hasPage = filesInFolder.some(f => f.filename.startsWith('page.') || f.filename.startsWith('route.'));
+                const hasOtherComponents = filesInFolder.some(f => f.filename.startsWith('loading.') || f.filename.startsWith('layout.') || f.filename.startsWith('error.'));
+                if (!hasPage && hasOtherComponents) {
+                    countWarning++;
+                }
+            });
+
+            // Unused Backend APIs Warnings
+            const usedApiEndpoints = new Set(depGraph.feApiCalls.map(c => c.url));
+            for (const beRoute of depGraph.beRoutes) {
+                if (!usedApiEndpoints.has(beRoute.route)) {
+                    countWarning++;
+                }
+            }
+
+            // Dead Pages Warnings
+            depGraph.feRouteOrigins.forEach(origin => {
+                if (origin.route !== '/' && !isRouteMatch(origin.route, allNavTargets)) {
+                    countWarning++;
+                }
+            });
+
+            // Construct Final Validation Report Output
+            let report = `==================================================\n`;
+            report += `FULLSTACK PROJECT VALIDATION REPORT\n`;
+            report += `==================================================\n\n`;
+            report += `Workspace\n\n`;
+            Array.from(workspaceFolders).forEach(f => {
+                report += `${f}/\n`;
+            });
+            report += `\nFiles\n\n${paths.length}\n\nSuccess\n\n${totalSuccess}\n\nFailed\n\n${totalFailed}\n\n`;
+            if (!hasBackendWorkspace) {
+                report += `[NOTICE] Backend workspace not found. Skipping strict backend cross-validation.\n\n`;
+            }
+            report += `==================================================\n\n`;
+
+            fileReports.forEach(item => {
+                report += `==================================================\n\n`;
+                report += `FILE\n\n${item.path}\n\nSTATUS\n\n${item.status}\n\n`;
+                if ((item.status === 'FAILED' || item.status === 'WARNING') && item.detail) {
+                    report += `TYPE\n\n${item.detail.type}\n\nLINE\n\n${item.detail.line}\n\nCOLUMN\n\n${item.detail.col}\n\nMESSAGE\n\n${item.detail.msg}\n\n`;
+                    report += `ERROR\n\n${item.detail.type}\n\nSOURCE\n\n${item.detail.source}\n\nCODE\n\n${item.detail.code}\n\n`;
+                }
+                report += `==================================================\n\n`;
+            });
+
+            report += `SUMMARY\n\n`;
+            report += `TOTAL FILE      : ${paths.length}\n`;
+            report += `SUCCESS         : ${totalSuccess}\n`;
+            report += `FAILED          : ${totalFailed}\n`;
+            report += `SYNTAX ERROR    : ${countSyntaxError}\n`;
+            report += `IMPORT ERROR    : ${countImportError}\n`;
+            report += `TYPE ERROR      : ${countTypeError}\n`;
+            report += `JSX ERROR       : ${countJsxError}\n`;
+            report += `ROUTE ERROR     : ${countRouteError}\n`;
+            report += `API ERROR       : ${countApiError}\n`;
+            report += `WARNING         : ${countWarning}\n`;
+
+            outputArea.value = report;
+            pathBanner.innerText = 'Finished.';
+        }
+
+        function copyToClipboard() {
+            const copyText = document.getElementById("outputArea");
+            if (!copyText.value) return;
+
+            copyText.select();
+            copyText.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(copyText.value);
+
+            const btn = document.getElementById('btnCopy');
+            const originalText = btn.innerText;
+            btn.innerText = ' COPIED!';
+            btn.style.background = '#22c55e';
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.style.background = '#4f46e5';
+            }, 1500);
+        }
+
+        function downloadAsTxt() {
+            const outputText = document.getElementById("outputArea").value;
+            if (!outputText) {
+                alert("Tidak ada output untuk di-download. Silakan jalankan validasi terlebih dahulu.");
+                return;
+            }
+
+            const blob = new Blob([outputText], { type: "text/plain;charset=utf-8" });
+            const link = document.append? document.createElement("a") : document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "fullstack_validation_report.txt";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
