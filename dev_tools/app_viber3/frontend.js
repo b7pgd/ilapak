@@ -249,7 +249,21 @@
             const urlMatches = code.matchAll(/(?:fetch|axios\.(?:get|post|put|delete))\s*\(\s*["'`]([^"'`]+)["'`]/g);
             for (const m of urlMatches) apiEndpoints.add(m[1]);
 
-            // Extract JSX Event Source & UI Layout Elements
+            // Extract Semantic UI Tree Hierarchy & Event Source Elements
+            const componentMatches = code.matchAll(/<([A-Z][a-zA-Z0-9_$]*)\b[^>]*>/g);
+            const foundComponents = new Set();
+            for (const cm of componentMatches) {
+                if (cm[1] !== mainComponent.replace('()', '')) {
+                    foundComponents.add(cm[1]);
+                }
+            }
+
+            const semanticGroups = {
+                'Header / User Section': [],
+                'Actions / Controls': [],
+                'Data / Layout Tables': []
+            };
+
             const jsxTagRegex = /<([a-zA-Z0-9_$]+)([^>]*?)>(.*?)<\/\1>|<(button|input|form|table|div|header|main)([^>]*?)\/?>/gs;
             let tagMatch;
             while ((tagMatch = jsxTagRegex.exec(code)) !== null) {
@@ -257,9 +271,22 @@
                 const attrs = tagMatch[2] || tagMatch[5] || '';
                 const innerText = (tagMatch[3] || '').replace(/<[^>]*>/g, '').trim();
 
-                if (['input', 'table', 'button', 'form', 'toolbar', 'header', 'main', 'div', 'tr', 'td', 'th', 'section'].includes(tagName.toLowerCase())) {
-                    const cleanName = innerText ? `${innerText} (${tagName})` : tagName;
-                    if (!jsxStructure.includes(cleanName)) jsxStructure.push(cleanName);
+                const tagLower = tagName.toLowerCase();
+                if (['button', 'input', 'form', 'table', 'header'].includes(tagLower) || /^[A-Z]/.test(tagName)) {
+                    let label = innerText || tagName;
+                    if (tagLower === 'button' || attrs.includes('type="submit"')) {
+                        label = innerText ? `${innerText} Button` : 'Button Action';
+                        semanticGroups['Actions / Controls'].push(label);
+                    } else if (tagLower === 'input') {
+                        label = 'Input Control';
+                        semanticGroups['Actions / Controls'].push(label);
+                    } else if (tagLower === 'table') {
+                        label = 'Data Table';
+                        semanticGroups['Data / Layout Tables'].push(label);
+                    } else if (tagLower === 'header' || attrs.includes('user') || attrs.includes('profile')) {
+                        label = innerText ? `${innerText} Header` : 'Header Section';
+                        semanticGroups['Header / User Section'].push(label);
+                    }
                 }
 
                 const eventMatch = attrs.match(/(onClick|onSubmit|onChange)\s*=\s*\{?\s*([a-zA-Z0-9_$]+)\s*\}?/);
@@ -286,6 +313,22 @@
                     });
                 }
             }
+
+            // Build hierarchical UI Tree Structure
+            if (foundComponents.size > 0) {
+                foundComponents.forEach(comp => {
+                    jsxStructure.push(`├── ${comp}`);
+                });
+            }
+            Object.keys(semanticGroups).forEach(group => {
+                const items = Array.from(new Set(semanticGroups[group]));
+                if (items.length > 0) {
+                    jsxStructure.push(`├── ${group}`);
+                    items.forEach(it => {
+                        jsxStructure.push(`│   └── ${it}`);
+                    });
+                }
+            });
 
             // Function Statement-by-Statement Walk Definition
             const fnRegex = /(?:async\s+)?function\s+([a-zA-Z0-9_$]+)\s*\(([^)]*)\)\s*\{([\s\S]*?)\}|const\s+([a-zA-Z0-9_$]+)\s*=\s*(?:async\s*)?\(([^)]*)\)\s*=>\s*\{([\s\S]*?)\}/g;
@@ -385,39 +428,61 @@
                     chain.push(`USER:\nClick ${evt.sourceName}`);
                     chain.push(`CALL:\n${evt.handler}()`);
 
-                    if (symbolModel.functions[evt.handler]) {
-                        const stmts = symbolModel.functions[evt.handler].statements;
-                        stmts.forEach(st => {
+                    const fnObj = symbolModel.functions[evt.handler];
+                    const fnBody = fnObj ? fnObj.body : '';
+
+                    if (fnObj) {
+                        fnObj.statements.forEach(st => {
                             if (!chain.includes(`CALL:\n${st}`)) chain.push(`EXECUTE:\n${st}`);
                         });
                     }
 
-                    let stateChanged = false;
+                    // Strict function-level state mutation extraction (Avoid false positives)
+                    const mutatedInHandler = [];
                     Object.keys(symbolModel.stateMap).forEach(setter => {
-                        if (code.includes(`${setter}(`)) {
-                            chain.push(`STATE CHANGE:\n${symbolModel.stateMap[setter]} updated`);
-                            stateChanged = true;
+                        if (fnBody.includes(`${setter}(`)) {
+                            const stateVar = symbolModel.stateMap[setter];
+                            mutatedInHandler.push(stateVar);
                         }
                     });
 
-                    chain.push('RENDER:\nComponent rerender');
+                    if (mutatedInHandler.length > 0) {
+                        chain.push(`WRITES:\n${mutatedInHandler.join(', ')}`);
+                        mutatedInHandler.forEach(sVar => {
+                            chain.push(`STATE CHANGE:\n${sVar} updated`);
+                        });
+                    }
+
+                    chain.push('RENDER:\nComponent rerender / UI update');
                     flowChains.push(chain.join('\n\n↓\n\n'));
                 });
             } else {
                 const handlers = Object.keys(symbolModel.functions);
                 if (handlers.length > 0) {
                     handlers.forEach(fnName => {
-                        const chain = [
-                            `CALL:\n${fnName}()`,
-                            'RENDER:\nComponent rerender'
-                        ];
+                        const fnBody = symbolModel.functions[fnName].body;
+                        const chain = [`CALL:\n${fnName}()`];
+                        
+                        const mutatedInHandler = [];
+                        Object.keys(symbolModel.stateMap).forEach(setter => {
+                            if (fnBody.includes(`${setter}(`)) {
+                                mutatedInHandler.push(symbolModel.stateMap[setter]);
+                            }
+                        });
+
+                        if (mutatedInHandler.length > 0) {
+                            chain.push(`WRITES:\n${mutatedInHandler.join(', ')}`);
+                            chain.push(`STATE CHANGE:\n${mutatedInHandler.join(', ')} updated`);
+                        }
+
+                        chain.push('RENDER:\nComponent rerender');
                         flowChains.push(chain.join('\n\n↓\n\n'));
                     });
                 }
             }
 
             if (flowChains.length === 0) {
-                flowChains.push('USER:\nClick Action Button\n\n↓\n\nCALL:\nhandleAction()\n\n↓\n\nRENDER:\nComponent rerender');
+                flowChains.push('USER:\nClick Action Button\n\n↓\n\nCALL:\nhandleAction()\n\n↓\n\nWRITES:\nstate\n\n↓\n\nSTATE CHANGE:\nstate updated\n\n↓\n\nRENDER:\nComponent rerender');
             }
 
             return flowChains;
@@ -515,13 +580,32 @@
                 if (code.includes('axios.put') || optionsStr.includes("method: 'PUT'") || optionsStr.includes('method: "PUT"')) method = 'PUT';
                 if (code.includes('axios.delete') || optionsStr.includes("method: 'DELETE'") || optionsStr.includes('method: "DELETE"')) method = 'DELETE';
 
+                // Trace caller function and dependent states
+                let callerFn = 'Inline / Global';
+                let consumerState = 'None';
+
+                Object.keys(symbolModel.functions).forEach(fn => {
+                    if (symbolModel.functions[fn].body.includes(rawUrl) || symbolModel.functions[fn].body.includes('fetch(') || symbolModel.functions[fn].body.includes('axios')) {
+                        callerFn = `${fn}()`;
+                    }
+                });
+
+                Object.keys(symbolModel.stateMap).forEach(setter => {
+                    if (code.includes(setter)) {
+                        consumerState = symbolModel.stateMap[setter];
+                    }
+                });
+
+                let trigger = code.includes('useEffect') ? 'Page Load / Lifecycle Hook' : 'User Action / Handler Call';
+
                 let block = `REQUEST\n  ${method} ${rawUrl}\nSOURCE:\n  ${code.includes('axios') ? 'axios' : 'fetch()'}`;
+                block += `\nCALLER:\n  ${callerFn}\nTRIGGER:\n  ${trigger}\nCONSUMER:\n  ${consumerState}\nDEPENDENT STATE:\n  ${consumerState}`;
 
                 const hasAuth = code.includes('Authorization') || code.includes('Bearer');
                 if (hasAuth) {
-                    block += `\nHEADERS\n  Authorization: Present in source`;
+                    block += `\nHEADERS:\n  Authorization: Present in source`;
                 } else {
-                    block += `\nHEADERS\n  unknown`;
+                    block += `\nHEADERS:\n  unknown`;
                 }
 
                 block += `\nRESPONSE:\n  unknown`;
@@ -573,11 +657,15 @@
 
             const navMatches = code.matchAll(/(router\.push|router\.replace|navigate)\s*\(\s*["'`]?([^"'`\),\s]+)["'`]?\s*\)/g);
             for (const match of navMatches) {
-                exits.push(`NAVIGATION\n  Route to ${match[2]}`);
+                exits.push(`SUCCESS:\n  State updated / Action Complete\n  ↓\n  Navigation to ${match[2]}`);
+            }
+
+            if (code.includes('catch(') || code.includes('catch (')) {
+                exits.push(`ERROR:\n  Exception caught\n  ↓\n  Toast / Notification / Remain on view`);
             }
 
             if (code.includes('return')) {
-                exits.push('RENDER EXIT\n  Component / Function Return Statement');
+                exits.push('SUCCESS:\n  State updated\n  ↓\n  Component View Rerender');
             }
 
             return exits.length > 0 ? exits : ['STANDARD EXIT\n  Function Execution Complete'];
@@ -589,16 +677,23 @@
             const apiList = Array.from(sm.apiEndpoints);
             const sideEffectsList = Array.from(sm.sideEffects);
 
-            // Construct strictly accurate State Flow based ONLY on symbolModel.stateVars
+            // Construct rich State Lifecycle Flow with Writer Functions & Data Flow
             const stateFlows = sm.stateVars.map(s => {
                 const initialVal = s.initialVal !== '' ? s.initialVal : 'undefined';
-                return `${s.varName}:\n  initial: ${initialVal}\n  ↓\n  ${s.setter || 'state update'}\n  ↓\n  updated ${s.inferredType}`;
+                let writerFn = 'None / Component Render';
+                Object.keys(sm.functions).forEach(fn => {
+                    if (sm.functions[fn].body.includes(s.setter)) {
+                        writerFn = `${fn}()`;
+                    }
+                });
+
+                return `${s.varName}\n  TYPE:\n    ${s.inferredType}\n  WRITER:\n    ${writerFn}\n  FLOW:\n    ${initialVal}\n    ↓ ${s.setter || 'setter'}\n    ↓\n    updated ${s.inferredType}`;
             });
 
-            // Format UI Tree hierarchy based on actual JSX elements or default main component
+            // Format UI Tree hierarchy
             let uiTreeOutput = `${sm.mainComponent}`;
             if (sm.jsxStructure.length > 0) {
-                uiTreeOutput += '\n' + sm.jsxStructure.map(item => `├── ${item}`).join('\n');
+                uiTreeOutput += '\n' + sm.jsxStructure.join('\n');
             } else {
                 uiTreeOutput += '\n└── [No JSX Child Structure Detected]';
             }
