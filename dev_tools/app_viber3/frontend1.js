@@ -23,6 +23,12 @@
         }
 
         async processFiles(projectFiles, selectedFiles) {
+            if (!selectedFiles || selectedFiles.length === 0) {
+                return {
+                    finalOutput: "NO FILE SELECTED"
+                };
+            }
+
             const results = [];
             for (const path of selectedFiles) {
                 const ext = this.getFileExtension(path);
@@ -71,9 +77,9 @@
             const reads = this.extractReads(code, symbolModel);
             const writes = this.extractWrites(code, symbolModel);
             const http = this.extractHttpCalls(code, symbolModel);
-            const dependencies = this.extractDependencies(code, symbolModel);
+            const dependencies = this.extractDependencies(code, symbolModel, framework);
             const failurePoints = this.extractFailurePoints(code, symbolModel, fileType);
-            const exitPaths = this.extractExitPaths(code, symbolModel);
+            const exitPaths = this.extractExitPaths(code, symbolModel, fileType);
 
             return {
                 filePath,
@@ -96,7 +102,7 @@
         getFileExtension(filePath) {
             const cleanPath = filePath.split('?')[0];
             const parts = cleanPath.split('.');
-            return parts.length > 1 ? parts.pop().toLowerCase() : '';
+            return parts.length > 1 ? parts.pop().toLowerCase().trim() : '';
         }
 
         detectFileType(path, code, ext) {
@@ -167,6 +173,7 @@
 
         buildSymbolModel(code, filePath, fileType) {
             const goVars = new Set();
+            const goFunctions = new Set();
             const goBlocks = [];
             const templateIncludes = new Set();
             const forms = [];
@@ -181,22 +188,57 @@
             const sideEffects = new Set();
             const jsxStructure = [];
             const domDependencies = [];
+            const templateDataMap = [];
+            let handlerName = 'Unknown\n  (inferred from template only)';
 
-            // Extract Go Template Variables {{ .VarName }} & Nested Variables {{ .Var.Child }} or {{ $var }}
+            // Extract Handler Name from Go comments or code metadata
+            const handlerMatch = code.match(/(?:handler|controller)\s*:\s*([a-zA-Z0-9_]+)/i) || code.match(/func\s+([a-zA-Z0-9_]+Handler)/);
+            if (handlerMatch) {
+                handlerName = handlerMatch[1];
+            }
+
+            // Built-in Go template keywords and standard helpers
+            const goBuiltins = ['if', 'else', 'end', 'range', 'template', 'define', 'block', 'with', 'and', 'or', 'not', 'eq', 'ne', 'lt', 'le', 'gt', 'ge', 'len', 'index', 'slice', 'printf', 'urlquery', 'js', 'html'];
+
+            // Extract Go Template Tokens
             const goVarMatches = code.matchAll(/\{\{\s*(\$?[a-zA-Z0-9_$.]+)/g);
             for (const m of goVarMatches) {
                 const token = m[1].trim();
-                if (!['if', 'else', 'end', 'range', 'template', 'define', 'block', 'with', 'and', 'or', 'not', 'eq', 'ne'].includes(token)) {
+                if (goBuiltins.includes(token)) {
+                    if (!['if', 'else', 'end', 'range', 'template', 'define', 'block', 'with'].includes(token)) {
+                        goFunctions.add(token);
+                    }
+                } else if (token.startsWith('.') || token.startsWith('$')) {
                     goVars.add(token);
+                } else {
+                    goFunctions.add(token);
                 }
             }
 
-            // Extract Go Template Control Blocks ({{if}}, {{range}}, {{define}}, {{block}}, {{template}}, {{with}})
+            // Extract Template Data Map (.Variable -> HTML Element)
+            const templateDataMatches = code.matchAll(/(<([a-zA-Z0-9-]+)[^>]*?(?:class=["']([^"']*)["'])?[^>]*?>)([\s\S]*?)\{\{\s*(\$?[a-zA-Z0-9_$.]+)\s*\}\}/g);
+            for (const m of templateDataMatches) {
+                const tag = m[2];
+                const className = m[3] ? `.${m[3].split(/\s+/)[0]}` : '';
+                const varName = m[5];
+                if (!goBuiltins.includes(varName) && (varName.startsWith('.') || varName.startsWith('$'))) {
+                    templateDataMap.push(`${varName}\n  ↓\n  ${tag}${className}`);
+                }
+            }
+
+            // Extract Go Template Control Blocks with structured breakdown
             const goBlockMatches = code.matchAll(/\{\{\s*(if|range|define|block|template|with)\s+([^}]+)\}\}/g);
             for (const m of goBlockMatches) {
+                const type = m[1];
+                const expr = m[2].trim();
+                const deps = Array.from(expr.matchAll(/(\$?[a-zA-Z0-9_$.]+)/g))
+                    .map(d => d[1])
+                    .filter(d => !goBuiltins.includes(d));
+
                 goBlocks.push({
-                    type: m[1],
-                    expression: m[2].trim()
+                    type,
+                    expression: expr,
+                    depends: Array.from(new Set(deps))
                 });
             }
 
@@ -207,20 +249,28 @@
             }
 
             // Extract Forms & Actions
-            const formMatches = code.matchAll(/<form\b([^>]*?)>/gi);
+            const formMatches = code.matchAll(/<form\b([^>]*?)>([\s\S]*?)<\/form>/gi);
             for (const m of formMatches) {
                 const attrs = m[1];
+                const formBody = m[2];
                 const actionMatch = attrs.match(/action=["']([^"']+)["']/i);
                 const methodMatch = attrs.match(/method=["']([^"']+)["']/i);
                 const idMatch = attrs.match(/id=["']([^"']+)["']/i);
                 const onsubmitMatch = attrs.match(/onsubmit=["']([^"']+)["']/i);
+
+                const fields = [];
+                const fieldMatches = formBody.matchAll(/<(?:input|select|textarea)\b[^>]*?name=["']([^"']+)["']/gi);
+                for (const fm of fieldMatches) {
+                    fields.push(fm[1]);
+                }
 
                 forms.push({
                     id: idMatch ? idMatch[1] : null,
                     action: actionMatch ? actionMatch[1] : 'current URL',
                     method: methodMatch ? methodMatch[1].toUpperCase() : 'GET',
                     onsubmit: onsubmitMatch ? onsubmitMatch[1] : null,
-                    boundHandler: onsubmitMatch ? onsubmitMatch[1] : null
+                    boundHandler: onsubmitMatch ? onsubmitMatch[1] : null,
+                    fields: fields
                 });
             }
 
@@ -271,11 +321,13 @@
                 }
             }
 
-            // Extract Specific DOM Elements / Selectors
+            // Extract Specific DOM Elements / Selectors (Filtering out Go Template expression noise)
             const selectorMatches = code.matchAll(/(?:document\s*\.\s*(?:getElementById|querySelector|querySelectorAll|getElementsByClassName|getElementsByTagName)\s*\(\s*["']([^"']+)["']\s*\)|\$\s*\(\s*["']([^"']+)["']\s*\)|id=["']([^"']+)["'])/g);
             for (const sm of selectorMatches) {
                 const sel = sm[1] || sm[2] || (`#` + sm[3]);
-                if (sel) domSelectors.add(sel);
+                if (sel && !sel.includes('{{')) {
+                    domSelectors.add(sel);
+                }
             }
 
             // Extract Storage and Cookie Reads
@@ -306,7 +358,9 @@
                     for (const tm of domTargetMatches) {
                         const targetEl = tm[1] || tm[2];
                         const method = tm[3];
-                        domDependencies.push(`${fnName}() -> [${targetEl}] -> ${method}()`);
+                        if (targetEl && !targetEl.includes('{{')) {
+                            domDependencies.push(`${fnName}() -> [${targetEl}] -> ${method}()`);
+                        }
                     }
                 }
             }
@@ -319,11 +373,14 @@
             if (code.includes('setAttribute') || code.includes('removeAttribute')) domManipulations.push('Attribute modification');
             if (code.includes('appendChild') || code.includes('removeChild') || code.includes('remove()')) domManipulations.push('DOM Tree Structure modification');
 
-            // Extract Side Effects & Storage
-            if (code.includes('fetch(') || code.includes('XMLHttpRequest') || code.includes('$.ajax') || code.includes('axios')) sideEffects.add('HTTP Network Call');
+            // Extract Side Effects & Storage (Precise mapping)
+            const hasApiFetch = code.includes('fetch(') || code.includes('XMLHttpRequest') || code.includes('$.ajax') || code.includes('axios');
+            if (hasApiFetch) sideEffects.add('HTTP Network Call');
             if (code.includes('localStorage')) sideEffects.add('localStorage');
             if (code.includes('sessionStorage')) sideEffects.add('sessionStorage');
-            if (code.includes('window.location') || code.includes('location.href')) sideEffects.add('window.location Redirection');
+            if (code.includes('window.location') || code.includes('location.href')) sideEffects.add('Browser Page Navigation');
+            if (code.includes('window.print(') || code.includes('print()')) sideEffects.add('WINDOW ACTION: window.print()');
+            if (domManipulations.length > 0) sideEffects.add('textContent / DOM update');
 
             // Separate API Endpoints (Fetch/AJAX) vs Browser Navigation Links (href)
             const apiMatches = code.matchAll(/(?:fetch|axios(?:\.get|\.post|\.put|\.delete)?|\$\.ajax)\s*\(?\s*[:=]?\s*["'`]([^"'`\s{}]+)["'`]/gi);
@@ -384,7 +441,9 @@
             });
 
             return {
+                handlerName,
                 goVars: Array.from(goVars),
+                goFunctions: Array.from(goFunctions),
                 goBlocks,
                 templateIncludes: Array.from(templateIncludes),
                 forms,
@@ -398,7 +457,8 @@
                 cookieReads: Array.from(cookieReads),
                 sideEffects,
                 jsxStructure,
-                domDependencies
+                domDependencies,
+                templateDataMap
             };
         }
 
@@ -407,7 +467,7 @@
 
             if (fileType.includes("Go HTML")) {
                 const route = filePath.replace(/\\/g, '/');
-                entryPoints.push(`SERVER RENDER\n  GET /${route.split('/').pop().replace(/\.[^/.]+$/, '')}\n  ↓\n  Go Handler()\n  ↓\n  Execute Template`);
+                entryPoints.push(`SERVER RENDER\n  GET /${route.split('/').pop().replace(/\.[^/.]+$/, '')}\n  ↓\n  Go Handler: ${symbolModel.handlerName}\n  ↓\n  Execute Template`);
             }
 
             if (code.includes('DOMContentLoaded') || code.includes('window.onload') || code.includes('$(document).ready') || code.includes('$(function')) {
@@ -434,8 +494,7 @@
 
             if (fileType.includes("Go HTML")) {
                 const routeName = '/' + filePath.split('/').pop().replace(/\.[^/.]+$/, '');
-                const handlerName = filePath.split('/').pop().split('.')[0] + 'Handler()';
-                flows.push(`SERVER EXECUTION\n  GET ${routeName}\n  ↓\n  ${handlerName}\n  ↓\n  Render Template`);
+                flows.push(`SERVER EXECUTION\n  GET ${routeName}\n  ↓\n  ${symbolModel.handlerName}\n  ↓\n  Render Template`);
             }
 
             const clientSteps = [];
@@ -445,21 +504,13 @@
 
             if (symbolModel.inlineEvents.length > 0) {
                 symbolModel.inlineEvents.forEach(evt => {
+                    const cleanFn = evt.handler.replace(/\(.*\)/, '').trim();
                     const chain = [
-                        `CLIENT EXECUTION\n  ${evt.event} [${evt.target}]`,
-                        `CALL:\n  ${evt.handler}`
+                        `EVENT\n  ${evt.event}`,
+                        `↓\n  ${cleanFn || evt.handler}`,
+                        `↓\n  DOM Update`
                     ];
-
-                    const cleanFnName = evt.handler.replace(/\(.*\)/, '').trim();
-                    if (symbolModel.jsFunctions[cleanFnName]) {
-                        const fnObj = symbolModel.jsFunctions[cleanFnName];
-                        fnObj.statements.forEach(st => chain.push(`EXECUTE:\n  ${st}`));
-                    } else {
-                        chain.push('EXECUTE:\n  Inline JS Execution / Callback');
-                    }
-
-                    chain.push('MUTATE:\n  DOM State / Layout Update');
-                    flows.push(chain.join('\n\n  ↓\n\n'));
+                    flows.push(chain.join('\n  '));
                 });
             } else if (clientSteps.length > 0) {
                 flows.push(`CLIENT EXECUTION\n  ${clientSteps.join('\n  ↓\n  ')}`);
@@ -471,7 +522,7 @@
                         `FORM EXECUTION:\n  Submit Form ${form.id ? '(#' + form.id + ')' : ''}`,
                         `JS HANDLER:\n  ${form.boundHandler ? form.boundHandler : 'Native Browser Submission'}`,
                         `HTTP REQUEST:\n  ${form.method} ${form.action}`,
-                        `SERVER HANDLER:\n  Backend Controller`,
+                        `SERVER HANDLER:\n  ${symbolModel.handlerName}`,
                         `RESULT:\n  Page Reload / HTML SSR Response / AJAX Response`
                     ];
                     flows.push(chain.join('\n\n↓\n\n'));
@@ -490,12 +541,12 @@
 
             if (symbolModel.goVars.length > 0) {
                 symbolModel.goVars.forEach(v => {
-                    stateFlows.push(`${v}\n  TYPE:\n    Server Go Template Variable\n  SOURCE:\n    Controller Context\n  INITIALIZER:\n    Go Controller / Context Data\n  WRITER:\n    Server-Side Render Engine\n  FLOW:\n    Backend Data Context\n    ↓ Inject {{${v}}}\n    ↓\n    Rendered HTML Output`);
+                    stateFlows.push(`${v}\n  Controller\n  ↓\n  Template\n  ↓\n  HTML`);
                 });
             }
 
             if (symbolModel.domManipulations.length > 0) {
-                stateFlows.push(`Client DOM State\n  TYPE:\n    DOM Class/Attributes/Tree\n  INITIALIZER:\n    Initial HTML Document\n  WRITER:\n    ${Object.keys(symbolModel.jsFunctions).join(', ') || 'Inline Event Script / Event Listener'}\n  FLOW:\n    User Event / Listener\n    ↓ DOM Selector\n    ↓\n    ${symbolModel.domManipulations.join(' / ')}`);
+                stateFlows.push(`Client DOM State\n  Controller\n  ↓\n  Template\n  ↓\n  HTML`);
             }
 
             return stateFlows;
@@ -561,26 +612,26 @@
 
             if (symbolModel.navigationLinks.size > 0) {
                 symbolModel.navigationLinks.forEach(nav => {
-                    httpBlocks.push(`BROWSER NAVIGATION\n  GET/POST ${nav}\nSOURCE:\n  HTML Link / href / location.href\nCALLER:\n  Browser Engine Navigation\nTRIGGER:\n  User Click / Redirection\nCONSUMER:\n  Full Page Reload`);
+                    httpBlocks.push(`GET ${nav}`);
                 });
             }
 
             if (symbolModel.forms.length > 0) {
                 symbolModel.forms.forEach(f => {
-                    httpBlocks.push(`FORM NAVIGATION\n  ${f.method} ${f.action}\nSOURCE:\n  HTML <form> Submit ${f.boundHandler ? '(Intercepted by JS: ' + f.boundHandler + ')' : ''}\nCALLER:\n  ${f.boundHandler ? 'JavaScript Event Handler' : 'Browser Native Navigation'}\nTRIGGER:\n  Submit Event\nCONSUMER:\n  Full Page SSR Reload / Dynamic Response`);
+                    httpBlocks.push(`${f.method} ${f.action}`);
                 });
             }
 
             if (symbolModel.apiEndpoints.size > 0) {
                 symbolModel.apiEndpoints.forEach(endpoint => {
-                    httpBlocks.push(`FETCH / API CALL\n  GET/POST ${endpoint}\nSOURCE:\n  Fetch API / AJAX / Axios\nCALLER:\n  Vanilla JS / Client Script\nTRIGGER:\n  Client-side Action / Event\nCONSUMER:\n  DOM Mutation / JS Callback`);
+                    httpBlocks.push(`fetch ${endpoint}`);
                 });
             }
 
             return httpBlocks.length > 0 ? httpBlocks : ['REQUEST\n  None detected in source code'];
         }
 
-        extractDependencies(code, symbolModel) {
+        extractDependencies(code, symbolModel, framework) {
             const deps = [];
 
             const scriptMatches = code.matchAll(/<script\b[^>]*src=["']([^"']+)["']/gi);
@@ -591,8 +642,12 @@
                 deps.push(`External JS Scripts\n    ${externalScripts.join('\n    ')}`);
             }
 
+            if (framework) {
+                deps.push(`Framework Context\n    ${framework}`);
+            }
+
             if (symbolModel.templateIncludes.length > 0) {
-                deps.push(`Template Includes\n    - ${symbolModel.templateIncludes.join('\n    - ')}`);
+                deps.push(`TEMPLATE INCLUDE GRAPH\n  ${symbolModel.templateIncludes.join('\n  ↓\n  ')}`);
             }
 
             if (symbolModel.domDependencies.length > 0) {
@@ -606,43 +661,50 @@
                 }
             }
 
-            return deps.length > 0 ? deps : ['No external scripts or template dependencies imported'];
+            return deps.length > 0 ? deps : ['Detected Dependencies:\n    None'];
         }
 
         extractFailurePoints(code, symbolModel, fileType) {
             const failures = [];
 
-            if (fileType.includes('Go HTML')) {
-                failures.push('Template Execution Failure\n↓\nTemplate Parse Error / Missing Variable / Controller Panic / Database Error (HTTP 500)');
+            const selectorMatches = code.matchAll(/document\.querySelector\s*\(\s*["']([^"']+)["']\s*\)/g);
+            for (const m of selectorMatches) {
+                const fnMatch = code.match(new RegExp(`function\\s+([a-zA-Z0-9_$]+)[^}]*?${m[1].replace('#', '\\#')}`));
+                const fnName = fnMatch ? fnMatch[1] + '()' : 'Client Script';
+                failures.push(`${fnName}\n↓\nquerySelector("${m[1]}")\n↓\nnull\n↓\nTypeError`);
             }
 
-            if (symbolModel.forms.length > 0) {
-                failures.push('HTML Form Submission\n↓\nHTTP Network Error / Server 500 Failure');
-            }
-            if (code.includes('fetch(') || code.includes('XMLHttpRequest') || code.includes('$.ajax') || code.includes('axios')) {
-                failures.push('AJAX / Network Request Call\n↓\nNetwork Drop or Invalid Response');
-            }
-            if (code.includes('JSON.parse')) {
-                failures.push('JSON Parsing\n↓\nSyntaxError on invalid server response string');
+            if (failures.length === 0) {
+                if (fileType.includes('Go HTML')) {
+                    failures.push('Template Execution Failure\n↓\nMissing Variable / Controller Error / HTTP 500');
+                }
+                if (symbolModel.forms.length > 0) {
+                    failures.push('HTML Form Submission\n↓\nHTTP Network Error / Server 500 Failure');
+                }
+                if (symbolModel.apiEndpoints.size > 0) {
+                    failures.push('AJAX / Network Request Call\n↓\nNetwork Drop or Invalid Response');
+                }
             }
 
             return failures.length > 0 ? failures : ['No explicit failure points identified'];
         }
 
-        extractExitPaths(code, symbolModel) {
+        extractExitPaths(code, symbolModel, fileType) {
             const exits = [];
 
-            if (symbolModel.forms.length > 0) {
-                exits.push('FORM SUBMIT EXIT:\n  Full Browser Navigation or Handled Action Endpoint');
-            }
-            if (code.includes('window.location') || code.includes('location.href')) {
-                exits.push('CLIENT REDIRECT EXIT:\n  window.location reassignment');
-            }
-            if (symbolModel.domManipulations.length > 0) {
-                exits.push('DOM MUTATION EXIT:\n  UI element class / content updated in-place');
+            if (fileType.includes('Go HTML')) {
+                exits.push('SUCCESS\n\nServer:\n  HTML Rendered\n\nClient:\n  User Interaction Available\n\nERROR\n\nTemplate Render Failure\n↓\n500 Response\n\nClient Error\n↓\nJS Exception');
+            } else if (symbolModel.forms.length > 0) {
+                exits.push('SUCCESS\n  Full Browser Navigation or Handled Action Endpoint\n\nERROR\n  HTTP 500 / Error Response');
+            } else if (code.includes('window.location') || code.includes('location.href')) {
+                exits.push('SUCCESS\n  window.location redirection\n\nERROR\n  Navigation Interrupted');
+            } else if (symbolModel.domManipulations.length > 0) {
+                exits.push('SUCCESS\n  UI element class / content updated in-place\n\nERROR\n  DOM Mutation Error');
+            } else {
+                exits.push('SUCCESS\n  HTML Rendered\n  ↓\n  User Interaction\n\nERROR\n  HTTP 500\n  ↓\n  Error Response');
             }
 
-            return exits.length > 0 ? exits : ['STANDARD EXIT:\n  DOM Render Complete'];
+            return exits;
         }
 
         formatDebugLir(data) {
@@ -655,6 +717,14 @@
                 uiTreeOutput += '\n└── [No Form / Event Elements Detected]';
             }
 
+            const formMapOutput = sm.forms.length > 0 
+                ? sm.forms.map(f => `Form ${f.id ? '#' + f.id : ''}\n  ${f.method} ${f.action}\n  Fields:\n    ${f.fields.length > 0 ? f.fields.join('\n    ') : 'None'}\n  JS:\n    ${f.boundHandler || 'None'}`).join('\n\n')
+                : 'None';
+
+            const routeGraphOutput = sm.navigationLinks.size > 0 
+                ? Array.from(sm.navigationLinks).join('\n  ↓\n  ') 
+                : 'None';
+
             return [
                 '==================================================',
                 `FILE: ${data.filePath}`,
@@ -662,12 +732,20 @@
                 `TYPE: ${data.fileType}`,
                 `PURPOSE: ${data.purpose}`,
                 '================================================== SYMBOL TABLE',
+                `HANDLER:\n  ${sm.handlerName}`,
                 `GO VARIABLES:\n  ${sm.goVars.length > 0 ? sm.goVars.join('\n  ') : 'None'}`,
+                `TEMPLATE FUNCTIONS:\n  ${sm.goFunctions.length > 0 ? sm.goFunctions.join('\n  ') : 'None'}`,
                 `TEMPLATE INCLUDES:\n  ${sm.templateIncludes.length > 0 ? sm.templateIncludes.join('\n  ') : 'None'}`,
-                `GO BLOCKS:\n  ${sm.goBlocks.length > 0 ? sm.goBlocks.map(b => `{{${b.type} ${b.expression}}}`).join('\n  ') : 'None'}`,
+                `GO BLOCKS:\n  ${sm.goBlocks.length > 0 ? sm.goBlocks.map(b => `${b.type.toUpperCase()}:\n    ${b.expression}` + (b.depends.length > 0 ? `\n    depends:\n      ${b.depends.join(', ')}` : '')).join('\n  ') : 'None'}`,
                 `FORMS:\n  ${sm.forms.length > 0 ? sm.forms.map(f => `[${f.method}] ${f.action}` + (f.boundHandler ? ` (Handler: ${f.boundHandler})` : '')).join('\n  ') : 'None'}`,
                 `FUNCTIONS:\n  ${Object.keys(sm.jsFunctions).length > 0 ? Object.keys(sm.jsFunctions).join('\n  ') : 'None'}`,
                 `API ENDPOINTS:\n  ${sm.apiEndpoints.size > 0 ? Array.from(sm.apiEndpoints).join('\n  ') : 'None'}`,
+                '================================================== TEMPLATE DATA MAP',
+                `${sm.templateDataMap.length > 0 ? sm.templateDataMap.join('\n\n') : 'None'}`,
+                '================================================== FORM MAP',
+                `${formMapOutput}`,
+                '================================================== ROUTE MAP',
+                `${routeGraphOutput}`,
                 '================================================== UI TREE',
                 `UI TREE:\n${uiTreeOutput}`,
                 '================================================== ENTRY POINTS',
