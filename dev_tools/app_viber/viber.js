@@ -154,7 +154,7 @@ function extractSkeleton() {
             const rawCode = e.target.result;
             const lines = rawCode.split('\n');
             let finalResultArray = [];
-            finalResultArray.push("Target File: /" + fileKey);
+            finalResultArray.push("File: /" + fileKey);
 
             // --- FLOW BACKEND PARSER (GO) ---
             if (file.name.endsWith('.go')) {
