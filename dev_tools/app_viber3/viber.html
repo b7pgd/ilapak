@@ -406,21 +406,73 @@
             document.getElementById('btnExtractFullstack').disabled = !hasSelection;
         }
 
+        async function runFrontendPipeline(files) {
+            const stages = window.LirEngineRegistry.frontend;
+            if (!stages || stages.length === 0) {
+                throw new Error("No registered stages found for frontend. Ensure frontend.js is loaded.");
+            }
+
+            const stage1Outputs = [];
+            for (const stageFn of stages) {
+                const result = await stageFn({
+                    projectFiles,
+                    selectedFiles: files
+                });
+
+                if (result?.finalOutput) {
+                    stage1Outputs.push(result.finalOutput);
+                } else if (result) {
+                    stage1Outputs.push(typeof result === 'string' ? result : JSON.stringify(result, null, 2));
+                }
+            }
+
+            const lirStage1Result = stage1Outputs.join("\n\n");
+
+            // Tahap 2: Jalankan frontend2.js jika terdaftar di registry
+            const semanticStages = window.LirEngineRegistry.frontend_semantic_mapper;
+            if (semanticStages && semanticStages.length > 0) {
+                const stage2Outputs = [];
+                for (const stageFn of semanticStages) {
+                    const result = await stageFn({
+                        finalOutput: lirStage1Result
+                    });
+
+                    if (result?.finalOutput) {
+                        stage2Outputs.push(result.finalOutput);
+                    } else if (result) {
+                        stage2Outputs.push(typeof result === 'string' ? result : JSON.stringify(result, null, 2));
+                    }
+                }
+
+                if (stage2Outputs.length > 0) {
+                    return `${lirStage1Result}\n\n${stage2Outputs.join("\n\n")}`;
+                }
+            }
+
+            return lirStage1Result;
+        }
+
         async function launchEngine(engineType) {
             if (selectedFileKeys.length === 0) return;
 
             document.getElementById('outputArea').value =
                 `Executing ${engineType.toUpperCase()} DEBUG LIR pipeline...`;
 
-            const stages = window.LirEngineRegistry[engineType];
-
-            if (!stages || stages.length === 0) {
-                document.getElementById('outputArea').value =
-                    `Error: No registered stages found for ${engineType}. Ensure ${engineType}.js is loaded and calls registerStage.`;
-                return;
-            }
-
             try {
+                if (engineType === 'frontend') {
+                    const finalOutput = await runFrontendPipeline(selectedFileKeys);
+                    renderOutput(finalOutput);
+                    return;
+                }
+
+                const stages = window.LirEngineRegistry[engineType];
+
+                if (!stages || stages.length === 0) {
+                    document.getElementById('outputArea').value =
+                        `Error: No registered stages found for ${engineType}. Ensure ${engineType}.js is loaded and calls registerStage.`;
+                    return;
+                }
+
                 const outputs = [];
 
                 for (const stageFn of stages) {
@@ -509,16 +561,10 @@
             let backendResult = null;
 
             if (frontendFiles.length > 0) {
-                const stages = window.LirEngineRegistry.frontend;
-                if (stages && stages.length > 0) {
-                    let output = null;
-                    for (const stageFn of stages) {
-                        output = await stageFn({
-                            projectFiles,
-                            selectedFiles: frontendFiles
-                        });
-                    }
-                    frontendResult = output?.finalOutput ?? output;
+                try {
+                    frontendResult = await runFrontendPipeline(frontendFiles);
+                } catch (e) {
+                    console.error("Error executing frontend pipeline in fullstack mode:", e);
                 }
             }
 
@@ -588,6 +634,7 @@
     </script>
     <script src="./frontend.js"></script>
     <script src="./frontend1.js"></script>
+    <script src="./frontend2.js"></script>
     <script src="./backend.js"></script>
 </body>
 </html>
