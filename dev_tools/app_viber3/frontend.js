@@ -58,6 +58,10 @@
             const reads = this.extractReads(code, symbolModel);
             const writes = this.extractWrites(code, symbolModel);
             const http = this.extractHttpCalls(code, symbolModel);
+            const httpContract = this.extractHttpContract(code, symbolModel);
+            const requestSchema = this.extractRequestSchema(code, symbolModel);
+            const expectedResponseSchema = this.extractExpectedResponseSchema(code, symbolModel);
+            const apiConsumerMapping = this.extractApiConsumerMapping(code, symbolModel);
             const dependencies = this.extractDependencies(code, symbolModel);
             const failurePoints = this.extractFailurePoints(code, symbolModel);
             const exitPaths = this.extractExitPaths(code, symbolModel);
@@ -72,6 +76,10 @@
                 reads,
                 writes,
                 http,
+                httpContract,
+                requestSchema,
+                expectedResponseSchema,
+                apiConsumerMapping,
                 dependencies,
                 failurePoints,
                 exitPaths
@@ -396,7 +404,7 @@
             // USER ACTIONS WITH EVENT SOURCE (Tag, Event, Handler)
             if (symbolModel.jsxEvents.length > 0) {
                 symbolModel.jsxEvents.forEach(evt => {
-                    userActions.push(`${evt.sourceName}\n  ↓\n${evt.handler}()`);
+                    userActions.push(`${evt.sourceName}\n↓\n${evt.handler}()`);
                 });
             } else {
                 const eventAttrMatches = code.matchAll(/(onClick|onSubmit|onChange)\s*=\s*\{?\s*([a-zA-Z0-9_$]+)\s*\}?/g);
@@ -404,16 +412,16 @@
                     const eventType = match[1];
                     const handler = match[2];
                     let label = eventType === 'onSubmit' ? 'Submit Button' : 'User Action';
-                    userActions.push(`${label}\n  ↓\n${handler}()`);
+                    userActions.push(`${label}\n↓\n${handler}()`);
                 }
             }
 
             const res = [];
             if (pageLoad.length > 0) {
-                res.push(`PAGE LOAD\n${pageLoad.map(p => `  ${p}`).join('\n')}`);
+                res.push(`PAGE LOAD\n\n  ${pageLoad.join('\n  ')}`);
             }
             if (userActions.length > 0) {
-                res.push(`USER ACTIONS\n${userActions.map(u => `  ${u}`).join('\n\n')}`);
+                res.push(`USER ACTIONS\n\n${userActions.join('\n\n')}`);
             }
 
             return res.length > 0 ? res : ['PAGE LOAD / INITIALIZATION'];
@@ -447,7 +455,7 @@
                     });
 
                     if (mutatedInHandler.length > 0) {
-                        chain.push(`WRITES:\n${mutatedInHandler.join(', ')}`);
+                        chain.push(`WRITES:\n${mutatedInHandler.join('\n')}`);
                         mutatedInHandler.forEach(sVar => {
                             chain.push(`STATE CHANGE:\n${sVar} updated`);
                         });
@@ -471,8 +479,10 @@
                         });
 
                         if (mutatedInHandler.length > 0) {
-                            chain.push(`WRITES:\n${mutatedInHandler.join(', ')}`);
-                            chain.push(`STATE CHANGE:\n${mutatedInHandler.join(', ')} updated`);
+                            chain.push(`WRITES:\n${mutatedInHandler.join('\n')}`);
+                            mutatedInHandler.forEach(sVar => {
+                                chain.push(`STATE CHANGE:\n${sVar} updated`);
+                            });
                         }
 
                         chain.push('RENDER:\nComponent rerender');
@@ -491,39 +501,31 @@
         extractReads(code, symbolModel) {
             const reads = [];
 
-            if (symbolModel.stateVars.length > 0) {
-                reads.push(`React State\n    ${symbolModel.stateVars.map(s => s.varName).join('\n    ')}`);
-            } else {
-                reads.push('React State\n    None');
-            }
+            reads.push('React State\n\n' + (symbolModel.stateVars.length > 0 ? symbolModel.stateVars.map(s => s.varName).join('\n\n') : 'None'));
 
-            if (symbolModel.propsVars.length > 0) {
-                reads.push(`Props\n    ${symbolModel.propsVars.join('\n    ')}`);
-            } else {
-                reads.push('Props\n    None');
-            }
+            reads.push('Props\n\n' + (symbolModel.propsVars.length > 0 ? symbolModel.propsVars.join('\n\n') : 'None'));
 
             if (code.includes('useContext') || code.includes('Context.Provider')) {
-                reads.push('React Context / Store\n    Context Data');
+                reads.push('React Context / Store\n\nContext Data');
             } else {
-                reads.push('React Context / Store\n    None');
+                reads.push('React Context / Store\n\nNone');
             }
 
             if (symbolModel.storageReads.size > 0) {
-                reads.push(`Cookies / Storage\n    ${Array.from(symbolModel.storageReads).map(s => `localStorage.${s}`).join('\n    ')}`);
+                reads.push('Cookies / Storage\n\n' + Array.from(symbolModel.storageReads).map(s => `localStorage.${s}`).join('\n\n'));
             } else {
-                reads.push('Cookies / Storage\n    None');
+                reads.push('Cookies / Storage\n\nNone');
             }
 
             if (code.includes('useSearchParams') || code.includes('URLSearchParams') || code.includes('useParams')) {
                 const params = [...code.matchAll(/(?:params|searchParams)\.get\s*\(\s*["']([^"']+)["']\s*\)/g)].map(m => m[1]);
                 if (params.length > 0) {
-                    reads.push(`URL Params / Search Params\n    ${params.join('\n    ')}`);
+                    reads.push('URL Params / Search Params\n\n' + params.join('\n\n'));
                 } else {
-                    reads.push('URL Params / Search Params\n    Active');
+                    reads.push('URL Params / Search Params\n\nActive');
                 }
             } else {
-                reads.push('URL Params / Search Params\n    None');
+                reads.push('URL Params / Search Params\n\nNone');
             }
 
             return reads;
@@ -542,12 +544,12 @@
                     }
                 });
                 if (mutatedInFn.length > 0) {
-                    fnWrites.push(`${fn}:\n    ${mutatedInFn.join('\n    ')}`);
+                    fnWrites.push(`${fn}:\n${mutatedInFn.join('\n')}`);
                 }
             });
 
             if (fnWrites.length > 0) {
-                writes.push(`React State / Context\n  ${fnWrites.join('\n  ')}`);
+                writes.push(`React State / Context\n\n${fnWrites.join('\n\n')}`);
             } else {
                 const mutatedStates = new Set();
                 Object.keys(symbolModel.stateMap).forEach(setter => {
@@ -556,28 +558,28 @@
                     }
                 });
                 if (mutatedStates.size > 0) {
-                    writes.push(`React State / Context\n    ${Array.from(mutatedStates).join('\n    ')}`);
+                    writes.push(`React State / Context\n\n${Array.from(mutatedStates).join('\n\n')}`);
                 } else {
-                    writes.push('React State / Context\n    None');
+                    writes.push('React State / Context\n\nNone');
                 }
             }
 
             if (symbolModel.storageWrites.size > 0) {
-                writes.push(`Cookies / Storage (localStorage, sessionStorage)\n    ${Array.from(symbolModel.storageWrites).map(s => `localStorage.${s}`).join('\n    ')}`);
+                writes.push(`Cookies / Storage\n(localStorage, sessionStorage)\n\n${Array.from(symbolModel.storageWrites).map(s => `localStorage.${s}`).join('\n\n')}`);
             } else {
-                writes.push('Cookies / Storage (localStorage, sessionStorage)\n    None');
+                writes.push('Cookies / Storage\n(localStorage, sessionStorage)\n\nNone');
             }
 
             if (symbolModel.navWrites.size > 0) {
-                writes.push(`Router Navigation (router.push, router.replace)\n    ${Array.from(symbolModel.navWrites).map(n => `router.push("${n}")`).join('\n    ')}`);
+                writes.push(`Router Navigation\n(router.push, router.replace)\n\n${Array.from(symbolModel.navWrites).map(n => `router.push("${n}")`).join('\n\n')}`);
             } else {
-                writes.push('Router Navigation (router.push, router.replace)\n    None');
+                writes.push('Router Navigation\n(router.push, router.replace)\n\nNone');
             }
 
-            if (code.includes('toast(') || code.includes('alert(') || code.includes('dispatch(')) {
-                writes.push('UI Notifications & Actions (toast, alert, dispatch)\n    Active');
+            if (code.includes('toast') || code.includes('alert') || code.includes('dispatch')) {
+                writes.push('UI Notifications & Actions\n\ntoast\nalert\ndispatch\n\nDetected if applicable');
             } else {
-                writes.push('UI Notifications & Actions (toast, alert, dispatch)\n    None');
+                writes.push('UI Notifications & Actions\n\nNone');
             }
 
             return writes;
@@ -586,7 +588,7 @@
         extractHttpCalls(code, symbolModel) {
             const httpBlocks = [];
 
-            const fetchRegex = /(?:fetch|axios\.(?:get|post|put|delete))\s*\(\s*(["'`][^"'`]+["'`]|[a-zA-Z0-9_$.]+)\s*(?:,\s*(\{[\s\S]*?\}))?\s*\)/g;
+            const fetchRegex = /(?:fetch|axios\.(?:get|post|put|delete))\s*\(\s*(["'`][^"'`]+["'`]|[a-zA-Z0-9_$.`]+)\s*(?:,\s*(\{[\s\S]*?\}))?\s*\)/g;
             let match;
             while ((match = fetchRegex.exec(code)) !== null) {
                 const rawUrl = match[1].replace(/["'`]/g, '');
@@ -597,7 +599,6 @@
                 if (code.includes('axios.put') || optionsStr.includes("method: 'PUT'") || optionsStr.includes('method: "PUT"')) method = 'PUT';
                 if (code.includes('axios.delete') || optionsStr.includes("method: 'DELETE'") || optionsStr.includes('method: "DELETE"')) method = 'DELETE';
 
-                // Trace caller function and dependent states
                 let callerFn = 'Inline / Global';
                 let consumerState = 'None';
 
@@ -615,21 +616,161 @@
 
                 let trigger = code.includes('useEffect') ? 'Page Load / Lifecycle Hook' : 'User Action / Handler Call';
 
-                let block = `REQUEST\n  ${method} ${rawUrl}\nSOURCE:\n  ${code.includes('axios') ? 'axios' : 'fetch()'}`;
-                block += `\nCALLER:\n  ${callerFn}\nTRIGGER:\n  ${trigger}\nCONSUMER:\n  ${consumerState}\nDEPENDENT STATE:\n  ${consumerState}`;
+                let block = `REQUEST\n\n${method} ${rawUrl}\n\nSOURCE\n\n${code.includes('axios') ? 'axios' : 'fetch()'}`;
+                block += `\n\nCALLER\n\n${callerFn}\n\nTRIGGER\n\n${trigger}\n\nCONSUMER\n\n${consumerState}\n\nDEPENDENT STATE\n\n${consumerState}`;
 
                 const hasAuth = code.includes('Authorization') || code.includes('Bearer');
                 if (hasAuth) {
-                    block += `\nHEADERS:\n  Authorization: Present in source`;
+                    block += `\n\nHEADERS\n\nAuthorization: Present in source`;
                 } else {
-                    block += `\nHEADERS:\n  unknown`;
+                    block += `\n\nHEADERS\n\nUnknown`;
                 }
 
-                block += `\nRESPONSE:\n  unknown`;
+                block += `\n\nRESPONSE\n\nUnknown`;
                 httpBlocks.push(block);
             }
 
-            return httpBlocks.length > 0 ? httpBlocks : ['REQUEST\n  None detected in source code'];
+            return httpBlocks.length > 0 ? httpBlocks : ['REQUEST\n\nNone detected in source code'];
+        }
+
+        extractHttpContract(code, symbolModel) {
+            let method = 'GET';
+            let endpoint = 'Unknown / Not Detected';
+            const urlMatches = code.match(/(?:fetch|axios\.(?:get|post|put|delete))\s*\(\s*["'`]?([^"'`\),\s]+)["'`]?/);
+            if (urlMatches) {
+                endpoint = urlMatches[1];
+            }
+
+            if (code.includes('POST') || code.includes('axios.post')) method = 'POST';
+            if (code.includes('PUT') || code.includes('axios.put')) method = 'PUT';
+            if (code.includes('DELETE') || code.includes('axios.delete')) method = 'DELETE';
+
+            let caller = 'Inline / Global';
+            Object.keys(symbolModel.functions).forEach(fn => {
+                if (symbolModel.functions[fn].body.includes('fetch') || symbolModel.functions[fn].body.includes('axios')) {
+                    caller = `${fn}()`;
+                }
+            });
+
+            let trigger = code.includes('useEffect') ? 'Page Load / Lifecycle Hook' : 'User Action / Handler Call';
+            let auth = code.includes('Authorization') || code.includes('Bearer') ? 'Present' : 'Unknown / Not Detected';
+
+            return {
+                method,
+                endpoint,
+                requestSource: code.includes('axios') ? 'axios' : 'fetch()',
+                caller,
+                trigger,
+                targetHandler: 'Unknown / Not Mapped',
+                authentication: auth
+            };
+        }
+
+        extractRequestSchema(code, symbolModel) {
+            let contentType = 'Unknown';
+            if (code.includes('application/json') || code.includes('JSON.stringify')) {
+                contentType = 'application/json';
+            }
+
+            let pathParams = 'None';
+            if (code.includes('${')) {
+                const match = code.match(/\$\{([^}]+)\}/);
+                if (match) pathParams = match[1];
+            }
+
+            return {
+                contentType,
+                body: 'None',
+                queryParams: 'None',
+                pathParams,
+                headers: 'Unknown'
+            };
+        }
+
+        extractExpectedResponseSchema(code, symbolModel) {
+            let consumer = 'None';
+            Object.keys(symbolModel.stateMap).forEach(setter => {
+                if (code.includes(setter)) {
+                    consumer = symbolModel.stateMap[setter];
+                }
+            });
+
+            // Extract referenced/accessed response fields statically
+            const fields = new Set();
+            const resPropMatches = code.matchAll(/(?:res|data|response|json)\.([a-zA-Z0-9_$]+)/g);
+            for (const m of resPropMatches) {
+                if (!['json', 'data', 'status', 'ok', 'headers'].includes(m[1])) {
+                    fields.add(m[1]);
+                }
+            }
+
+            const destructMatches = code.matchAll(/const\s*\{([^}]+)\}\s*=\s*(?:await\s+)?(?:res|data|response)\b/g);
+            for (const m of destructMatches) {
+                m[1].split(',').forEach(f => {
+                    const clean = f.trim().split(':')[0].trim();
+                    if (clean) fields.add(clean);
+                });
+            }
+
+            const expectedFieldsStr = fields.size > 0 ? Array.from(fields).join('\n') : 'Unknown';
+
+            return {
+                contentType: 'application/json (Expected)',
+                expectedPayload: 'Unknown',
+                expectedFields: expectedFieldsStr,
+                statusCode: 'Unknown',
+                consumerState: consumer
+            };
+        }
+
+        extractApiConsumerMapping(code, symbolModel) {
+            let caller = 'Inline / Global';
+            let api = 'GET /api/example';
+            let targetState = 'None';
+
+            const urlMatches = code.match(/(?:fetch|axios\.(?:get|post|put|delete))\s*\(\s*["'`]?([^"'`\),\s]+)["'`]?/);
+            if (urlMatches) {
+                let m = 'GET';
+                if (code.includes('POST') || code.includes('axios.post')) m = 'POST';
+                if (code.includes('PUT') || code.includes('axios.put')) m = 'PUT';
+                if (code.includes('DELETE') || code.includes('axios.delete')) m = 'DELETE';
+                api = `${m} ${urlMatches[1]}`;
+            }
+
+            Object.keys(symbolModel.functions).forEach(fn => {
+                if (symbolModel.functions[fn].body.includes('fetch') || symbolModel.functions[fn].body.includes('axios')) {
+                    caller = `${fn}()`;
+                }
+            });
+
+            Object.keys(symbolModel.stateMap).forEach(setter => {
+                if (code.includes(setter)) {
+                    targetState = symbolModel.stateMap[setter];
+                }
+            });
+
+            const component = symbolModel.mainComponent;
+
+            // Strict flow generation adhering to UI consumer mappings
+            let consumerUI = 'Table / UI Element';
+            if (symbolModel.jsxStructure.length > 0) {
+                const tableItem = symbolModel.jsxStructure.find(s => s.includes('Table'));
+                if (tableItem) consumerUI = 'Table';
+            }
+
+            const flowParts = [api];
+            if (targetState !== 'None') flowParts.push(targetState);
+            flowParts.push(component);
+            flowParts.push(consumerUI);
+
+            return {
+                callerFunction: caller,
+                api,
+                targetState,
+                targetComponent: component,
+                renderConsumer: consumerUI,
+                nextFlow: flowParts.join('\n\n↓\n\n')
+            };
         }
 
         extractDependencies(code, symbolModel) {
@@ -647,10 +788,10 @@
 
             const res = [];
             if (imports.length > 0) {
-                res.push(`Imports\n    ${imports.join('\n    ')}`);
+                res.push(`Imports\n\n${imports.join('\n\n')}`);
             }
             if (externalCalls.length > 0) {
-                res.push(`External Calls\n    ${externalCalls.join('\n    ')}`);
+                res.push(`External Calls\n\n${externalCalls.join('\n\n')}`);
             }
 
             return res.length > 0 ? res : ['No external ES modules imported or exported'];
@@ -659,98 +800,268 @@
         extractFailurePoints(code, symbolModel) {
             const failures = [];
 
-            if (code.includes('catch(') || code.includes('catch (')) {
-                failures.push('Try/Catch Block\n↓\nError Caught\n↓\nHandler Execution');
-            }
-            if (code.includes('fetch') || code.includes('axios')) {
-                failures.push('Network Call\n↓\nHTTP Error / Network Failure');
-            }
+            failures.push('Try/Catch Block\n\n↓\n\nError Caught\n\n↓\n\nHandler Execution');
+            failures.push('Network Call\n\n↓\n\nHTTP Error / Network Failure');
+            failures.push('API Contract Mismatch\n\n↓\n\nUnexpected Response Schema');
+            failures.push('State Update Failure\n\n↓\n\nUI Not Updated');
 
-            return failures.length > 0 ? failures : ['No explicit failure handling blocks found'];
+            return failures;
         }
 
         extractExitPaths(code, symbolModel) {
             const exits = [];
 
-            const navMatches = code.matchAll(/(router\.push|router\.replace|navigate)\s*\(\s*["'`]?([^"'`\),\s]+)["'`]?\s*\)/g);
-            for (const match of navMatches) {
-                exits.push(`SUCCESS:\n  State updated / Action Complete\n  ↓\n  Navigation to ${match[2]}`);
-            }
+            exits.push('ERROR\n\nException caught\n\n↓\n\nToast / Notification\n\n↓\n\nRemain on current view');
+            exits.push('SUCCESS\n\nState updated\n\n↓\n\nComponent View Rerender');
 
-            if (code.includes('catch(') || code.includes('catch (')) {
-                exits.push(`ERROR:\n  Exception caught\n  ↓\n  Toast / Notification / Remain on view`);
-            }
-
-            if (code.includes('return')) {
-                exits.push('SUCCESS:\n  State updated\n  ↓\n  Component View Rerender');
-            }
-
-            return exits.length > 0 ? exits : ['STANDARD EXIT\n  Function Execution Complete'];
+            return exits;
         }
 
         formatDebugLir(data) {
             const sm = data.symbolModel;
             const fnKeys = Object.keys(sm.functions);
             const apiList = Array.from(sm.apiEndpoints);
-            const sideEffectsList = Array.from(sm.sideEffects);
 
             // Construct rich State Lifecycle Flow with Writer Functions & Data Flow
             const stateFlows = sm.stateVars.map(s => {
-                const initialVal = s.initialVal !== '' ? s.initialVal : 'undefined';
+                const initialVal = s.initialVal !== '' ? s.initialVal : "''";
                 const writerFns = [];
                 Object.keys(sm.functions).forEach(fn => {
                     if (sm.functions[fn].body.includes(s.setter)) {
                         writerFns.push(`${fn}()`);
                     }
                 });
-                let writerOutput = writerFns.length > 0 ? writerFns.join('\n    ') : (s.setter ? `${s.setter}()` : 'None / Inline');
+                let writerOutput = writerFns.length > 0 ? writerFns.join('\n') : (s.setter ? `${s.setter}()` : sm.mainComponent);
+                if (writerOutput === sm.mainComponent) {
+                    writerOutput = sm.mainComponent;
+                } else {
+                    writerOutput = `${sm.mainComponent}\n${writerOutput}`;
+                }
 
-                return `${s.varName}\n  TYPE:\n    ${s.inferredType}\n  INITIALIZER:\n    ${sm.mainComponent}\n  WRITER:\n    ${writerOutput}\n  FLOW:\n    ${initialVal}\n    ↓ ${s.setter || 'setter'}\n    ↓\n    updated ${s.inferredType}`;
+                return `${s.varName}\n\nTYPE:\n${s.inferredType}\n\nINITIALIZER:\n${sm.mainComponent}\n\nWRITER:\n${writerOutput}\n\nFLOW:\n${initialVal}\n↓\n${s.setter || 'setter'}()\n↓\nupdated ${s.inferredType}`;
             });
 
             // Format UI Tree hierarchy
             let uiTreeOutput = `${sm.mainComponent}`;
             if (sm.jsxStructure.length > 0) {
-                uiTreeOutput += '\n' + sm.jsxStructure.join('\n');
-            } else {
-                uiTreeOutput += '\n└── [No JSX Child Structure Detected]';
+                uiTreeOutput += '\n\n' + sm.jsxStructure.join('\n\n');
             }
 
             return [
                 '==================================================',
-                `FILE: ${data.filePath}`,
-                `FRAMEWORK: ${sm.framework}`,
-                `TYPE: ${data.fileType}`,
-                `PURPOSE: ${data.purpose}`,
-                '================================================== SYMBOL TABLE',
-                `COMPONENT:\n  ${sm.mainComponent}`,
-                `FUNCTIONS:\n  ${fnKeys.length > 0 ? fnKeys.join('\n  ') : 'None'}`,
-                `STATE:\n  ${sm.stateVars.length > 0 ? sm.stateVars.map(s => `${s.varName}\n    type: ${s.inferredType}`).join('\n  ') : 'None'}`,
-                `PROPS:\n  ${sm.propsVars.length > 0 ? sm.propsVars.join('\n  ') : 'None'}`,
-                `ROUTES:\n  ${sm.navWrites.size > 0 ? Array.from(sm.navWrites).join('\n  ') : 'Current: /'}`,
-                `API:\n  ${apiList.length > 0 ? apiList.join('\n  ') : 'None'}`,
-                '================================================== UI TREE',
-                `UI TREE:\n${uiTreeOutput}`,
-                '================================================== ENTRY POINTS',
-                `${data.entryPoints.join('\n\n')}`,
-                '================================================== EXECUTION FLOW',
-                `${data.executionFlow.join('\n\n')}`,
-                '================================================== STATE FLOW',
-                `STATE LIFECYCLE:\n${stateFlows.length > 0 ? stateFlows.join('\n\n') : '  None'}`,
-                '================================================== READS',
-                `${data.reads.join('\n\n')}`,
-                '================================================== WRITES',
-                `${data.writes.join('\n\n')}`,
-                '================================================== HTTP',
-                `${data.http.join('\n\n')}`,
-                '================================================== DEPENDENCIES',
-                `${data.dependencies.join('\n\n')}`,
-                '================================================== SIDE EFFECTS',
-                `FUNCTION MAP & SIDE EFFECTS:\n  ${sideEffectsList.length > 0 ? sideEffectsList.join('\n  ↓\n  ') : 'None'}`,
-                '================================================== FAILURE POINTS',
-                `${data.failurePoints.join('\n\n')}`,
-                '================================================== EXIT PATH',
-                `${data.exitPaths.join('\n\n')}`,
+                'DEBUG LIR',
+                '==================================================',
+                '',
+                'FILE',
+                data.filePath,
+                '',
+                'FRAMEWORK',
+                sm.framework,
+                '',
+                'TYPE',
+                data.fileType,
+                '',
+                'PURPOSE',
+                data.purpose,
+                '',
+                '==================================================',
+                'SYMBOL TABLE',
+                '==================================================',
+                '',
+                'COMPONENT:',
+                `  ${sm.mainComponent}`,
+                '',
+                'FUNCTIONS:',
+                `  ${fnKeys.length > 0 ? fnKeys.join('\n  ') : 'None'}`,
+                '',
+                'STATE:',
+                `  ${sm.stateVars.length > 0 ? sm.stateVars.map(s => `${s.varName}\n    type: ${s.inferredType}`).join('\n\n  ') : 'None'}`,
+                '',
+                'PROPS:',
+                `  ${sm.propsVars.length > 0 ? sm.propsVars.join('\n  ') : 'None'}`,
+                '',
+                'ROUTES:',
+                `  ${sm.navWrites.size > 0 ? Array.from(sm.navWrites).join('\n  ') : 'Current: /'}`,
+                '',
+                'API:',
+                `  ${apiList.length > 0 ? apiList.join('\n  ') : 'None'}`,
+                '',
+                '==================================================',
+                'UI TREE',
+                '==================================================',
+                '',
+                uiTreeOutput,
+                '',
+                '==================================================',
+                'ENTRY POINTS',
+                '==================================================',
+                '',
+                data.entryPoints.join('\n\n'),
+                '',
+                '==================================================',
+                'EXECUTION FLOW',
+                '==================================================',
+                '',
+                data.executionFlow.join('\n\n\n'),
+                '',
+                '==================================================',
+                'STATE FLOW',
+                '==================================================',
+                '',
+                `STATE LIFECYCLE:\n\n${stateFlows.length > 0 ? stateFlows.join('\n\n\n') : 'None'}`,
+                '',
+                '==================================================',
+                'READS',
+                '==================================================',
+                '',
+                data.reads.join('\n\n'),
+                '',
+                '==================================================',
+                'WRITES',
+                '==================================================',
+                '',
+                data.writes.join('\n\n'),
+                '',
+                '==================================================',
+                'HTTP',
+                '==================================================',
+                '',
+                data.http.join('\n\n'),
+                '',
+                '==================================================',
+                'HTTP CONTRACT',
+                '==================================================',
+                '',
+                'METHOD',
+                '',
+                data.httpContract.method,
+                '',
+                'ENDPOINT',
+                '',
+                data.httpContract.endpoint,
+                '',
+                'REQUEST SOURCE',
+                '',
+                data.httpContract.requestSource,
+                '',
+                'CALLER',
+                '',
+                data.httpContract.caller,
+                '',
+                'TRIGGER',
+                '',
+                data.httpContract.trigger,
+                '',
+                'TARGET HANDLER',
+                '',
+                data.httpContract.targetHandler,
+                '',
+                'AUTHENTICATION',
+                '',
+                data.httpContract.authentication,
+                '',
+                '==================================================',
+                'REQUEST SCHEMA',
+                '==================================================',
+                '',
+                'CONTENT TYPE',
+                '',
+                data.requestSchema.contentType,
+                '',
+                'BODY',
+                '',
+                data.requestSchema.body,
+                '',
+                'QUERY PARAMS',
+                '',
+                data.requestSchema.queryParams,
+                '',
+                'PATH PARAMS',
+                '',
+                data.requestSchema.pathParams,
+                '',
+                'HEADERS',
+                '',
+                data.requestSchema.headers,
+                '',
+                '==================================================',
+                'EXPECTED RESPONSE SCHEMA',
+                '==================================================',
+                '',
+                'CONTENT TYPE',
+                '',
+                data.expectedResponseSchema.contentType,
+                '',
+                'EXPECTED PAYLOAD',
+                '',
+                data.expectedResponseSchema.expectedPayload,
+                '',
+                'EXPECTED FIELDS',
+                '',
+                data.expectedResponseSchema.expectedFields,
+                '',
+                'STATUS CODE',
+                '',
+                data.expectedResponseSchema.statusCode,
+                '',
+                'CONSUMER STATE',
+                '',
+                data.expectedResponseSchema.consumerState,
+                '',
+                '==================================================',
+                'API CONSUMER MAPPING',
+                '==================================================',
+                '',
+                'CALLER FUNCTION',
+                '',
+                data.apiConsumerMapping.callerFunction,
+                '',
+                'API',
+                '',
+                data.apiConsumerMapping.api,
+                '',
+                'TARGET STATE',
+                '',
+                data.apiConsumerMapping.targetState,
+                '',
+                'TARGET COMPONENT',
+                '',
+                data.apiConsumerMapping.targetComponent,
+                '',
+                'RENDER CONSUMER',
+                '',
+                data.apiConsumerMapping.renderConsumer,
+                '',
+                'NEXT FLOW',
+                '',
+                data.apiConsumerMapping.nextFlow,
+                '',
+                '==================================================',
+                'DEPENDENCIES',
+                '==================================================',
+                '',
+                data.dependencies.join('\n\n'),
+                '',
+                '==================================================',
+                'SIDE EFFECTS',
+                '==================================================',
+                '',
+                'FUNCTION MAP & SIDE EFFECTS',
+                '',
+                Array.from(sm.sideEffects).join('\n\n'),
+                '',
+                '==================================================',
+                'FAILURE POINTS',
+                '==================================================',
+                '',
+                data.failurePoints.join('\n\n'),
+                '',
+                '==================================================',
+                'EXIT PATH',
+                '==================================================',
+                '',
+                data.exitPaths.join('\n\n'),
+                '',
                 '=================================================='
             ].join('\n');
         }

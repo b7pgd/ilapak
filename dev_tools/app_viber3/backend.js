@@ -54,6 +54,10 @@
             const reads = this.extractReads(code);
             const writes = this.extractWrites(code);
             const http = this.extractHttpCalls(code);
+            const httpContract = this.extractHttpContract(code, entryPoints);
+            const requestSchema = this.extractRequestSchema(code);
+            const responseSchema = this.extractResponseSchema(code, http);
+            const entityMapping = this.extractEntityMapping(code);
             const dependencies = this.extractDependencies(code);
             const failurePoints = this.extractFailurePoints(code);
             const exitPaths = this.extractExitPaths(code);
@@ -67,6 +71,10 @@
                 reads,
                 writes,
                 http,
+                httpContract,
+                requestSchema,
+                responseSchema,
+                entityMapping,
                 dependencies,
                 failurePoints,
                 exitPaths
@@ -81,7 +89,7 @@
         detectFileType(path, code, ext) {
             const p = path.toLowerCase();
 
-            if (p.includes('controller')) return 'API Controller / Request Handler';
+            if (p.includes('controller')) return 'Backend HTTP Handler';
             if (p.includes('route') || p.includes('router')) return 'HTTP Router / Endpoint Definition';
             if (p.includes('middleware')) return 'HTTP Middleware';
             if (p.includes('service') || p.includes('usecase')) return 'Business Logic Service / UseCase';
@@ -93,7 +101,7 @@
 
             if (ext === 'go') {
                 if (code.includes('package main')) return 'Go Application Entrypoint (main.go)';
-                if (code.includes('echo.Context') || code.includes('*gin.Context') || code.includes('*fiber.Ctx')) return 'Go HTTP Controller Handler';
+                if (code.includes('echo.Context') || code.includes('*gin.Context') || code.includes('*fiber.Ctx')) return 'Backend HTTP Handler';
                 return 'Go Package Module';
             }
 
@@ -140,287 +148,600 @@
             }
 
             const fileName = path.split('/').pop();
-            return `Handles server-side data, routes, or business operations for ${fileType} in ${fileName}.`;
+            return `Target File: ${fileName}`;
         }
 
         extractEntryPoints(code, ext) {
-            const entryPoints = [];
+            const http = [];
+            const calledBy = [];
 
-            // Express, Fastify, Gin, Fiber, Chi, Echo, FastAPI, Flask Route handlers
             const routeMatches = code.matchAll(/(app|router|r|e|group|route|Route::)\.(get|post|put|patch|delete|all|use|match|options)\s*\(\s*["'`]?([^"'`\),\s]+)["'`]?/gi);
             for (const match of routeMatches) {
-                entryPoints.push(`HTTP Route [${match[2].toUpperCase()}]: ${match[3]}`);
+                http.push(`${match[2].toUpperCase()} ${match[3]}`);
             }
 
-            // Spring Annotations
             const springRoutes = code.matchAll(/@(GetMapping|PostMapping|PutMapping|DeleteMapping|RequestMapping)\s*\(\s*(?:value\s*=\s*)?["']([^"']+)["']/g);
             for (const match of springRoutes) {
                 const method = match[1].replace('Mapping', '').toUpperCase();
-                entryPoints.push(`Spring Endpoint [${method || 'REQUEST'}]: ${match[2]}`);
+                http.push(`${method || 'REQUEST'} ${match[2]}`);
             }
 
-            // Python Decorators
             const pyRoutes = code.matchAll(/@(app|router)\.(get|post|put|delete|patch)\s*\(\s*["']([^"']+)["']/g);
             for (const match of pyRoutes) {
-                entryPoints.push(`FastAPI/Flask Route [${match[2].toUpperCase()}]: ${match[3]}`);
+                http.push(`${match[2].toUpperCase()} ${match[3]}`);
             }
 
-            // CLI / Main entrypoints
-            if (code.includes('func main()') || code.includes('public static void main') || code.includes('if __name__ == "__main__":')) {
-                entryPoints.push('Main Executable Entry Point');
+            const callerMatches = code.matchAll(/(?:from|import|fetch|axios).*?["']([^"']+\.(?:tsx|jsx|js|vue|svelte|html))["']/gi);
+            for (const match of callerMatches) {
+                calledBy.push(match[1]);
             }
 
-            // Cron / Worker jobs
-            if (code.includes('cron') || code.includes('@Scheduled') || code.includes('setInterval') || code.includes('queue.process')) {
-                entryPoints.push('Cron Task / Scheduled Background Worker');
+            if (http.length === 0 && (code.includes('func main()') || code.includes('public static void main') || code.includes('if __name__ == "__main__":'))) {
+                http.push('Main Executable Entry Point');
             }
 
-            return entryPoints.length > 0 ? entryPoints : ['Module export / Auxiliary package function'];
+            return {
+                http: http.length > 0 ? http : ['Route Not Detected'],
+                calledBy: calledBy.length > 0 ? calledBy : ['Unknown Caller / Internal Module']
+            };
         }
 
         extractExecutionFlow(code) {
-            const flowSteps = [];
+            const steps = [];
 
-            // Class Method Definitions
-            const classMethods = code.matchAll(/(?:public|private|protected|async|static)?\s*(?:function\s+|def\s+|fn\s+)?([a-zA-Z0-9_$]+)\s*\(([^)]*)\)\s*(?::{|\{|->|def)/g);
-            for (const match of classMethods) {
-                if (!['if', 'for', 'while', 'switch', 'catch'].includes(match[1])) {
-                    flowSteps.push(`Method/Function: ${match[1]}(${match[2].trim()})`);
-                }
+            if (code.includes('req.body') || code.includes('c.Bind') || code.includes('c.BodyParser') || code.includes('ShouldBindJSON') || code.includes('request()->all()')) {
+                steps.push('Receive Request');
+                steps.push('Parse Request Data');
+            } else {
+                steps.push('Receive Request');
             }
 
-            // Go Functions
-            const goFns = code.matchAll(/func\s+(?:\([^)]+\)\s+)?([a-zA-Z0-9_$]+)\s*\(([^)]*)\)/g);
-            for (const match of goFns) {
-                flowSteps.push(`Go Handler/Fn: ${match[1]}(${match[2].trim()})`);
+            if (code.includes('validate') || code.includes('validator') || code.includes('Binding') || code.includes('FormRequest')) {
+                steps.push('Validate Input');
             }
 
-            // Middleware chains
-            if (code.includes('next()') || code.includes('c.Next()') || code.includes('return next(c)')) {
-                flowSteps.push('Middleware Pipeline Execution: Forwards context to next handler in chain');
+            if (code.includes('Create') || code.includes('Insert') || code.includes('Save') || code.includes('Audit') || code.includes('RecordActivity')) {
+                steps.push('Record / Insert Data');
             }
 
-            // Database Operations Flow
-            if (code.includes('.find') || code.includes('.select') || code.includes('.save') || code.includes('.execute') || code.includes('DB.Where')) {
-                flowSteps.push('Database Query Step: Invokes ORM/Database operation');
+            if (code.includes('Find') || code.includes('Where') || code.includes('SELECT') || code.includes('GetUser') || code.includes('Query') || code.includes('First')) {
+                steps.push('Fetch Record');
             }
 
-            return flowSteps.length > 0 ? flowSteps : ['Linear server-side script initialization'];
+            if (code.includes('CompareHash') || code.includes('Verify') || code.includes('bcrypt') || code.includes('CheckPassword')) {
+                steps.push('Verify Credentials');
+            }
+
+            if (code.includes('jwt') || code.includes('GenerateToken') || code.includes('SignedString')) {
+                steps.push('Generate Auth Token');
+            }
+
+            if (code.includes('SetCookie') || code.includes('cookie') || code.includes('Header')) {
+                steps.push('Set Response Cookie / Header');
+            }
+
+            if (code.includes('res.json') || code.includes('c.JSON') || code.includes('return response()') || code.includes('jsonify') || code.includes('JSON(')) {
+                steps.push('Return JSON Response');
+            }
+
+            return steps.length > 0 ? steps : ['Execute Process'];
         }
 
         extractReads(code) {
-            const reads = [];
+            const requestFields = [];
+            const dbTables = [];
+            const envVars = [];
 
-            // HTTP Request Reading
-            if (code.includes('req.body') || code.includes('c.Body') || code.includes('request()->all()') || code.includes('request.json') || code.includes('@RequestBody')) {
-                reads.push('HTTP Request Payload: Reads incoming request Body JSON/Form');
+            const jsonTags = code.matchAll(/json:"([a-zA-Z0-9_]+)"/g);
+            for (const match of jsonTags) {
+                if (!requestFields.includes(match[1])) requestFields.push(match[1]);
             }
 
-            if (code.includes('req.params') || code.includes('req.query') || code.includes('c.Param') || code.includes('c.QueryParam') || code.includes('@PathVariable') || code.includes('@RequestParam')) {
-                reads.push('HTTP Request Metadata: Reads Path Parameters or Query Strings');
+            const bodyAccess = code.matchAll(/(?:req\.body|body|payload)\.([a-zA-Z0-9_]+)/g);
+            for (const match of bodyAccess) {
+                if (!requestFields.includes(match[1])) requestFields.push(match[1]);
             }
 
-            if (code.includes('req.headers') || code.includes('c.GetHeader') || code.includes('request()->header')) {
-                reads.push('HTTP Request Headers: Reads HTTP request authorization or custom headers');
+            const dbMatches = code.matchAll(/(?:FROM|\.Table\(|\.Model\(&?([a-zA-Z0-9_]+)\)|db\.([a-zA-Z0-9_]+))/gi);
+            for (const match of dbMatches) {
+                const table = (match[1] || match[2]).toLowerCase();
+                if (!dbTables.includes(table)) dbTables.push(table);
             }
 
-            if (code.includes('req.cookies') || code.includes('c.Cookie')) {
-                reads.push('HTTP Cookies: Reads client browser cookies');
-            }
-
-            // Database / Cache Reads
-            if (code.includes('SELECT ') || code.includes('.find') || code.includes('.get(') || code.includes('.first') || code.includes('DB.Where')) {
-                reads.push('Database Persistence: Queries data storage records');
-            }
-
-            if (code.includes('redis.get') || code.includes('cache.get') || code.includes('Cache::get')) {
-                reads.push('Cache Read: Fetches cache keys (Redis/Memcached/In-Memory)');
-            }
-
-            // File & Environment Reads
-            const envMatches = code.matchAll(/(process\.env\.[a-zA-Z0-9_$]+|os\.Getenv\(["']([^"']+)["']\)|env\(["']([^"']+)["']\)|os\.environ\.get\(["']([^"']+)["']\))/g);
+            const envMatches = code.matchAll(/(?:process\.env\.|os\.Getenv\(["']|env\(["']|os\.environ\.get\(["'])([a-zA-Z0-9_]+)/g);
             for (const match of envMatches) {
-                reads.push(`Environment Variable: ${match[0]}`);
+                if (!envVars.includes(match[1])) envVars.push(match[1]);
             }
 
-            if (code.includes('fs.readFile') || code.includes('os.ReadFile') || code.includes('open(') || code.includes('file_get_contents')) {
-                reads.push('File Storage Read: Reads local server file system');
+            const dbOutput = [];
+            if (dbTables.length > 0) {
+                dbTables.forEach(t => dbOutput.push(`Table: ${t}`));
             }
 
-            return reads.length > 0 ? reads : ['No active request, database, or environment reads detected'];
+            return {
+                request: requestFields.length > 0 ? requestFields : ['None / Raw Body'],
+                database: dbOutput.length > 0 ? dbOutput : ['None / Not Detected'],
+                environment: envVars.length > 0 ? envVars : ['None']
+            };
         }
 
         extractWrites(code) {
-            const writes = [];
+            const httpResp = [];
+            const cookies = [];
+            const logs = [];
 
-            // Database Writes
-            if (code.includes('INSERT INTO') || code.includes('UPDATE ') || code.includes('DELETE FROM') || code.includes('.save(') || code.includes('.create(') || code.includes('.delete(') || code.includes('DB.Create')) {
-                writes.push('Database State Mutation: Inserts, updates, or deletes database records');
+            if (code.includes('res.json') || code.includes('c.JSON') || code.includes('return response()') || code.includes('jsonify') || code.includes('JSON(')) {
+                httpResp.push('status', 'headers', 'json');
             }
 
-            // HTTP Response Outputs
-            if (code.includes('res.json') || code.includes('c.JSON') || code.includes('return response()') || code.includes('jsonify(') || code.includes('ResponseEntity')) {
-                writes.push('HTTP Response Output: Serializes JSON payload to client');
+            const cookieMatches = code.matchAll(/(?:SetCookie|cookie)\s*\(\s*["']([^"']+)["']/gi);
+            for (const match of cookieMatches) {
+                if (!cookies.includes(match[1])) cookies.push(match[1]);
             }
 
-            if (code.includes('res.cookie') || code.includes('c.SetCookie')) {
-                writes.push('HTTP Cookie Write: Sets client response cookies');
+            const logMatches = code.matchAll(/(?:log\.|Logger|console\.log).*?["']([^"']+)["']/gi);
+            for (const match of logMatches) {
+                if (!logs.includes(match[1])) logs.push(match[1]);
             }
 
-            if (code.includes('res.setHeader') || code.includes('c.Header')) {
-                writes.push('HTTP Header Write: Attaches custom HTTP response headers');
-            }
-
-            // Cache & Queue Writes
-            if (code.includes('redis.set') || code.includes('cache.put') || code.includes('Cache::put')) {
-                writes.push('Cache Write: Mutates cache entries');
-            }
-
-            if (code.includes('queue.push') || code.includes('dispatch(') || code.includes('publish')) {
-                writes.push('Message Queue Push: Emits job/message to queue worker');
-            }
-
-            // File & Log Writes
-            if (code.includes('console.log') || code.includes('log.') || code.includes('Log::') || code.includes('logger.')) {
-                writes.push('System Logging: Writes execution traces to log outputs');
-            }
-
-            if (code.includes('fs.writeFile') || code.includes('os.WriteFile') || code.includes('file_put_contents')) {
-                writes.push('File Storage Write: Writes files to disk');
-            }
-
-            return writes.length > 0 ? writes : ['No database, response, or state mutations detected'];
+            return {
+                httpResponse: httpResp.length > 0 ? httpResp : ['None / Void Output'],
+                cookie: cookies.length > 0 ? cookies : ['None'],
+                logs: logs.length > 0 ? logs : ['None']
+            };
         }
 
         extractHttpCalls(code) {
-            const http = [];
+            const request = [];
+            const body = [];
+            const successResp = [];
+            const errorResp = [];
 
-            // Outbound Client HTTP Calls
-            const httpClients = code.matchAll(/(axios\.|http\.|fetch\(|curl_|HttpClient|restTemplate\.)(get|post|put|delete|request)\s*\(\s*["'`]?([^"'`\),\s]+)["'`]?/gi);
-            for (const match of httpClients) {
-                http.push(`Outbound HTTP Call: [${match[2].toUpperCase()}] -> ${match[3]}`);
+            const routeMatches = code.matchAll(/(app|router|r|e|group|route|Route::)\.(get|post|put|patch|delete)\s*\(\s*["'`]?([^"'`\),\s]+)["'`]?/gi);
+            for (const match of routeMatches) {
+                request.push(`${match[2].toUpperCase()} ${match[3]}`);
             }
 
-            // Incoming HTTP Context Signatures
-            const statusMatches = code.matchAll(/(res\.status\(\s*(\d+)\s*\)|c\.JSON\(\s*(\d+)|status_code\s*=\s*(\d+)|http\.Status[a-zA-Z]+|http_response_code\((\d+)\))/g);
+            const jsonTags = code.matchAll(/json:"([a-zA-Z0-9_]+)"/g);
+            for (const match of jsonTags) {
+                if (!body.includes(match[1])) body.push(match[1]);
+            }
+
+            const statusMatches = code.matchAll(/(?:Status|status_code\s*=\s*|res\.status\(|c\.JSON\()(\d{3})/g);
             for (const match of statusMatches) {
-                http.push(`HTTP Status Response Code: ${match[0]}`);
+                const codeNum = match[1];
+                if (codeNum.startsWith('2') && !successResp.includes(codeNum)) {
+                    successResp.push(codeNum);
+                } else if ((codeNum.startsWith('4') || codeNum.startsWith('5')) && !errorResp.includes(codeNum)) {
+                    errorResp.push(codeNum);
+                }
             }
 
-            return http.length > 0 ? http : ['No external outbound HTTP requests triggered'];
+            return {
+                request: request.length > 0 ? request : ['Unknown Route / Not Detected'],
+                body: body.length > 0 ? body : ['None / Empty'],
+                successResponse: successResp.length > 0 ? successResp : ['200 / Success Response'],
+                errorResponse: errorResp.length > 0 ? errorResp : ['Internal Error Response']
+            };
+        }
+
+        extractHttpContract(code, entryPoints) {
+            let method = 'Unknown';
+            let route = 'Unknown Route / Not Detected';
+
+            if (entryPoints.http.length > 0 && entryPoints.http[0] !== 'Route Not Detected') {
+                const parts = entryPoints.http[0].split(' ');
+                if (parts.length >= 2) {
+                    method = parts[0];
+                    route = parts.slice(1).join(' ');
+                } else {
+                    route = entryPoints.http[0];
+                }
+            }
+
+            let middleware = 'Unknown / Not Detected';
+            if (code.includes('Use(') || code.includes('middleware')) {
+                middleware = 'Detected if applicable';
+            }
+
+            let auth = 'Unknown / Not Detected';
+            if (code.includes('jwt') || code.includes('Auth') || code.includes('Bearer') || code.includes('Token')) {
+                auth = 'Detected if applicable';
+            }
+
+            return {
+                method,
+                route,
+                handler: 'Current Handler',
+                caller: entryPoints.calledBy.length > 0 ? entryPoints.calledBy[0] : 'Unknown Caller / Internal Module',
+                middleware,
+                authentication: auth
+            };
+        }
+
+        extractRequestSchema(code) {
+            let contentType = 'Unknown';
+            if (code.includes('application/json') || code.includes('Bind') || code.includes('JSON')) {
+                contentType = 'application/json (Detected if applicable)';
+            } else if (code.includes('multipart/form-data') || code.includes('FormFile')) {
+                contentType = 'multipart/form-data (Detected if applicable)';
+            }
+
+            const body = [];
+            const jsonTags = code.matchAll(/json:"([a-zA-Z0-9_]+)"/g);
+            for (const match of jsonTags) {
+                if (!body.includes(match[1])) body.push(match[1]);
+            }
+
+            let queryParams = 'None';
+            if (code.includes('QueryParam') || code.includes('req.query') || code.includes('c.Query')) {
+                queryParams = 'Detected if applicable';
+            }
+
+            let pathParams = 'None';
+            if (code.includes('Param(') || code.includes('req.params') || code.includes('c.Param')) {
+                pathParams = 'Detected if applicable';
+            }
+
+            let headers = 'Unknown';
+            if (code.includes('Header') || code.includes('headers')) {
+                headers = 'Detected if applicable';
+            }
+
+            return {
+                contentType,
+                body: body.length > 0 ? body.join('\n') : 'None / Empty',
+                queryParams,
+                pathParams,
+                headers
+            };
+        }
+
+        extractResponseSchema(code, httpCalls) {
+            let contentType = 'Unknown';
+            if (code.includes('c.JSON') || code.includes('res.json') || code.includes('jsonify') || code.includes('JSON(')) {
+                contentType = 'application/json (Detected if applicable)';
+            }
+
+            let statusCode = '200 (Detected if applicable)';
+            if (httpCalls.successResponse.length > 0 && httpCalls.successResponse[0] !== '200 / Success Response') {
+                statusCode = httpCalls.successResponse[0];
+            }
+
+            return {
+                contentType,
+                successPayload: 'Unknown',
+                fields: 'Unknown',
+                statusCode,
+                errorPayload: 'Unknown',
+                errorStatus: 'Unknown'
+            };
+        }
+
+        extractEntityMapping(code) {
+            const crudOps = [];
+            if (code.includes('Create') || code.includes('Insert') || code.includes('Save')) crudOps.push('Create');
+            if (code.includes('Find') || code.includes('First') || code.includes('Where') || code.includes('SELECT')) crudOps.push('Read');
+            if (code.includes('Update') || code.includes('Save')) crudOps.push('Update');
+            if (code.includes('Delete') || code.includes('Destroy')) crudOps.push('Delete');
+
+            if (crudOps.length > 0) {
+                crudOps.push('Detected if applicable');
+            }
+
+            return {
+                controller: 'Current Handler',
+                service: 'Unknown / Not Detected',
+                repository: 'Unknown / Not Detected',
+                entity: 'Unknown',
+                databaseTable: 'Unknown',
+                crudOperation: crudOps.length > 0 ? crudOps : ['Unknown']
+            };
         }
 
         extractDependencies(code) {
-            const deps = [];
+            const imports = [];
+            const externalCalls = [];
 
-            // Node / JS Imports
-            const jsImports = code.matchAll(/(?:import\s+(?:[\s\S]*?)\s+from\s+["']([^"']+)["']|require\s*\(\s*["']([^"']+)["']\s*\))/g);
-            for (const match of jsImports) {
-                deps.push(`Node Module / Import: ${match[1] || match[2]}`);
-            }
-
-            // Go Imports
-            const goImports = code.matchAll(/"([^"]+)"/g);
             if (code.includes('import (')) {
                 const importBlock = code.substring(code.indexOf('import ('), code.indexOf(')'));
                 const matches = importBlock.matchAll(/"([^"]+)"/g);
                 for (const m of matches) {
-                    deps.push(`Go Package: ${m[1]}`);
+                    imports.push(m[1]);
+                }
+            } else {
+                const goImports = code.matchAll(/import\s+["']([^"']+)["']/g);
+                for (const match of goImports) {
+                    imports.push(match[1]);
                 }
             }
 
-            // PHP Use statements
-            const phpUses = code.matchAll(/use\s+([^;]+);/g);
-            for (const match of phpUses) {
-                deps.push(`PHP Namespace Use: ${match[1].trim()}`);
+            const jsImports = code.matchAll(/(?:import\s+[\s\S]*?\s+from\s+["']([^"']+)["']|require\s*\(\s*["']([^"']+)["']\s*\))/g);
+            for (const match of jsImports) {
+                imports.push(match[1] || match[2]);
             }
 
-            // Python Imports
-            const pyImports = code.matchAll(/(?:from\s+([a-zA-Z0-9_.]+)\s+import|import\s+([a-zA-Z0-9_.]+))/g);
-            for (const match of pyImports) {
-                deps.push(`Python Module: ${match[1] || match[2]}`);
+            const callMatches = code.matchAll(/([A-Z][a-zA-Z0-9_]+\.[A-Z][a-zA-Z0-9_]+)\s*\(/g);
+            for (const match of callMatches) {
+                if (!externalCalls.includes(`${match[1]}()`)) {
+                    externalCalls.push(`${match[1]}()`);
+                }
             }
 
-            // Java Imports
-            const javaImports = code.matchAll(/import\s+([a-zA-Z0-9_.]+);/g);
-            for (const match of javaImports) {
-                deps.push(`Java Package: ${match[1]}`);
-            }
-
-            return deps.length > 0 ? deps : ['No external modules or packages explicitly imported'];
+            return {
+                imports: imports.length > 0 ? imports : ['None / Local Code'],
+                externalCalls: externalCalls.length > 0 ? externalCalls : ['None / Internal Logic']
+            };
         }
 
         extractFailurePoints(code) {
             const failures = [];
 
-            if (code.includes('try {') || code.includes('except ') || code.includes('catch (')) {
-                failures.push('Exception Handling Block: Captures runtime errors via try/catch/except');
+            if (code.includes('db') || code.includes('DB') || code.includes('SELECT') || code.includes('Find') || code.includes('Create') || code.includes('Save')) {
+                failures.push('Database Query Failed');
             }
 
-            if (code.includes('if err != nil') || code.includes('if err {')) {
-                failures.push('Explicit Error Check: Evaluates Go/C-style error return check');
+            if (code.includes('err != nil') || code.includes('catch') || code.includes('if err')) {
+                failures.push('Execution Error Detected');
             }
 
-            if (code.includes('panic(') || code.includes('throw new') || code.includes('raise ')) {
-                failures.push('Panic / Unhandled Exception Raise: May abruptly abort execution thread');
+            if (code.includes('Bind') || code.includes('validate') || code.includes('body')) {
+                failures.push('Request Validation Failed\n(Detected if applicable)');
             }
 
-            if (code.includes('validate') || code.includes('validator') || code.includes('FormRequest') || code.includes('pydantic')) {
-                failures.push('Request Validation Failure: Rejects invalid client payload with HTTP 400/422');
+            if (code.includes('JSON') || code.includes('Marshal') || code.includes('jsonify')) {
+                failures.push('Response Serialization Failed\n(Detected if applicable)');
             }
 
-            if (code.includes('jwt') || code.includes('auth') || code.includes('Bearer') || code.includes('Unauthorized')) {
-                failures.push('Authentication / Authorization Risk: Throws HTTP 401/403 on missing or invalid tokens');
-            }
+            failures.push('HTTP Contract Mismatch');
 
-            if (code.includes('null') || code.includes('nil') || code.includes('None') || code.includes('undefined')) {
-                failures.push('Null Pointer / Nil Pointer Dereference: High hazard if record or context is uninitialized');
-            }
-
-            return failures.length > 0 ? failures : ['Standard execution error vectors'];
+            return failures;
         }
 
         extractExitPaths(code) {
-            const exits = [];
+            const success = [];
+            const error = [];
 
-            if (code.includes('return res.') || code.includes('return c.JSON') || code.includes('return jsonify') || code.includes('return response()')) {
-                exits.push('HTTP Response Exit: Terminates request cycle with HTTP response');
-            }
+            success.push('HTTP Success Response');
+            success.push('JSON Response Returned');
+            success.push('Client Receives Response');
 
-            if (code.includes('return err') || code.includes('throw') || code.includes('raise')) {
-                exits.push('Error Exit Path: Bails early returning error state');
-            }
+            error.push('HTTP Error Response');
+            error.push('Error Payload Returned');
+            error.push('Request Terminated');
 
-            if (code.includes('process.exit') || code.includes('os.Exit') || code.includes('sys.exit')) {
-                exits.push('Process Termination: Immediately halts running process host');
-            }
-
-            const returnMatches = code.matchAll(/return\s+([^;]+);/g);
-            let count = 0;
-            for (const match of returnMatches) {
-                if (count < 2) {
-                    exits.push(`Return Value: ${match[1].trim()}`);
-                    count++;
-                }
-            }
-
-            return exits.length > 0 ? exits : ['Normal function end / Thread return'];
+            return {
+                success,
+                error
+            };
         }
 
         formatDebugLir(data) {
             return [
-                '================================================== DEBUG LIR',
-                `FILE: ${data.filePath}`,
-                `TYPE: ${data.fileType}`,
-                `PURPOSE: ${data.purpose}`,
-                `ENTRY POINTS:\n  - ${data.entryPoints.join('\n  - ')}`,
-                `EXECUTION FLOW:\n  - ${data.executionFlow.join('\n  - ')}`,
-                `READS:\n  - ${data.reads.join('\n  - ')}`,
-                `WRITES:\n  - ${data.writes.join('\n  - ')}`,
-                `HTTP:\n  - ${data.http.join('\n  - ')}`,
-                `DEPENDENCIES:\n  - ${data.dependencies.join('\n  - ')}`,
-                `FAILURE POINTS:\n  - ${data.failurePoints.join('\n  - ')}`,
-                `EXIT PATH:\n  - ${data.exitPaths.join('\n  - ')}`,
+                '==================================================',
+                'DEBUG LIR',
+                '==================================================',
+                '',
+                'FILE',
+                '',
+                data.filePath,
+                '',
+                'TYPE',
+                '',
+                data.fileType,
+                '',
+                'PURPOSE',
+                '',
+                data.purpose,
+                '',
+                '==================================================',
+                'ENTRY POINTS',
+                '==================================================',
+                '',
+                'HTTP',
+                '',
+                data.entryPoints.http.join('\n\n'),
+                '',
+                'CALLED BY',
+                '',
+                data.entryPoints.calledBy.join('\n\n'),
+                '',
+                '==================================================',
+                'EXECUTION FLOW',
+                '==================================================',
+                '',
+                data.executionFlow.join('\n\n↓\n\n'),
+                '',
+                '==================================================',
+                'READS',
+                '==================================================',
+                '',
+                'Request',
+                '',
+                data.reads.request.join('\n\n'),
+                '',
+                'Database',
+                '',
+                data.reads.database.join('\n\n'),
+                '',
+                'Environment',
+                '',
+                data.reads.environment.join('\n\n'),
+                '',
+                '==================================================',
+                'WRITES',
+                '==================================================',
+                '',
+                'HTTP Response',
+                '',
+                data.writes.httpResponse.join('\n\n'),
+                '',
+                'Cookie',
+                '',
+                data.writes.cookie.join('\n\n'),
+                '',
+                'Logs',
+                '',
+                data.writes.logs.join('\n\n'),
+                '',
+                '==================================================',
+                'HTTP',
+                '==================================================',
+                '',
+                'REQUEST',
+                '',
+                data.http.request.join('\n\n'),
+                '',
+                'BODY',
+                '',
+                data.http.body.join('\n\n'),
+                '',
+                'SUCCESS RESPONSE',
+                '',
+                data.http.successResponse.join('\n\n'),
+                '',
+                'ERROR RESPONSE',
+                '',
+                data.http.errorResponse.join('\n\n'),
+                '',
+                '==================================================',
+                'HTTP CONTRACT',
+                '==================================================',
+                '',
+                'METHOD',
+                '',
+                data.httpContract.method,
+                '',
+                'ROUTE',
+                '',
+                data.httpContract.route,
+                '',
+                'HANDLER',
+                '',
+                data.httpContract.handler,
+                '',
+                'CALLER',
+                '',
+                data.httpContract.caller,
+                '',
+                'MIDDLEWARE',
+                '',
+                data.httpContract.middleware,
+                '',
+                'AUTHENTICATION',
+                '',
+                data.httpContract.authentication,
+                '',
+                '==================================================',
+                'REQUEST SCHEMA',
+                '==================================================',
+                '',
+                'CONTENT TYPE',
+                '',
+                data.requestSchema.contentType,
+                '',
+                'BODY',
+                '',
+                data.requestSchema.body,
+                '',
+                'QUERY PARAMS',
+                '',
+                data.requestSchema.queryParams,
+                '',
+                'PATH PARAMS',
+                '',
+                data.requestSchema.pathParams,
+                '',
+                'HEADERS',
+                '',
+                data.requestSchema.headers,
+                '',
+                '==================================================',
+                'RESPONSE SCHEMA',
+                '==================================================',
+                '',
+                'CONTENT TYPE',
+                '',
+                data.responseSchema.contentType,
+                '',
+                'SUCCESS PAYLOAD',
+                '',
+                data.responseSchema.successPayload,
+                '',
+                'FIELDS',
+                '',
+                data.responseSchema.fields,
+                '',
+                'STATUS CODE',
+                '',
+                data.responseSchema.statusCode,
+                '',
+                'ERROR PAYLOAD',
+                '',
+                data.responseSchema.errorPayload,
+                '',
+                'ERROR STATUS',
+                '',
+                data.responseSchema.errorStatus,
+                '',
+                '==================================================',
+                'ENTITY MAPPING',
+                '==================================================',
+                '',
+                'CONTROLLER',
+                '',
+                data.entityMapping.controller,
+                '',
+                'SERVICE',
+                '',
+                data.entityMapping.service,
+                '',
+                'REPOSITORY',
+                '',
+                data.entityMapping.repository,
+                '',
+                'ENTITY',
+                '',
+                data.entityMapping.entity,
+                '',
+                'DATABASE TABLE',
+                '',
+                data.entityMapping.databaseTable,
+                '',
+                'CRUD OPERATION',
+                '',
+                data.entityMapping.crudOperation.join('\n\n'),
+                '',
+                '==================================================',
+                'DEPENDENCIES',
+                '==================================================',
+                '',
+                'Imports',
+                '',
+                data.dependencies.imports.join('\n\n'),
+                '',
+                'External Calls',
+                '',
+                data.dependencies.externalCalls.join('\n\n'),
+                '',
+                '==================================================',
+                'FAILURE POINTS',
+                '==================================================',
+                '',
+                data.failurePoints.join('\n\n↓\n\n'),
+                '',
+                '==================================================',
+                'EXIT PATH',
+                '==================================================',
+                '',
+                'SUCCESS',
+                '',
+                data.exitPaths.success.join('\n\n↓\n\n'),
+                '',
+                'ERROR',
+                '',
+                data.exitPaths.error.join('\n\n↓\n\n'),
+                '',
                 '=================================================='
             ].join('\n');
         }
