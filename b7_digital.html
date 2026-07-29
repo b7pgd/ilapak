@@ -16,6 +16,7 @@
             height: 100%;
             overflow: hidden;
             background-color: #000;
+            font-family: Arial, sans-serif;
         }
 
         .screen-container {
@@ -37,90 +38,106 @@
             z-index: 1;
         }
 
+        /* Saat awal, OEE dipaksa aktif duluan */
+        iframe#frame-oee.active-init {
+            opacity: 1;
+            visibility: visible;
+            z-index: 10;
+        }
+
         iframe.active {
             opacity: 1;
             visibility: visible;
             z-index: 2;
         }
+
+        /* Banner Petunjuk di Bawah Layar */
+        #setup-banner {
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 30px;
+            border: 2px solid #00e676;
+            z-index: 9999;
+            font-size: 14px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        #setup-banner span {
+            color: #00e676;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
 
+    <div id="setup-banner" onclick="startRotator()">
+        Silakan <b>LOGIN ADMIN</b> di layar. Jika sudah masuk Dashboard, <span>KLIK DI SINI / KLIK LAYAR</span> untuk Mulai Rotasi!
+    </div>
+
     <div class="screen-container">
-        <!-- Screen 1: Jam (Default Aktif Pertama Kali) -->
-        <iframe id="frame-clock" src="http://10.167.166.109:8001" class="active"></iframe>
+        <!-- Screen 1: Jam -->
+        <iframe id="frame-clock" src="http://10.167.166.109:8001"></iframe>
         
-        <!-- Screen 2: Dashboard OEE (Arahkan langsung ke route login) -->
-        <iframe id="frame-oee" src="http://10.167.170.74:81/#/login"></iframe>
+        <!-- Screen 2: Dashboard OEE (Aktif Pertama Kali untuk Login) -->
+        <iframe id="frame-oee" src="http://10.167.170.74:81/#/login" class="active-init"></iframe>
     </div>
 
     <script>
         const clockFrame = document.getElementById('frame-clock');
         const oeeFrame = document.getElementById('frame-oee');
+        const banner = document.getElementById('setup-banner');
 
         const DISPLAY_TIME = 30000; // 30 detik per screen
-        let currentScreen = 'clock';
+        let currentScreen = 'oee';
+        let isRotatorRunning = false;
+        let rotationInterval = null;
 
-        // --- 1. ROTASI SCREEN (SAVER MODE) ---
+        // --- FUNGSIONALITAS UTAMA: MULAI ROTASI ---
+        function startRotator() {
+            if (isRotatorRunning) return;
+
+            isRotatorRunning = true;
+            
+            // Sembunyikan banner petunjuk
+            banner.style.display = 'none';
+
+            // Lepas class inisialisasi awal
+            oeeFrame.classList.remove('active-init');
+            
+            // Set OEE sebagai screen aktif pertama dalam mode rotasi
+            oeeFrame.classList.add('active');
+
+            // Jalankan interval rotasi 30 detik
+            rotationInterval = setInterval(switchScreen, DISPLAY_TIME);
+        }
+
+        // --- ROTASI SCREEN (30 DETIK) ---
         function switchScreen() {
-            if (currentScreen === 'clock') {
-                clockFrame.classList.remove('active');
-                oeeFrame.classList.add('active');
-                currentScreen = 'oee';
-            } else {
+            if (currentScreen === 'oee') {
                 oeeFrame.classList.remove('active');
                 clockFrame.classList.add('active');
                 currentScreen = 'clock';
+            } else {
+                clockFrame.classList.remove('active');
+                oeeFrame.classList.add('active');
+                currentScreen = 'oee';
             }
         }
 
-        // Jalankan pergantian setiap 30 detik
-        setInterval(switchScreen, DISPLAY_TIME);
-
-
-        // --- 2. ENGINE AUTO-LOGIN & SESSION CHECKER (OEE DASHBOARD) ---
-        function handleOeeAutoLogin() {
-            try {
-                const iframeDoc = oeeFrame.contentDocument || oeeFrame.contentWindow.document;
-
-                if (!iframeDoc) return;
-
-                // Cari elemen input login (Mendukung Selector Umum: name, id, class, placeholder, atau type)
-                const userInput = iframeDoc.querySelector('input[type="text"], input[name="username"], input[name="user"], #username, #user, input[placeholder*="user" i], input[placeholder*="username" i]');
-                const passInput = iframeDoc.querySelector('input[type="password"], input[name="password"], input[name="pass"], #password, #pass, input[placeholder*="pass" i]');
-                const loginBtn = iframeDoc.querySelector('button[type="submit"], input[type="submit"], button, .btn-login, #login');
-
-                // Jika form login ditemukan di DOM, lakukan pengisian dan submit otomatis
-                if (userInput && passInput) {
-                    // Isi nilai
-                    userInput.value = 'admin';
-                    passInput.value = 'admin';
-
-                    // Trigger event bawaan JS agar framework SPA (Vue/React/Angular) mendeteksi perubahan input
-                    userInput.dispatchEvent(new Event('input', { bubbles: true }));
-                    userInput.dispatchEvent(new Event('change', { bubbles: true }));
-                    passInput.dispatchEvent(new Event('input', { bubbles: true }));
-                    passInput.dispatchEvent(new Event('change', { bubbles: true }));
-
-                    // Trigger click submit
-                    if (loginBtn) {
-                        loginBtn.click();
-                    } else if (userInput.form) {
-                        userInput.form.submit();
-                    }
-                }
-            } catch (error) {
-                // Catatan: Jika browser memblokir akses cross-origin iframe (CORS),
-                // Script ini membutuhkan opsi fallback browser (misal Chrome Extension/Same-Origin Bypass).
-                console.warn("Auto-login engine checking/bypassing...", error);
+        // Izinkan pemicu rotasi lewat klik di mana saja pada dokumen
+        document.addEventListener('click', function() {
+            if (!isRotatorRunning) {
+                startRotator();
             }
-        }
-
-        // Cek status login / form login setiap 3 detik secara periodik
-        setInterval(handleOeeAutoLogin, 3000);
-
-        // Jalankan pengecekan pertama kali saat iframe OEE selesai load
-        oeeFrame.addEventListener('load', handleOeeAutoLogin);
+        });
     </script>
 </body>
 </html>
