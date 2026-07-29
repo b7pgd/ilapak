@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Display - Dashboard OEE</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html { width: 100%; height: 100%; overflow: hidden; background-color: #000; font-family: Arial, sans-serif; }
+        
+        #setup-banner {
+            position: fixed;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 30px;
+            border: 2px solid #00e676;
+            z-index: 999999;
+            font-size: 14px;
+            text-align: center;
+            cursor: pointer;
+            user-select: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        #setup-banner span { color: #00e676; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div id="setup-banner" onclick="activateRotator()">
+        Silakan <b>LOGIN ADMIN OEE</b>. Jika sudah di Dashboard, <span>KLIK DI SINI / KLIK LAYAR</span> untuk Mulai Rotasi Auto-Redirect!
+    </div>
+
+    <script>
+        const OEE_URL = "http://10.167.170.74:81/#/";
+        const OEE_LOGIN_URL = "http://10.167.170.74:81/#/login";
+        const CLOCK_HTML_PAGE = "clock.html"; // Nama file kedua
+        const DISPLAY_TIME = 30000; // 30 detik
+
+        // Cek apakah rotasi sudah pernah diaktifkan sebelumnya
+        const isRotatorActive = localStorage.getItem('rotator_active') === 'true';
+
+        if (isRotatorActive) {
+            // Jika rotasi sudah aktif, sembunyikan banner dan langsung redirect ke Jam setelah 30 detik
+            document.getElementById('setup-banner').style.display = 'none';
+            
+            // Redirect langsung ke URL Dashboard OEE jika belum di sana
+            if (!window.location.href.includes('10.167.170.74')) {
+                window.location.href = OEE_URL;
+            }
+
+            // Timer 30 detik untuk pindah ke Jam
+            setTimeout(() => {
+                window.location.href = CLOCK_HTML_PAGE;
+            }, DISPLAY_TIME);
+
+        } else {
+            // Jika pertama kali dibuka, arahkan ke halaman login OEE
+            window.location.href = OEE_LOGIN_URL;
+        }
+
+        // Fungsi yang dipanggil saat user klik banner/layar setelah berhasil login
+        function activateRotator() {
+            localStorage.setItem('rotator_active', 'true');
+            document.getElementById('setup-banner').style.display = 'none';
+            
+            // Pindah ke Jam setelah 30 detik
+            setTimeout(() => {
+                window.location.href = CLOCK_HTML_PAGE;
+            }, DISPLAY_TIME);
+        }
+
+        // Izinkan klik di mana saja untuk aktivasi rotasi pertama kali
+        document.addEventListener('click', function() {
+            if (localStorage.getItem('rotator_active') !== 'true') {
+                activateRotator();
+            }
+        });
+    </script>
+</body>
+</html>
