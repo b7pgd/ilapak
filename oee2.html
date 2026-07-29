@@ -3,119 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Display Rotator Master</title>
+    <title>Rotator TV Kiosk</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body, html { 
-            width: 100%; 
-            height: 100%; 
-            overflow: hidden; 
-            background-color: #111; 
-            color: #fff;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000;
             font-family: Arial, sans-serif;
+        }
+
+        /* Container Pembungkus */
+        #viewport {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
+
+        /* Banner Overlay Kios */
+        #login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 99999;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-end;
             align-items: center;
-            text-align: center;
+            padding-bottom: 20px;
+            pointer-events: none; /* Biar tetap bisa ngeklik form login di belakangnya */
         }
 
-        .card {
-            background: #222;
-            padding: 30px;
-            border-radius: 15px;
+        .action-card {
+            pointer-events: auto; /* Tombol aktif */
+            background: #111;
             border: 2px solid #00e676;
-            max-width: 90%;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-        }
-
-        h2 { color: #00e676; margin-bottom: 15px; }
-        p { font-size: 18px; margin-bottom: 25px; line-height: 1.5; }
-        
-        button {
-            background: #00e676;
-            color: #000;
-            border: none;
+            color: #fff;
             padding: 15px 30px;
-            font-size: 18px;
-            font-weight: bold;
-            border-radius: 8px;
+            border-radius: 40px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.8);
             cursor: pointer;
-            transition: 0.2s;
         }
 
-        button:hover { background: #00c853; transform: scale(1.05); }
-        .status { margin-top: 15px; font-size: 14px; color: #aaa; }
+        .action-card h3 {
+            font-size: 16px;
+            color: #00e676;
+            margin-bottom: 5px;
+        }
+
+        .action-card p {
+            font-size: 13px;
+            color: #ccc;
+        }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <h2>ROTATOR DISPLAY TV</h2>
-        <p id="info-text">
-            Klik tombol di bawah untuk membuka **Dashboard OEE**. <br>
-            Silakan **LOGIN** terlebih dahulu di tab/halaman tersebut!
-        </p>
-        <button id="main-btn" onclick="handleAction()">MULAI / LOGIN OEE</button>
-        <div class="status" id="status-text">Status: Menunggu Login Pertama</div>
+    <div id="viewport">
+        <!-- Frame Utama Tunggal -->
+        <iframe id="kiosk-frame" src="about:blank"></iframe>
+    </div>
+
+    <!-- Banner Petunjuk Setup -->
+    <div id="login-overlay">
+        <div class="action-card" id="btn-action" onclick="handleStep()">
+            <h3 id="txt-title">STEP 1: LOGIN OEE</h3>
+            <p id="txt-desc">Silakan ketik user & pass di layar. Jika SUDAH MASUK DASHBOARD, KLIK DI SINI!</p>
+        </div>
     </div>
 
     <script>
-        const URL_OEE = "http://10.167.170.74:81/#/";
+        const URL_OEE_LOGIN = "http://10.167.170.74:81/#/login";
+        const URL_OEE_DASHBOARD = "http://10.167.170.74:81/#/";
         const URL_CLOCK = "http://10.167.166.109:8001";
         const DISPLAY_TIME = 30000; // 30 Detik
 
-        let targetWindow = null;
-        let currentTarget = 'oee';
-        let rotationInterval = null;
+        const frame = document.getElementById('kiosk-frame');
+        const overlay = document.getElementById('login-overlay');
+        const txtTitle = document.getElementById('txt-title');
+        const txtDesc = document.getElementById('txt-desc');
 
-        function handleAction() {
-            const btn = document.getElementById('main-btn');
-            const info = document.getElementById('info-text');
-            const status = document.getElementById('status-text');
+        let step = 1;
+        let currentDisplay = 'oee';
 
-            if (!rotationInterval) {
-                // Step 1: Buka OEE pertama kali untuk login
-                targetWindow = window.open(URL_OEE, '_blank');
+        // Load awal: Set frame ke halaman login OEE
+        frame.src = URL_OEE_LOGIN;
+
+        function handleStep() {
+            if (step === 1) {
+                // Step 2: User mengonfirmasi sudah login
+                step = 2;
                 
-                info.innerHTML = "<b>PENTING:</b> Buka tab OEE yang baru terbuka, lalu <b>LOGIN ADMIN</b>.<br>Jika sudah masuk Dashboard, kembali ke halaman ini dan klik tombol di bawah!";
-                btn.innerText = "SAYA SUDAH LOGIN (MULAI ROTASI)";
-                btn.style.background = "#ffab00";
-                status.innerText = "Status: Selesaikan Login di Tab OEE";
+                // Sembunyikan overlay total
+                overlay.style.display = 'none';
 
-                rotationInterval = 'WAITING_FOR_CONFIRM';
-            } else if (rotationInterval === 'WAITING_FOR_CONFIRM') {
-                // Step 2: User konfirmasi udah login, rotasi dimulai!
-                info.innerHTML = "<b>ROTASI BERJALAN AUTOMATIS!</b><br>Layar ini akan mengontrol tampilan TV bergantian per 30 detik.";
-                btn.style.display = "none";
-                status.innerText = "Status: Rotasi Aktif (OEE <-> JAM)";
-
-                // Jalankan Rotasi
-                startLoop();
+                // Arahkan frame ke Dashboard OEE & Mulai Timer Rotasi
+                frame.src = URL_OEE_DASHBOARD;
+                
+                setInterval(rotateDisplay, DISPLAY_TIME);
             }
         }
 
-        function startLoop() {
-            // Langsung arahkan tab tadi ke OEE dulu
-            if (targetWindow && !targetWindow.closed) {
-                targetWindow.location.href = URL_OEE;
+        function rotateDisplay() {
+            if (currentDisplay === 'oee') {
+                frame.src = URL_CLOCK;
+                currentDisplay = 'clock';
+            } else {
+                frame.src = URL_OEE_DASHBOARD;
+                currentDisplay = 'oee';
             }
-
-            setInterval(() => {
-                if (!targetWindow || targetWindow.closed) {
-                    // Kalau tab-nya ketutup, buka lagi
-                    targetWindow = window.open(currentTarget === 'oee' ? URL_CLOCK : URL_OEE, '_blank');
-                } else {
-                    // Pindahkan URL tab tersebut tanpa terkena CORS!
-                    if (currentTarget === 'oee') {
-                        targetWindow.location.href = URL_CLOCK;
-                        currentTarget = 'clock';
-                    } else {
-                        targetWindow.location.href = URL_OEE;
-                        currentTarget = 'oee';
-                    }
-                }
-            }, DISPLAY_TIME);
         }
     </script>
 </body>
