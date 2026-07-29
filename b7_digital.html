@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Display Rotator - OEE & Clock</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000;
+        }
+
+        .screen-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 1s ease-in-out;
+            z-index: 1;
+        }
+
+        iframe.active {
+            opacity: 1;
+            visibility: visible;
+            z-index: 2;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="screen-container">
+        <!-- Screen 1: Jam (Default Aktif Pertama Kali) -->
+        <iframe id="frame-clock" src="http://10.167.166.109:8001" class="active"></iframe>
+        
+        <!-- Screen 2: Dashboard OEE -->
+        <iframe id="frame-oee" src="http://10.167.170.74:81/#/"></iframe>
+    </div>
+
+    <script>
+        const clockFrame = document.getElementById('frame-clock');
+        const oeeFrame = document.getElementById('frame-oee');
+
+        const DISPLAY_TIME = 30000; // 30 detik per screen
+        let currentScreen = 'clock';
+
+        // --- 1. ROTASI SCREEN (SAVER MODE) ---
+        function switchScreen() {
+            if (currentScreen === 'clock') {
+                clockFrame.classList.remove('active');
+                oeeFrame.classList.add('active');
+                currentScreen = 'oee';
+            } else {
+                oeeFrame.classList.remove('active');
+                clockFrame.classList.add('active');
+                currentScreen = 'clock';
+            }
+        }
+
+        // Jalankan pergantian setiap 30 detik
+        setInterval(switchScreen, DISPLAY_TIME);
+
+
+        // --- 2. ENGINE AUTO-LOGIN & SESSION CHECKER (OEE DASHBOARD) ---
+        function handleOeeAutoLogin() {
+            try {
+                const iframeDoc = oeeFrame.contentDocument || oeeFrame.contentWindow.document;
+
+                if (!iframeDoc) return;
+
+                // Cari elemen input login (Mendukung Selector Umum: name, id, atau type)
+                const userInput = iframeDoc.querySelector('input[name="username"], input[name="user"], input[type="text"], #username, #user');
+                const passInput = iframeDoc.querySelector('input[name="password"], input[name="pass"], input[type="password"], #password, #pass');
+                const loginBtn = iframeDoc.querySelector('button[type="submit"], input[type="submit"], .btn-login, #login');
+
+                // Jika form login ditemukan di DOM, lakukan pengisian dan submit otomatis
+                if (userInput && passInput) {
+                    // Isi nilai
+                    userInput.value = 'admin';
+                    passInput.value = 'admin';
+
+                    // Trigger event bawaan JS agar framework SPA (Vue/React/Angular) mendeteksi perubahan input
+                    userInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    userInput.dispatchEvent(new Event('change', { bubbles: true }));
+                    passInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    passInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+                    // Trigger click submit
+                    if (loginBtn) {
+                        loginBtn.click();
+                    } else if (userInput.form) {
+                        userInput.form.submit();
+                    }
+                }
+            } catch (error) {
+                // Catatan: Jika browser memblokir akses cross-origin iframe (CORS),
+                // Script ini membutuhkan opsi fallback browser (misal Chrome Extension/Same-Origin Bypass).
+                console.warn("Auto-login engine checking/bypassing...", error);
+            }
+        }
+
+        // Cek status login / form login setiap 3 detik secara periodik
+        setInterval(handleOeeAutoLogin, 3000);
+
+        // Jalankan pengecekan pertama kali saat iframe OEE selesai load
+        oeeFrame.addEventListener('load', handleOeeAutoLogin);
+    </script>
+</body>
+</html>
