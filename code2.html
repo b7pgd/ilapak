@@ -733,18 +733,22 @@ return clean;
 
 // Fitur Gabung & Copy Otomatis (Berurutan dari atas ke bawah)
 copyBtn.addEventListener('click', () => {
-const extraText = extraBox.value.trim();
-const notesText = notesBox.value.trim();
-const instructionText = instructionBox.value.trim();
+const extraText = extraBox.value;
+const notesText = notesBox.value;
+const instructionText = instructionBox.value;
 let parts = [];
-if (extraText !== '') parts.push(extraText);
-if (notesText !== '') parts.push(notesText);
-if (instructionText !== '') parts.push(instructionText);
-const combinedText = parts.join('\n\n');
+if (extraText.trim() !== '') parts.push(extraText);
+if (notesText.trim() !== '') parts.push(notesText);
+if (instructionText.trim() !== '') parts.push(instructionText);
+let combinedText = parts.join('\n\n');
 if (!combinedText.trim()) {
 alert('Tidak ada teks untuk digabungkan!');
 return;
 }
+combinedText = combinedText.replace(/\r\n/g, "\n");
+combinedText = combinedText.replace(/\t/g, "    ");
+combinedText = combinedText.split("\n").map(line => line.replace(/\s+$/g, "")).join("\n");
+combinedText = combinedText.replace(/\n{3,}/g, "\n\n");
 executeCopy(combinedText, "Copied Combined Text!");
 });
 
