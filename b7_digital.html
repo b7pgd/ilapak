@@ -3,140 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Display Rotator - OEE & Clock</title>
+    <title>Display Rotator - Single Frame</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body, html {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: #000;
-            font-family: Arial, sans-serif;
-        }
-
-        .screen-container {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-        }
-
-        iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border: none;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 1s ease-in-out;
-            z-index: 1;
-        }
-
-        /* Saat awal, OEE dipaksa aktif duluan */
-        iframe#frame-oee.active-init {
-            opacity: 1;
-            visibility: visible;
-            z-index: 10;
-        }
-
-        iframe.active {
-            opacity: 1;
-            visibility: visible;
-            z-index: 2;
-        }
-
-        /* Banner Petunjuk di Bawah Layar */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html { width: 100%; height: 100%; overflow: hidden; background-color: #000; font-family: Arial, sans-serif; }
+        iframe { width: 100vw; height: 100vh; border: none; display: block; }
         #setup-banner {
-            position: fixed;
-            bottom: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.85);
-            color: #fff;
-            padding: 12px 24px;
-            border-radius: 30px;
-            border: 2px solid #00e676;
-            z-index: 9999;
-            font-size: 14px;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            cursor: pointer;
-            user-select: none;
+            position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9); color: #fff; padding: 12px 24px;
+            border-radius: 30px; border: 2px solid #00e676; z-index: 9999;
+            font-size: 14px; text-align: center; cursor: pointer; user-select: none;
         }
-
-        #setup-banner span {
-            color: #00e676;
-            font-weight: bold;
-        }
+        #setup-banner span { color: #00e676; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div id="setup-banner" onclick="startRotator()">
-        Silakan <b>LOGIN ADMIN</b> di layar. Jika sudah masuk Dashboard, <span>KLIK DI SINI / KLIK LAYAR</span> untuk Mulai Rotasi!
+        Silakan <b>LOGIN ADMIN OEE</b> di layar. Jika sudah masuk Dashboard, <span>KLIK DI SINI / KLIK LAYAR</span> untuk Mulai Rotasi!
     </div>
 
-    <div class="screen-container">
-        <!-- Screen 1: Jam -->
-        <iframe id="frame-clock" src="http://10.167.166.109:8001"></iframe>
-        
-        <!-- Screen 2: Dashboard OEE (Aktif Pertama Kali untuk Login) -->
-        <iframe id="frame-oee" src="http://10.167.170.74:81/#/login" class="active-init"></iframe>
-    </div>
+    <!-- Cukup GUNAKAN 1 IFRAME TUNGGAL agar browser TV tidak mendeteksi Cross-Origin Stacking -->
+    <iframe id="main-frame" src="http://10.167.170.74:81/#/login"></iframe>
 
     <script>
-        const clockFrame = document.getElementById('frame-clock');
-        const oeeFrame = document.getElementById('frame-oee');
+        const mainFrame = document.getElementById('main-frame');
         const banner = document.getElementById('setup-banner');
 
-        const DISPLAY_TIME = 30000; // 30 detik per screen
+        const URL_CLOCK = "http://10.167.166.109:8001";
+        const URL_OEE = "http://10.167.170.74:81/#/";
+        const DISPLAY_TIME = 30000; // 30 detik
+
         let currentScreen = 'oee';
         let isRotatorRunning = false;
-        let rotationInterval = null;
 
-        // --- FUNGSIONALITAS UTAMA: MULAI ROTASI ---
         function startRotator() {
             if (isRotatorRunning) return;
-
             isRotatorRunning = true;
-            
-            // Sembunyikan banner petunjuk
             banner.style.display = 'none';
 
-            // Lepas class inisialisasi awal
-            oeeFrame.classList.remove('active-init');
-            
-            // Set OEE sebagai screen aktif pertama dalam mode rotasi
-            oeeFrame.classList.add('active');
+            // Pindah langsung ke dashboard OEE
+            mainFrame.src = URL_OEE;
 
-            // Jalankan interval rotasi 30 detik
-            rotationInterval = setInterval(switchScreen, DISPLAY_TIME);
+            // Jalankan rotasi 1 iframe
+            setInterval(switchScreen, DISPLAY_TIME);
         }
 
-        // --- ROTASI SCREEN (30 DETIK) ---
         function switchScreen() {
             if (currentScreen === 'oee') {
-                oeeFrame.classList.remove('active');
-                clockFrame.classList.add('active');
+                mainFrame.src = URL_CLOCK;
                 currentScreen = 'clock';
             } else {
-                clockFrame.classList.remove('active');
-                oeeFrame.classList.add('active');
+                mainFrame.src = URL_OEE;
                 currentScreen = 'oee';
             }
         }
 
-        // Izinkan pemicu rotasi lewat klik di mana saja pada dokumen
         document.addEventListener('click', function() {
-            if (!isRotatorRunning) {
-                startRotator();
-            }
+            if (!isRotatorRunning) startRotator();
         });
     </script>
 </body>
