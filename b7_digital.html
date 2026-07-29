@@ -50,8 +50,8 @@
         <!-- Screen 1: Jam (Default Aktif Pertama Kali) -->
         <iframe id="frame-clock" src="http://10.167.166.109:8001" class="active"></iframe>
         
-        <!-- Screen 2: Dashboard OEE -->
-        <iframe id="frame-oee" src="http://10.167.170.74:81/#/"></iframe>
+        <!-- Screen 2: Dashboard OEE (Arahkan langsung ke route login) -->
+        <iframe id="frame-oee" src="http://10.167.170.74:81/#/login"></iframe>
     </div>
 
     <script>
@@ -85,10 +85,10 @@
 
                 if (!iframeDoc) return;
 
-                // Cari elemen input login (Mendukung Selector Umum: name, id, atau type)
-                const userInput = iframeDoc.querySelector('input[name="username"], input[name="user"], input[type="text"], #username, #user');
-                const passInput = iframeDoc.querySelector('input[name="password"], input[name="pass"], input[type="password"], #password, #pass');
-                const loginBtn = iframeDoc.querySelector('button[type="submit"], input[type="submit"], .btn-login, #login');
+                // Cari elemen input login (Mendukung Selector Umum: name, id, class, placeholder, atau type)
+                const userInput = iframeDoc.querySelector('input[type="text"], input[name="username"], input[name="user"], #username, #user, input[placeholder*="user" i], input[placeholder*="username" i]');
+                const passInput = iframeDoc.querySelector('input[type="password"], input[name="password"], input[name="pass"], #password, #pass, input[placeholder*="pass" i]');
+                const loginBtn = iframeDoc.querySelector('button[type="submit"], input[type="submit"], button, .btn-login, #login');
 
                 // Jika form login ditemukan di DOM, lakukan pengisian dan submit otomatis
                 if (userInput && passInput) {
