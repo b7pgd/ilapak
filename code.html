@@ -3,255 +3,772 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Text Formatter Cleaner</title>
-
+<title>Text Generator</title>
 <style>
-*{
-    box-sizing:border-box;
-    margin:0;
-    padding:0;
+* {
+box-sizing: border-box;
+margin: 0;
+padding: 0;
+font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
-
-body{
-    background:#f0f4f8;
-    color:#1e293b;
-    font-family:Segoe UI,Arial,sans-serif;
-    padding:20px;
+body {
+background-color: #f0f4f8;
+color: #1e293b;
+padding: 15px;
+display: flex;
+justify-content: center;
+align-items: flex-start;
+min-height: 100vh;
 }
-
-.container{
-    max-width:1600px;
-    margin:auto;
+.container {
+width: 100%;
+max-width: 1000px; /* Diperlebar biar mantap */
+background-color: #ffffff;
+padding: 20px;
+border-radius: 8px;
+border: 1px solid #cbd5e1;
+box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+margin-top: 10px;
 }
-
-h1{
-    margin-bottom:15px;
-    color:#1d4ed8;
+h2 {
+margin-bottom: 15px;
+font-size: 1.3rem;
+color: #1d4ed8;
+text-align: center;
 }
-
-.toolbar{
-    display:flex;
-    gap:10px;
-    flex-wrap:wrap;
-    margin-bottom:15px;
+/* Header di atas setiap field penampung label dan tombol aksi */
+.textarea-header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 6px;
 }
-
-/* Container khusus kolom tombol kiri */
-.action-group {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+.textarea-header label {
+font-weight: 600;
+font-size: 0.9rem;
+color: #475569;
 }
-
-button{
-    border:none;
-    padding:12px 18px;
-    border-radius:8px;
-    cursor:pointer;
-    font-weight:600;
-    transition: background 0.2s;
+/* Group tombol Copy, Paste, Clear di kanan */
+.btn-group {
+display: flex;
+gap: 4px;
 }
-
-.clean{
-    background:#1a73e8;
-    color:white;
+/* Ukuran tombol disamakan dengan tombol clear lama */
+.action-btn {
+color: white;
+border: none;
+padding: 4px 10px;
+border-radius: 4px;
+cursor: pointer;
+font-size: 0.75rem;
+font-weight: bold;
+transition: background 0.2s;
 }
-.clean:hover{ background:#1557b0; }
-
-.paste-btn{
-    background:#0b8457;
-    color:white;
+.btn-copy {
+background-color: #2563eb;
 }
-.paste-btn:hover{ background:#096b46; }
-
-.copy{
-    background:#2563eb;
-    color:white;
+.btn-copy:hover {
+background-color: #1d4ed8;
 }
-.copy:hover{ background:#1d4ed8; }
-
-.clear{
-    background:#dc2626;
-    color:white;
+.btn-paste {
+background-color: #0b8457;
 }
-.clear:hover{ background:#b91c1c; }
-
-.stats{
-    margin-left:auto;
-    display:flex;
-    align-items:center;
-    color:#64748b;
-    font-size:14px;
-    font-weight: 600;
+.btn-paste:hover {
+background-color: #096b46;
 }
-
-.grid{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:15px;
+.btn-clear {
+background-color: #ef4444;
 }
-
-textarea{
-    width:100%;
-    height:80vh;
-    resize:none;
-    border:1px solid #cbd5e1;
-    outline:none;
-    padding:16px;
-    border-radius:12px;
-    background:#ffffff;
-    color:#0f172a;
-    font-family:Consolas,monospace;
-    font-size:14px;
-    line-height:1.5;
+.btn-clear:hover {
+background-color: #dc2626;
 }
-
-textarea:focus{
-    border-color:#2563eb;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+/* Textbox Utama Gede dan Lebar */
+.notes-textarea {
+width: 100%;
+height: 420px; /* Dibikin jauh lebih tinggi dan gede */
+background-color: #ffffff;
+border: 1px solid #cbd5e1;
+color: #0f172a;
+padding: 12px;
+border-radius: 6px;
+font-size: 0.95rem;
+resize: vertical;
+outline: none;
+margin-bottom: 15px;
 }
-
-textarea[readonly]{
-    background:#f8fafc;
+/* Textbox Baru Sepertiga Ukuran Textbox Utama */
+.extra-textarea {
+width: 100%;
+height: 140px; /* Sepertiga dari 420px */
+background-color: #ffffff;
+border: 1px solid #cbd5e1;
+color: #0f172a;
+padding: 12px;
+border-radius: 6px;
+font-size: 0.95rem;
+resize: vertical;
+outline: none;
+margin-bottom: 15px;
 }
-
-@media(max-width:900px){
-    .grid{
-        grid-template-columns:1fr;
-    }
-    /* Di mobile, susunan tombol group sejajar ke samping */
-    .action-group {
-        flex-direction: row;
-        gap: 10px;
-    }
+.notes-textarea:focus, .extra-textarea:focus, .instruction-input:focus {
+border-color: #2563eb;
+box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+/* Input Kedua (Instruksi Hardcoded) */
+.instruction-group {
+margin-bottom: 20px;
+}
+.instruction-input {
+width: 100%;
+background-color: #ffffff;
+border: 1px solid #cbd5e1;
+color: #0f172a;
+padding: 10px;
+border-radius: 6px;
+font-size: 0.9rem;
+outline: none;
+}
+/* Button Copy/Copas Biru Polos */
+.copy-btn {
+width: 100%;
+background-color: #2563eb;
+color: white;
+border: none;
+padding: 12px;
+border-radius: 6px;
+font-size: 1rem;
+font-weight: bold;
+cursor: pointer;
+transition: background 0.2s;
+margin-bottom: 10px;
+}
+.copy-btn:hover {
+background-color: #1d4ed8;
+}
+.copy-btn:active {
+background-color: #1e40af;
+}
+.compress-btn {
+background-color: #16a34a;
+margin-bottom: 0;
+}
+.compress-btn:hover {
+background-color: #15803d;
+}
+.compress-btn:active {
+background-color: #166534;
+}
+/* Toast Notification */
+.toast {
+visibility: hidden;
+min-width: 200px;
+background-color: #1e293b;
+color: #ffffff;
+text-align: center;
+border-radius: 4px;
+padding: 10px;
+position: fixed;
+z-index: 10;
+bottom: 30px;
+font-size: 0.9rem;
+font-weight: bold;
+box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+.toast.show {
+visibility: visible;
+animation: fadein 0.3s, fadeout 0.3s 2.2s;
+}
+@keyframes fadein {
+from {bottom: 0; opacity: 0;}
+to {bottom: 30px; opacity: 1;}
+}
+@keyframes fadeout {
+from {bottom: 30px; opacity: 1;}
+to {bottom: 0; opacity: 0;}
 }
 </style>
 </head>
 <body>
-
 <div class="container">
-
-<h1>Text Formatter Cleaner</h1>
-
-<div class="toolbar">
-
-<!-- Group kolom untuk tombol Clean Text dan Paste di bawahnya -->
-<div class="action-group">
-    <button class="clean" onclick="cleanText()">
-    Clean Text
-    </button>
-    
-    <button class="paste-btn" onclick="pasteInput()">
-    Paste
-    </button>
+<h2>Text Editor</h2>
+<!-- Field 1: Tambahan Konteks -->
+<div class="textarea-header">
+<label for="extraBox">Tambahan Konteks (Kosong)</label>
+<div class="btn-group">
+<button class="action-btn btn-copy" onclick="copySingle('extraBox')">Copy</button>
+<button class="action-btn btn-paste" onclick="pasteSingle('extraBox')">Paste</button>
+<button class="action-btn btn-clear" onclick="clearSingle('extraBox')">Clear</button>
 </div>
-
-<button class="copy" onclick="copyOutput()">
-Copy Result
-</button>
-
-<button class="clear" onclick="clearAll()">
-Clear
-</button>
-
-<div class="stats">
-<span id="stats">0 chars | 0 lines</span>
 </div>
-
+<textarea class="extra-textarea" id="extraBox" placeholder="Tulis konteks tambahan di sini..."></textarea>
+<!-- Field 2: Notes -->
+<div class="textarea-header">
+<label for="notesBox">Notes</label>
+<div class="btn-group">
+<button class="action-btn btn-copy" onclick="copySingle('notesBox')">Copy</button>
+<button class="action-btn btn-paste" onclick="pasteSingle('notesBox')">Paste</button>
+<button class="action-btn btn-clear" onclick="clearSingle('notesBox')">Clear</button>
 </div>
-
-<div class="grid">
-
-<textarea
-id="input"
-placeholder="Paste huge text here..."
-oninput="updateStats()"
-></textarea>
-
-<textarea
-id="output"
-placeholder="Formatted result..."
-readonly
-></textarea>
-
 </div>
-
+<textarea class="notes-textarea" id="notesBox" placeholder="Tulis notes di sini..."></textarea>
+<!-- Field 3: Instruksi Tambahan -->
+<div class="instruction-group">
+<div class="textarea-header">
+<label for="instructionBox">Instruksi Tambahan:</label>
+<div class="btn-group">
+<button class="action-btn btn-copy" onclick="copySingle('instructionBox')">Copy</button>
+<button class="action-btn btn-paste" onclick="pasteSingle('instructionBox')">Paste</button>
+<button class="action-btn btn-clear" onclick="clearSingle('instructionBox')">Clear</button>
 </div>
-
+</div>
+<input type="text" class="instruction-input" id="instructionBox" value="Terapkan hanya perubahan yang diminta pada konteks. Jangan melakukan refactor, cleanup, rename, reorder, atau perubahan di luar target. Pertahankan struktur, flow, output, API, dan logic tetap identik. Semua bagian yang tidak terkait wajib tetap sama. Kirim 1 file lengkap.">
+</div>
+<button class="copy-btn" id="copyBtn">Copy Combined Text</button>
+<button class="copy-btn compress-btn" id="copyCompressedBtn">Copy Compressed Text</button>
+</div>
+<div class="toast" id="toastBox">Copied to clipboard!</div>
 <script>
+const notesBox = document.getElementById('notesBox');
+const extraBox = document.getElementById('extraBox');
+const instructionBox = document.getElementById('instructionBox');
+const copyBtn = document.getElementById('copyBtn');
+const copyCompressedBtn = document.getElementById('copyCompressedBtn');
+const toastBox = document.getElementById('toastBox');
 
-function cleanText(){
-
-    let text =
-        document.getElementById("input").value;
-
-    text = text.replace(/\r\n/g,"\n");
-
-    text = text.replace(/\t/g,"    ");
-
-    text = text.split("\n")
-        .map(line => line.replace(/\s+$/g,""))
-        .join("\n");
-
-    text = text.replace(/\n{3,}/g,"\n\n");
-
-    document.getElementById("output").value =
-        text;
-
-    updateStats();
+// Fungsi Global Aksi Clear per Field
+function clearSingle(targetId) {
+const target = document.getElementById(targetId);
+target.value = '';
+target.focus();
 }
 
-async function pasteInput(){
-    if(navigator.clipboard && window.isSecureContext){
-        try {
-            const text = await navigator.clipboard.readText();
-            document.getElementById("input").value = text;
-            updateStats();
-        } catch (err) {
-            alert('Gagal membaca clipboard. Izinkan akses clipboard browser.');
-        }
-    } else {
-        alert('Fitur paste otomatis membutuhkan koneksi aman (HTTPS).');
-    }
+// Fungsi Global Aksi Copy per Field
+function copySingle(targetId) {
+const target = document.getElementById(targetId);
+const textToCopy = target.value;
+if (!textToCopy.trim()) return;
+executeCopy(textToCopy, "Copied text!");
 }
 
-async function copyOutput(){
-
-    const text =
-        document.getElementById("output").value;
-
-    if(!text){
-        return;
-    }
-
-    await navigator.clipboard.writeText(text);
+// Fungsi Global Aksi Paste per Field (Support HTTPS & Modern Device Browser)
+function pasteSingle(targetId) {
+const target = document.getElementById(targetId);
+if (navigator.clipboard && window.isSecureContext) {
+navigator.clipboard.readText()
+.then(text => {
+target.value = text;
+target.focus();
+})
+.catch(err => {
+console.error('Failed to read clipboard: ', err);
+alert('Gagal membaca clipboard otomatis. Izinkan akses clipboard di browser Anda atau gunakan paste manual HP.');
+});
+} else {
+alert('Fitur auto-paste membutuhkan koneksi HTTPS / Local Server aman. Gunakan fitur bawaan keyboard perangkat Anda.');
+}
 }
 
-function clearAll(){
-
-    document.getElementById("input").value="";
-    document.getElementById("output").value="";
-    updateStats();
+// Core execution copy engine dengan fallback
+function executeCopy(text, successMessage) {
+if (navigator.clipboard && window.isSecureContext) {
+navigator.clipboard.writeText(text)
+.then(() => showToast(successMessage))
+.catch(() => fallbackCopyText(text, successMessage));
+} else {
+fallbackCopyText(text, successMessage);
+}
 }
 
-function updateStats(){
-
-    const txt =
-        document.getElementById("input").value;
-
-    const chars = txt.length;
-
-    const lines =
-        txt === ""
-        ? 0
-        : txt.split("\n").length;
-
-    document.getElementById("stats").textContent =
-        chars + " chars | " +
-        lines + " lines";
+// Fungsi Fallback Copy (Pasti berhasil di lingkungan non-HTTPS / Lokal HP)
+function fallbackCopyText(text, successMessage) {
+const textArea = document.createElement("textarea");
+textArea.value = text;
+textArea.style.top = "0";
+textArea.style.left = "0";
+textArea.style.position = "fixed";
+textArea.style.opacity = "0";
+document.body.appendChild(textArea);
+textArea.focus();
+textArea.select();
+try {
+const successful = document.execCommand('copy');
+if (successful) {
+showToast(successMessage);
+} else {
+alert('Gagal menyalin teks, silahkan seleksi manual.');
+}
+} catch (err) {
+console.error('Fallback error:', err);
+alert('Gagal menyalin teks, silahkan seleksi manual.');
+}
+document.body.removeChild(textArea);
 }
 
+// Fungsi menampilkan pop-up sukses copy dengan kustomisasi pesan text
+function showToast(message = "Copied to clipboard!") {
+toastBox.textContent = message;
+toastBox.classList.add('show');
+setTimeout(() => {
+toastBox.classList.remove('show');
+}, 2500);
+}
+
+// =========================================================================
+// ARCHITECTURE: LOSSLESS AI COMPRESSION ENGINE PIPELINE
+// Pipeline: Input -> Language Detection -> Rule Selector -> Normalization -> Structural Compression
+// =========================================================================
+
+function compressEngine(input) {
+if (!input || !input.trim()) return '';
+
+// Step 1: Detect Document Blocks (Markdown Code Blocks, HTML, Plain Text sections)
+const blocks = parseDocumentBlocks(input);
+
+// Step 2: Process each block with its appropriate context rule
+const compressedBlocks = blocks.map(block => processBlockByLanguage(block));
+
+// Step 3: Combine and return final lossless text with final cleanup
+const rawCombined = compressedBlocks.join('\n');
+return sanitizeOutputArtifacts(rawCombined);
+}
+
+// Step 1: Parser - Breakdown text into Markdown code blocks and non-code sections
+function parseDocumentBlocks(text) {
+const lines = text.split(/\r?\n/);
+const blocks = [];
+let currentLines = [];
+let inCodeBlock = false;
+let currentLang = '';
+
+for (let line of lines) {
+const trimmed = line.trim();
+if (trimmed.startsWith('```')) {
+if (inCodeBlock) {
+// Close code block
+currentLines.push(line);
+blocks.push({
+type: 'code_block',
+lang: currentLang,
+lines: currentLines
+});
+currentLines = [];
+inCodeBlock = false;
+currentLang = '';
+} else {
+// Flush previous non-code block if present
+if (currentLines.length > 0) {
+blocks.push({
+type: 'text_block',
+lang: detectTextBlockLang(currentLines),
+lines: currentLines
+});
+currentLines = [];
+}
+inCodeBlock = true;
+currentLang = trimmed.slice(3).trim().toLowerCase();
+currentLines.push(line);
+}
+} else {
+currentLines.push(line);
+}
+}
+
+if (currentLines.length > 0) {
+blocks.push({
+type: inCodeBlock ? 'code_block' : 'text_block',
+lang: inCodeBlock ? currentLang : detectTextBlockLang(currentLines),
+lines: currentLines
+});
+}
+
+return blocks;
+}
+
+// Detect specific structured languages in non-markdown block
+function detectTextBlockLang(lines) {
+const sample = lines.slice(0, 30).join('\n').trim();
+if (!sample) return 'plain';
+
+// JSON
+if ((sample.startsWith('{') && sample.endsWith('}')) || (sample.startsWith('[') && sample.endsWith(']'))) {
+try { JSON.parse(sample); return 'json'; } catch(e) {}
+}
+
+// HTML / XML
+if (/^<!DOCTYPE html>/i.test(sample) || /^<([a-z0-9-]+)(\s+[^>]+)?/i.test(sample)) {
+return 'html';
+}
+
+// SQL
+if (/^\s*(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|WITH)\b/i.test(sample)) {
+return 'sql';
+}
+
+// CSS
+if (/^([.#a-z0-9_\-\s,>+~:]+)\s*\{[^}]*\}/i.test(sample)) {
+return 'css';
+}
+
+// Python / YAML (Indent-sensitive code outside triple backticks)
+if (/^\s*(def\s|class\s|import\s|from\s\w+\simport)/.test(sample)) {
+return 'python';
+}
+
+return 'plain';
+}
+
+// Step 2: Language-Aware Rule Selector & Processor
+function processBlockByLanguage(block) {
+const { type, lang, lines } = block;
+
+// Preserve Markdown Code Block enclosure intact
+if (type === 'code_block') {
+const header = lines[0];
+const footer = lines[lines.length - 1];
+const bodyLines = lines.slice(1, lines.length - (lines[lines.length - 1].trim().startsWith('```') ? 1 : 0));
+const detectedLang = lang || mapLangAlias(header.slice(3).trim().toLowerCase());
+
+const processedBody = normalizeAndCompressCode(bodyLines, detectedLang);
+return [header, ...processedBody, footer].join('\n');
+}
+
+// Non-code block routing
+switch (lang) {
+case 'json':
+return normalizeJSON(lines);
+case 'html':
+case 'xml':
+return normalizeMarkup(lines);
+case 'css':
+return normalizeCSS(lines);
+case 'sql':
+return normalizeSQL(lines);
+case 'python':
+case 'yaml':
+case 'yml':
+return normalizeIndentSensitive(lines);
+default:
+return processPlainOrMixedText(lines);
+}
+}
+
+function mapLangAlias(lang) {
+if (['py', 'python'].includes(lang)) return 'python';
+if (['js', 'javascript', 'ts', 'typescript', 'go', 'java', 'c', 'cpp', 'cs', 'php'].includes(lang)) return 'code';
+if (['html', 'xml', 'svg'].includes(lang)) return 'html';
+if (['css', 'scss', 'less'].includes(lang)) return 'css';
+if (['json'].includes(lang)) return 'json';
+if (['sql'].includes(lang)) return 'sql';
+if (['yaml', 'yml'].includes(lang)) return 'yaml';
+return 'plain';
+}
+
+// Normalizer for Source Code inside Markdown Code Blocks
+function normalizeAndCompressCode(lines, lang) {
+const isIndentSensitive = ['python', 'py', 'yaml', 'yml'].includes(lang);
+let result = [];
+
+for (let line of lines) {
+if (line.trim() === '') continue; // Hapus blank lines
+
+if (isIndentSensitive) {
+// Pertahankan indentasi awal untuk Python / YAML, hapus trailing whitespace
+result.push(line.trimEnd());
+} else {
+// Hapus whitespace awal & akhir, collapse spaces di luar quotes
+let trimmed = line.trim();
+result.push(collapseWhitespaceOutsideQuotes(trimmed));
+}
+}
+return result;
+}
+
+// Processors for specific data & code formats
+function normalizeJSON(lines) {
+const raw = lines.join('\n').trim();
+try {
+const parsed = JSON.parse(raw);
+// Lossless formatting JSON without altering key structures
+return JSON.stringify(parsed, null, 2);
+} catch (e) {
+return lines.filter(l => l.trim() !== '').map(l => l.trim()).join('\n');
+}
+}
+
+function normalizeMarkup(lines) {
+let result = [];
+for (let line of lines) {
+let trimmed = line.trim();
+if (!trimmed) continue;
+// Hapus extra spaces di luar atribut HTML/XML
+result.push(collapseWhitespaceOutsideQuotes(trimmed));
+}
+return result.join('\n');
+}
+
+function normalizeCSS(lines) {
+let result = [];
+for (let line of lines) {
+let trimmed = line.trim();
+if (!trimmed) continue;
+result.push(collapseWhitespaceOutsideQuotes(trimmed));
+}
+return result.join('\n');
+}
+
+function normalizeSQL(lines) {
+let result = [];
+for (let line of lines) {
+let trimmed = line.trim();
+if (!trimmed) continue;
+result.push(collapseWhitespaceOutsideQuotes(trimmed));
+}
+return result.join('\n');
+}
+
+function normalizeIndentSensitive(lines) {
+let result = [];
+for (let line of lines) {
+if (line.trim() === '') continue;
+result.push(line.trimEnd());
+}
+return result.join('\n');
+}
+
+// Step 3: Plaintext & Mixed Text Safe Structural Compression
+function processPlainOrMixedText(lines) {
+let cleaned = [];
+for (let line of lines) {
+let trimmed = line.trim();
+if (!trimmed) continue;
+cleaned.push(trimmed);
+}
+
+let result = [];
+let listBuffer = [];
+
+function flushBuffer() {
+if (listBuffer.length === 0) return;
+let merged = [];
+for (let i = 0; i < listBuffer.length; i++) {
+let current = listBuffer[i];
+let next = listBuffer[i + 1];
+
+// Jika key: value terpisah baris
+if (current.endsWith(':') && next && !next.endsWith(':') && isSimpleListValue(next)) {
+merged.push(current + ' ' + next);
+i++;
+} else {
+// Bersihkan bullet list marker jika aman
+merged.push(current.replace(/^[*•-]\s+/, ''));
+}
+}
+
+// Gabungkan buffer dengan aman tanpa melipatgandakan koma
+let lineResult = '';
+for (let item of merged) {
+let cleanItem = item.trim();
+if (!cleanItem) continue;
+if (!lineResult) {
+lineResult = cleanItem;
+} else {
+if (/[,,;:{}()\[\]]$/.test(lineResult) || /^[,;:{}()\[\]]/.test(cleanItem)) {
+lineResult += ' ' + cleanItem;
+} else {
+lineResult += ', ' + cleanItem;
+}
+}
+}
+if (lineResult) result.push(lineResult);
+listBuffer = [];
+}
+
+for (let line of cleaned) {
+// Structural barrier — do NOT inline code, headers, SQL, tree structures
+if (isStructuralOrCodeLine(line)) {
+flushBuffer();
+result.push(line);
+} else {
+listBuffer.push(line);
+}
+}
+flushBuffer();
+
+return result.join('\n');
+}
+
+// Helper: Safety check for lines that must never be merged horizontally
+function isStructuralOrCodeLine(line) {
+const trimmed = line.trim();
+if (!trimmed) return false;
+
+return (
+trimmed.startsWith('#') || // Markdown Heading
+trimmed.startsWith('---') || // Separator
+trimmed.startsWith('```') || // Code block tag
+/^[├└│]/.test(trimmed) || // ASCII Tree Structure
+/^(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|WITH|UNION|JOIN|LEFT JOIN|RIGHT JOIN|INNER JOIN|OUTER JOIN|GROUP BY|ORDER BY|HAVING|LIMIT|OFFSET|VALUES|SET)\b/i.test(trimmed) || // SQL Keywords
+/^<\/?[\w\s="'-]+>?$/.test(trimmed) || // HTML/XML Tags
+/^(function|class|def|if|else|for|while|switch|case|try|catch|import|export|const|let|var|return|package|type|struct|interface)\b/.test(trimmed) || // Code Keywords
+/[{}();]$/.test(trimmed) // Code statement endings
+);
+}
+
+function isSimpleListValue(line) {
+return !isStructuralOrCodeLine(line) && !line.includes(':');
+}
+
+// Helper: Safe whitespace collapse outside string quotes/literals
+function collapseWhitespaceOutsideQuotes(text) {
+let result = '';
+let inSingle = false;
+let inDouble = false;
+let inBacktick = false;
+
+for (let i = 0; i < text.length; i++) {
+let char = text[i];
+let prev = i > 0 ? text[i - 1] : '';
+
+if (char === "'" && !inDouble && !inBacktick && prev !== '\\') inSingle = !inSingle;
+if (char === '"' && !inSingle && !inBacktick && prev !== '\\') inDouble = !inDouble;
+if (char === '`' && !inSingle && !inDouble && prev !== '\\') inBacktick = !inBacktick;
+
+if (!inSingle && !inDouble && !inBacktick) {
+if (char === ' ' && result.endsWith(' ')) {
+continue;
+}
+}
+result += char;
+}
+return result;
+}
+
+// Helper: Executes callback strictly on segments outside string literals
+function processOutsideQuotes(str, callback) {
+let result = '';
+let currentBuffer = '';
+let inSingle = false;
+let inDouble = false;
+let inBacktick = false;
+
+for (let i = 0; i < str.length; i++) {
+let char = str[i];
+let prev = i > 0 ? str[i - 1] : '';
+
+if (char === "'" && !inDouble && !inBacktick && prev !== '\\') {
+if (!inSingle) {
+result += callback(currentBuffer) + "'";
+currentBuffer = '';
+inSingle = true;
+} else {
+result += "'";
+inSingle = false;
+}
+continue;
+}
+if (char === '"' && !inSingle && !inBacktick && prev !== '\\') {
+if (!inDouble) {
+result += callback(currentBuffer) + '"';
+currentBuffer = '';
+inDouble = true;
+} else {
+result += '"';
+inDouble = false;
+}
+continue;
+}
+if (char === '`' && !inSingle && !inDouble && prev !== '\\') {
+if (!inBacktick) {
+result += callback(currentBuffer) + '`';
+currentBuffer = '';
+inBacktick = true;
+} else {
+result += '`';
+inBacktick = false;
+}
+continue;
+}
+
+if (inSingle || inDouble || inBacktick) {
+result += char;
+} else {
+currentBuffer += char;
+}
+}
+
+if (currentBuffer) {
+result += callback(currentBuffer);
+}
+
+return result;
+}
+
+// Helper Final Cleanup: Menghilangkan artefak separator ganda tanpa merusak string literal
+function sanitizeOutputArtifacts(text) {
+const lines = text.split('\n');
+let inCodeBlock = false;
+
+return lines.map(line => {
+const trimmed = line.trim();
+if (trimmed.startsWith('```')) {
+inCodeBlock = !inCodeBlock;
+return line;
+}
+if (inCodeBlock) return line;
+
+return processOutsideQuotes(line, (part) => {
+let clean = part;
+// Bersihkan koma berulang (misal: ,, atau , ,) di luar string
+clean = clean.replace(/,\s*,+/g, ',');
+clean = clean.replace(/,(\s*,)+/g, ',');
+// Hapus koma menggantung sebelum penutup kurung/bracket/titik koma (jika ada artefak merge)
+clean = clean.replace(/,\s*([;})\]])/g, '$1');
+// Rapikan spasi setelah koma di luar string
+clean = clean.replace(/,\s*/g, ', ');
+clean = clean.replace(/\s+,/g, ',');
+return clean;
+});
+}).join('\n');
+}
+
+// Fitur Gabung & Copy Otomatis (Berurutan dari atas ke bawah)
+copyBtn.addEventListener('click', () => {
+const extraText = extraBox.value;
+const notesText = notesBox.value;
+const instructionText = instructionBox.value;
+let parts = [];
+if (extraText.trim() !== '') parts.push(extraText);
+if (notesText.trim() !== '') parts.push(notesText);
+if (instructionText.trim() !== '') parts.push(instructionText);
+let combinedText = parts.join('\n\n');
+if (!combinedText.trim()) {
+alert('Tidak ada teks untuk digabungkan!');
+return;
+}
+combinedText = combinedText.replace(/\r\n/g, "\n");
+combinedText = combinedText.replace(/\t/g, "    ");
+combinedText = combinedText.split("\n").map(line => line.replace(/\s+$/g, "")).join("\n");
+combinedText = combinedText.replace(/\n{3,}/g, "\n\n");
+executeCopy(combinedText, "Copied Combined Text!");
+});
+
+// Fitur Gabung, Kompres, & Copy Otomatis
+copyCompressedBtn.addEventListener('click', () => {
+const extraText = extraBox.value.trim();
+const notesText = notesBox.value.trim();
+const instructionText = instructionBox.value.trim();
+let parts = [];
+if (extraText !== '') parts.push(extraText);
+if (notesText !== '') parts.push(notesText);
+if (instructionText !== '') parts.push(instructionText);
+const combinedText = parts.join('\n\n');
+if (!combinedText.trim()) {
+alert('Tidak ada teks untuk dikompres!');
+return;
+}
+const compressedText = compressEngine(combinedText);
+executeCopy(compressedText, "Copied Compressed Text!");
+});
 </script>
-
 </body>
 </html>
