@@ -135,16 +135,9 @@ textarea[readonly]{
 
 <div class="toolbar">
 
-<!-- Group kolom untuk tombol Clean Text dan Paste di bawahnya -->
-<div class="action-group">
-    <button class="clean" onclick="cleanText()">
-    Clean Text
-    </button>
-    
-    <button class="paste-btn" onclick="pasteInput()">
-    Paste
-    </button>
-</div>
+<button class="clean" onclick="pasteAndClean()">
+Paste & Clean Text
+</button>
 
 <button class="copy" onclick="copyOutput()">
 Copy Result
@@ -207,6 +200,20 @@ async function pasteInput(){
             const text = await navigator.clipboard.readText();
             document.getElementById("input").value = text;
             updateStats();
+        } catch (err) {
+            alert('Gagal membaca clipboard. Izinkan akses clipboard browser.');
+        }
+    } else {
+        alert('Fitur paste otomatis membutuhkan koneksi aman (HTTPS).');
+    }
+}
+
+async function pasteAndClean(){
+    if(navigator.clipboard && window.isSecureContext){
+        try {
+            const text = await navigator.clipboard.readText();
+            document.getElementById("input").value = text;
+            cleanText();
         } catch (err) {
             alert('Gagal membaca clipboard. Izinkan akses clipboard browser.');
         }
