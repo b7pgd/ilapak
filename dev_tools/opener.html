@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Opening...</title>
+    <style>
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            cursor: pointer;
+            background: transparent;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        const urls = [
+            "https://gemini.google.com/",
+            "https://chatgpt.com/",
+            "https://b7pgd.github.io/ilapak/code.html",
+            "https://b7pgd.github.io/ilapak/dev_tools/app_viber/viber.html",
+            "https://b7pgd.github.io/ilapak/dev_tools/app_viber2/viber.html",
+            "https://b7pgd.github.io/ilapak/dev_tools/app_viber4/viber.html",
+            "https://b7pgd.github.io/ilapak/dev_tools/app_prompt/prompt.html",
+            "https://b7pgd.github.io/ilapak/tools.html"
+        ];
+
+        document.addEventListener('click', () => {
+            for (let i = 1; i < urls.length; i++) {
+                window.open(urls[i], '_blank');
+            }
+            window.top.location.href = urls[0];
+        }, { once: true });
+    </script>
+</body>
+</html>
