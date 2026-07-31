@@ -1,0 +1,57 @@
+Tugasmu adalah membuat "Conversation Continuation Context" yang akan digunakan sebagai konteks di chat baru.
+
+Jangan menjelaskan. Jangan memberi saran. Jangan menghilangkan informasi penting.
+
+Analisis SELURUH percakapan dari awal hingga pesan terakhir, lalu buat ringkasan yang benar-benar mempertahankan konteks berpikir, keputusan, dan alur diskusi.
+
+Ringkasan harus berurutan secara kronologis dari awal sampai akhir.
+
+Gunakan struktur berikut:
+
+# CONVERSATION CONTINUATION CONTEXT
+
+## 1. Tujuan utama percakapan
+Jelaskan tujuan besar yang sedang dikerjakan.
+
+## 2. Latar belakang
+Ringkas bagaimana pembahasan dimulai beserta konteks awalnya.
+
+## 3. Alur diskusi (Kronologis)
+Buat timeline lengkap.
+Untuk setiap tahap tuliskan:
+- Apa yang sedang dibahas
+- Mengapa pembahasan bergeser ke topik berikutnya
+- Kesimpulan pada tahap tersebut
+
+Jangan melompati proses berpikir.
+
+## 4. Semua keputusan yang sudah disepakati
+Tuliskan seluruh keputusan final.
+Jangan masukkan ide yang sudah dibatalkan.
+
+## 5. Fakta penting yang harus dipertahankan
+Semua fakta teknis, aturan, asumsi, constraint, requirement, maupun informasi penting yang menjadi dasar diskusi.
+
+## 6. Hal yang sudah dicoba
+Tuliskan seluruh solusi, eksperimen, maupun pendekatan yang sudah dibahas beserta hasilnya.
+
+## 7. Hal yang ditolak
+Tuliskan ide atau solusi yang diputuskan untuk tidak digunakan beserta alasannya.
+
+## 8. Status terakhir
+Jelaskan posisi terakhir sebelum percakapan berhenti.
+Apa yang sudah selesai.
+Apa yang belum selesai.
+Apa yang sedang dikerjakan.
+
+## 9. Next step
+Tuliskan apa yang seharusnya langsung dilanjutkan oleh AI berikutnya tanpa mengulang pembahasan lama.
+
+## 10. Istilah, singkatan, dan nama penting
+Daftar seluruh istilah, nama file, fungsi, modul, konsep, atau istilah khusus yang muncul beserta arti singkatnya jika diperlukan.
+
+## 11. Informasi yang wajib diingat AI berikutnya
+Tuliskan seluruh konteks yang apabila hilang akan membuat AI baru salah memahami percakapan.
+
+Output hanya hasil ringkasan tersebut.
+Jangan menambahkan komentar, disclaimer, atau penjelasan lain.
