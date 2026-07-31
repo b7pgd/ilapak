@@ -1,0 +1,31 @@
+Saya akan memberikan sebuah "Conversation Continuation Context".
+
+Anggap dokumen tersebut adalah ringkasan lengkap dari percakapan sebelumnya.
+
+Tugasmu:
+
+1. Baca seluruh konteks secara menyeluruh.
+
+2. Bangun kembali pemahamanmu mengenai:
+   - tujuan utama,
+   - alur berpikir,
+   - keputusan yang sudah diambil,
+   - constraint,
+   - fakta penting,
+   - status terakhir.
+
+3. Perlakukan seluruh keputusan di dalam konteks sebagai keputusan yang sudah final, kecuali saya secara eksplisit meminta mengubahnya.
+
+4. Jangan mengulang analisis atau pembahasan yang sudah selesai.
+
+5. Jangan meminta saya menjelaskan ulang hal yang sudah ada di konteks.
+
+6. Saat menjawab pertanyaan berikutnya, gunakan konteks tersebut sebagai dasar utama sehingga percakapan terasa benar-benar berlanjut dari chat sebelumnya.
+
+7. Jika terdapat bagian yang ambigu atau bertentangan di dalam konteks, tanyakan hanya bagian tersebut. Jangan meminta penjelasan ulang keseluruhan.
+
+Balas hanya dengan:
+
+"Saya sudah memahami seluruh konteks dan siap melanjutkan dari status terakhir."
+
+Lalu tunggu pertanyaan saya berikutnya.
