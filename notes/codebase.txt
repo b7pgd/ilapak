@@ -1,0 +1,460 @@
+// Target File: /app/label/preview/page.tsx
+// =========================================
+'use client';
+
+import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+
+interface PreviewBersihProps {
+  Label?: Record<string, any>;
+  Petugas?: Record<string, any>;
+  Pemeriksa?: Record<string, any>;
+  Timestamp?: string | number;
+}
+
+function PreviewBersih({ Label, Petugas, Pemeriksa, Timestamp }: PreviewBersihProps) {
+  const searchParams = useSearchParams();
+  const id = searchParams.get('id');
+
+  const [fetchedData, setFetchedData] = useState<{
+    Label?: Record<string, any>;
+    Petugas?: Record<string, any>;
+    Pemeriksa?: Record<string, any>;
+    Timestamp?: string | number;
+  }>({});
+
+  useEffect(() => {
+    if (!id) return;
+    fetch(`/api/label/${id}`, { credentials: 'include' })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data) {
+          setFetchedData({
+            Label: data.Label || data.label || data,
+            Petugas: data.Petugas || data.petugas || {},
+            Pemeriksa: data.Pemeriksa || data.pemeriksa || {},
+            Timestamp: data.Timestamp || data.timestamp,
+          });
+        }
+      })
+      .catch(() => {});
+  }, [id]);
+
+  const formatDate = (dateVal: any) => {
+    if (!dateVal) return '';
+    const d = new Date(dateVal);
+    if (isNaN(d.getTime())) return dateVal;
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}-${month}-${year}`;
+  };
+
+  const safeValue = (value: any) => {
+    if (value === null || value === undefined) return '';
+    return String(value);
+  };
+
+  const labelData = Label ?? fetchedData.Label ?? {};
+  const petugasData = Petugas ?? fetchedData.Petugas ?? {};
+  const pemeriksaData = Pemeriksa ?? fetchedData.Pemeriksa ?? {};
+  const currentTimestamp = Timestamp ?? fetchedData.Timestamp;
+
+  console.log("Preview Props", {
+    Label: labelData,
+    Petugas: petugasData,
+    Pemeriksa: pemeriksaData,
+    Timestamp: currentTimestamp,
+  });
+
+  console.log("Label Data", labelData);
+  console.log("Petugas Data", petugasData);
+  console.log("Pemeriksa Data", pemeriksaData);
+
+  if (process.env.NODE_ENV === "development") {
+    console.log("Kategori :", labelData.KategoriName);
+    console.log("Kode :", labelData.IsiKode);
+    console.log("Batch :", labelData.IdentitasProdukVal);
+  }
+
+  return (
+    <>
+      <style jsx global>{`
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+          -webkit-text-size-adjust: none !important;
+          text-size-adjust: none !important;
+        }
+
+        body {
+          background: #fff;
+          margin: 0;
+          padding: 0;
+          -webkit-font-smoothing: antialiased;
+          width: 100%;
+        }
+
+        .main-wrapper {
+          width: 1000px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          position: relative;
+          margin: 0 auto;
+        }
+
+        .label-canvas {
+          width: 1000px;
+          height: 720px;
+          background-color: #bad34a;
+          border: 1px solid #000;
+          position: relative;
+          padding: 30px 40px;
+          color: #1a1a1a;
+          transform: scale(0.7);
+          transform-origin: top center;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+          margin-top: 20px;
+          margin-bottom: -216px;
+        }
+
+        .header {
+          display: flex;
+          align-items: center;
+        }
+        .bt-logo-png {
+          width: 280px;
+          height: auto;
+        }
+        .title-top {
+          font-size: 40px;
+          font-weight: bold;
+          flex: 1;
+          text-align: center;
+          padding-left: 100px;
+        }
+        .divider {
+          height: 1.5px;
+          background: #000;
+          margin: 15px -40px 25px -40px;
+        }
+
+        .form-area {
+          font-size: 21px;
+          font-weight: bold;
+          line-height: 1.2;
+        }
+        .row {
+          display: flex;
+          margin-bottom: 8px;
+          align-items: flex-start;
+        }
+        .f-label {
+          width: 480px;
+          flex-shrink: 0;
+        }
+        .f-colon {
+          width: 25px;
+          flex-shrink: 0;
+        }
+        .f-value {
+          flex: 1;
+          word-break: break-all;
+          text-transform: uppercase;
+          font-size: 23px;
+        }
+
+        .strikethrough {
+          text-decoration: line-through;
+          text-decoration-thickness: 3px;
+        }
+
+        .c-grid {
+          display: flex;
+          align-items: center;
+        }
+        .c-labels {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+        .c-boxes {
+          display: flex;
+          flex-direction: column;
+          margin: 0 12px;
+        }
+        .box {
+          width: 70px;
+          height: 38px;
+          border: 1.5px solid #000;
+          background: white;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          font-size: 30px;
+        }
+
+        .signature-wrapper {
+          position: absolute;
+          bottom: 60px;
+          left: 40px;
+          right: 40px;
+          display: flex;
+          justify-content: space-between;
+          padding: 0 20px;
+        }
+
+        .sig-column {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          width: 350px;
+          position: relative;
+        }
+
+        .sig-text {
+          font-size: 21px;
+          font-weight: bold;
+          margin-bottom: 5px;
+        }
+
+        .sig-container {
+          width: 100%;
+          height: 120px;
+          position: relative;
+          display: flex;
+          justify-content: center;
+          align-items: flex-end;
+        }
+
+        .petugas-container {
+          padding-top: 35px;
+        }
+
+        .digital-sig {
+          position: absolute;
+          top: 0;
+          width: 180px;
+          height: 90px;
+          object-fit: contain;
+          z-index: 1;
+        }
+
+        .name-wrapper {
+          width: 100%;
+          height: 45px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 2;
+          position: relative;
+        }
+
+        .bracket {
+          font-size: 35px;
+          position: absolute;
+          font-weight: normal;
+        }
+        .b-left {
+          left: 20px;
+        }
+        .b-right {
+          right: 20px;
+        }
+
+        .dummy-sig {
+          font-size: 22px;
+          font-weight: bold;
+          white-space: nowrap;
+          text-transform: uppercase;
+          text-align: center;
+        }
+
+        .cp-code {
+          margin-top: 5px;
+          font-weight: bold;
+          font-size: 17px;
+          letter-spacing: 0.3px;
+          width: 100%;
+          text-align: center;
+          white-space: nowrap;
+        }
+
+        .footer-text {
+          position: absolute;
+          bottom: 20px;
+          left: 40px;
+          right: 40px;
+          font-size: 18px;
+          font-weight: normal;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        @media print {
+          body {
+            background: #fff;
+            display: block;
+            width: 100%;
+          }
+          .main-wrapper {
+            width: 100%;
+          }
+          .label-canvas {
+            transform: scale(1);
+            margin: 0 auto;
+            box-shadow: none;
+            border: 1px solid #000;
+            background-color: #bad34a !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+        }
+      `}</style>
+
+      <div className="main-wrapper">
+        <div className="label-canvas">
+          <div className="header">
+            <img
+              src="/assets/logo.png"
+              className="bt-logo-png"
+              alt="Logo"
+              loading="eager"
+              draggable={false}
+            />
+            <h1 className="title-top">TELAH DIBERSIHKAN</h1>
+          </div>
+          <div className="divider"></div>
+
+          <div className="form-area">
+            <div className="row">
+              <div className="f-label">
+                <span className={labelData.KategoriType !== 'alat' ? 'strikethrough' : ''}>ALAT</span>/
+                <span className={labelData.KategoriType !== 'mesin' ? 'strikethrough' : ''}>MESIN</span>/
+                <span className={labelData.KategoriType !== 'ruang' ? 'strikethrough' : ''}>RUANG</span>
+              </div>
+              <div className="f-colon">:</div>
+              <div className="f-value">{safeValue(labelData.KategoriName)}</div>
+            </div>
+            <div className="row">
+              <div className="f-label">
+                <span className={labelData.JenisKode !== 'produk' ? 'strikethrough' : ''}>KODE PRODUK</span>/
+                <span className={labelData.JenisKode !== 'material' ? 'strikethrough' : ''}>MATERIAL SEBELUMNYA</span>
+              </div>
+              <div className="f-colon">:</div>
+              <div className="f-value">{safeValue(labelData.IsiKode)}</div>
+            </div>
+            <div className="row">
+              <div className="f-label">
+                <span className={labelData.IdentitasProdukType !== 'batch' ? 'strikethrough' : ''}>NO. BATCH</span> /{' '}
+                <span className={labelData.IdentitasProdukType !== 'qc' ? 'strikethrough' : ''}>NO. QC</span>
+              </div>
+              <div className="f-colon">:</div>
+              <div className="f-value">{safeValue(labelData.IdentitasProdukVal)}</div>
+            </div>
+            <div className="row">
+              <div className="f-label">JENIS</div>
+              <div className="f-colon">:</div>
+              <div className="f-value">
+                <span className={labelData.JenisPekerjaan !== 'cleaning' ? 'strikethrough' : ''}>CLEANING</span>/
+                <span className={labelData.JenisPekerjaan !== 'sanitasi' ? 'strikethrough' : ''}>SANITASI</span> *
+              </div>
+            </div>
+            <div className="row">
+              <div className="f-label">PELAKSANAAN PEMBERISIHAN</div>
+              <div className="f-colon">:</div>
+              <div className="c-grid">
+                <div className="c-labels">
+                  <div>RUTIN</div>
+                  <div>BERKALA</div>
+                </div>
+                <div className="c-boxes">
+                  <div className="box">{labelData.TipePembersihan === 'Rutin' ? '✔' : '-'}</div>
+                  <div className="box" style={{ marginTop: '-1.5px' }}>
+                    {labelData.TipePembersihan === 'Berkala' ? '✔' : '-'}
+                  </div>
+                </div>
+                <div className="c-tgl">
+                  <div style={{ fontSize: '21px', fontWeight: 'bold' }}>
+                    TGL{' '}
+                    <span style={{ marginLeft: '10px' }}>
+                      {labelData.TipePembersihan === 'Rutin' ? formatDate(labelData.TglPelaksanaan) : '-'}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '21px', fontWeight: 'bold', marginTop: '16px' }}>
+                    TGL{' '}
+                    <span style={{ marginLeft: '10px' }}>
+                      {labelData.TipePembersihan === 'Berkala' ? formatDate(labelData.TglPelaksanaan) : '-'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="row" style={{ marginTop: '5px' }}>
+              <div className="f-label">TANGGAL ED / DIBERSIHKAN KEMBALI</div>
+              <div className="f-colon">:</div>
+              <div className="f-value">{formatDate(labelData.TglEDKembali)}</div>
+            </div>
+            <div className="row">
+              <div className="f-label">TANGGAL ED MASA PAKAI</div>
+              <div className="f-colon">:</div>
+              <div className="f-value">{formatDate(labelData.TglEDMasaPakai)}</div>
+            </div>
+          </div>
+
+          <div className="signature-wrapper">
+            <div className="sig-column">
+              <div className="sig-text">PARAF PETUGAS</div>
+              <div className="sig-container petugas-container">
+                {!!petugasData.ParafFile && (
+                  <img
+                    src={`/assets/${petugasData.ParafFile}${currentTimestamp ? `?t=${encodeURIComponent(String(currentTimestamp))}` : ''}`}
+                    className="digital-sig"
+                    alt="Paraf Petugas"
+                    loading="lazy"
+                    draggable={false}
+                  />
+                )}
+                <div className="name-wrapper">
+                  <span className="bracket b-left">(</span>
+                  <div className="dummy-sig">{safeValue(petugasData.NamaParaf)}</div>
+                  <span className="bracket b-right">)</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="sig-column">
+              <div className="sig-text">PARAF PEMERIKSA</div>
+              <div className="sig-container">
+                {!!pemeriksaData.ParafFile && (
+                  <img
+                    src={`/assets/${pemeriksaData.ParafFile}${currentTimestamp ? `?t=${encodeURIComponent(String(currentTimestamp))}` : ''}`}
+                    className="digital-sig"
+                    alt="Paraf Pemeriksa"
+                    loading="lazy"
+                    draggable={false}
+                  />
+                )}
+                <div className="name-wrapper">
+                  <span className="bracket b-left">(</span>
+                  <div className="dummy-sig">{safeValue(pemeriksaData.NamaParaf)}</div>
+                  <span className="bracket b-right">)</span>
+                </div>
+              </div>
+              <div className="cp-code">CR-PR-PR-1037.02 (20 May 2025)</div>
+            </div>
+          </div>
+
+          <div className="footer-text">
+            Label yang sudah terisi lengkap ditempel pada alat/mesin/ruangan yang sudah selesai dilakukan pembersihan.
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+export default React.memo(PreviewBersih);
