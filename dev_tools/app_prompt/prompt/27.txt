@@ -1,0 +1,17 @@
+Berdasarkan seluruh konteks percakapan ini serta seluruh file source code yang telah kamu generate sebelumnya, buat hanya daftar perintah CLI yang diperlukan untuk menjalankan proyek dari awal hingga aplikasi berhasil dijalankan.
+
+Aturan wajib:
+
+- Gunakan konteks proyek yang sudah ada (struktur file, nama module, dependensi, nama executable, dll.).
+- Jangan mengulang atau membuat ulang source code Go.
+- Jangan membuat file apa pun.
+- Jangan menjelaskan setiap perintah.
+- Jangan memberikan tips, catatan, atau penjelasan tambahan.
+- Jangan menggunakan format one-liner ("&&", ";", atau sejenisnya).
+- Setiap perintah harus berada pada baris terpisah.
+- Gunakan urutan yang benar sehingga pengguna cukup menyalin seluruh blok perintah dan menjalankannya satu per satu.
+- Jika suatu langkah tidak diperlukan berdasarkan konteks proyek, jangan sertakan.
+- Jika dependensi perlu diunduh, sertakan perintah yang diperlukan.
+- Akhiri dengan perintah untuk menjalankan aplikasi.
+
+Output hanya berupa command list CLI tanpa teks lain.
