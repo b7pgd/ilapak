@@ -1,0 +1,180 @@
+Instruksi Analisis PDF
+
+Baca seluruh isi file PDF ini secara menyeluruh. Jangan hanya merangkum, tetapi lakukan analisis mendalam terhadap struktur, isi, tujuan, dan potensi pemanfaatannya.
+
+Berikan hasil dalam format berikut:
+
+1. Ringkasan Umum
+
+- Judul dokumen.
+- Topik utama.
+- Ringkasan singkat (3–10 paragraf sesuai panjang dokumen).
+- Tingkat kesulitan pembaca (pemula, menengah, ahli).
+
+2. Tujuan Dokumen
+
+Jelaskan:
+
+- Dokumen ini dibuat untuk tujuan apa.
+- Masalah apa yang ingin diselesaikan.
+- Siapa target pembacanya.
+- Apa hasil yang diharapkan setelah seseorang membaca dokumen ini.
+
+3. Struktur Dokumen
+
+Uraikan seluruh struktur dokumen:
+
+- Daftar bab.
+- Subbab.
+- Hubungan antarbagian.
+- Alur pembahasan dari awal hingga akhir.
+
+4. Pembahasan Detail
+
+Untuk setiap bab atau bagian:
+
+- Jelaskan inti pembahasannya.
+- Konsep penting.
+- Istilah teknis beserta penjelasannya.
+- Contoh yang diberikan.
+- Hubungan dengan bagian lain.
+
+Jangan melewatkan bagian apa pun.
+
+5. Konsep Inti
+
+Daftarkan semua konsep penting beserta:
+
+- Definisi.
+- Fungsi.
+- Kelebihan.
+- Kekurangan.
+- Kapan digunakan.
+- Hubungannya dengan konsep lain.
+
+6. Insight Penting
+
+Identifikasi:
+
+- Ide utama.
+- Insight yang tidak langsung terlihat.
+- Pola yang muncul.
+- Prinsip-prinsip yang mendasari dokumen.
+
+7. Pengetahuan yang Didapat
+
+Setelah membaca dokumen ini, seseorang akan memahami:
+
+- ...
+- ...
+- ...
+  Buat selengkap mungkin.
+
+8. Potensi Pemanfaatan
+
+Jelaskan semua kemungkinan penggunaan isi dokumen, misalnya:
+
+- Dijadikan aplikasi.
+- Website.
+- Sistem backend.
+- API.
+- AI Agent.
+- Chatbot.
+- Automation.
+- Workflow.
+- SOP.
+- Dokumentasi.
+- Materi pembelajaran.
+- Buku.
+- Modul pelatihan.
+- Template.
+- Framework.
+- Library.
+- Tools.
+- Dataset.
+- Analisis bisnis.
+- Produk komersial.
+- Open source.
+- Dan kemungkinan lainnya.
+
+Untuk setiap kemungkinan jelaskan:
+
+- Cara implementasi.
+- Tingkat kesulitan.
+- Manfaat.
+- Nilai tambah.
+
+9. Ide Pengembangan
+
+Berikan sebanyak mungkin ide lanjutan yang terinspirasi dari dokumen ini.
+Kelompokkan berdasarkan kategori dan jelaskan alasan setiap ide.
+
+10. Hubungan dengan Teknologi Lain
+
+Jika relevan, jelaskan hubungan isi dokumen dengan:
+
+- AI
+- Machine Learning
+- LLM
+- Golang
+- Node.js
+- Python
+- Flutter
+- React
+- Next.js
+- PostgreSQL
+- MySQL
+- Docker
+- Kubernetes
+- Cloud
+- DevOps
+- Security
+- Mobile
+- Web
+- IoT
+- dan teknologi lain yang berkaitan.
+
+11. Hal yang Kurang
+
+Analisis:
+
+- Apa yang belum dibahas.
+- Kekurangan dokumen.
+- Asumsi yang dibuat penulis.
+- Potensi masalah jika isi dokumen diterapkan.
+
+12. Pertanyaan yang Terjawab dan Belum Terjawab
+
+Buat dua daftar:
+
+- Pertanyaan yang berhasil dijawab oleh dokumen.
+- Pertanyaan yang masih belum dijawab.
+
+13. Peta Konsep
+
+Buat peta konsep dalam bentuk teks (hierarki) yang menunjukkan hubungan seluruh topik di dalam dokumen.
+
+14. Kata Kunci
+
+Daftarkan seluruh kata kunci penting beserta penjelasan singkatnya.
+
+15. Kesimpulan Akhir
+
+Berikan evaluasi menyeluruh mengenai:
+
+- Nilai dokumen.
+- Kegunaan.
+- Keunggulan.
+- Kelemahan.
+- Siapa yang paling cocok membacanya.
+- Bagaimana memanfaatkan isi dokumen secara maksimal.
+
+Aturan Analisis
+
+- Baca seluruh halaman sebelum menyimpulkan.
+- Jangan mengabaikan lampiran, tabel, gambar, diagram, atau contoh.
+- Jika terdapat kode program, jelaskan fungsi setiap bagian dan arsitektur yang digunakan.
+- Jika terdapat diagram, jelaskan maknanya secara rinci.
+- Bedakan dengan jelas antara fakta yang tertulis di dokumen dan interpretasi atau analisismu sendiri.
+- Jangan mengarang informasi yang tidak ada di dokumen. Jika ada bagian yang ambigu, jelaskan bahwa interpretasi tersebut bersifat dugaan beserta alasannya.
+- Gunakan heading yang rapi dan berikan penjelasan yang mendalam pada setiap bagian.
