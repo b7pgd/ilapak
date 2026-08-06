@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catatan Evaluasi Presentasi</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<style>
+body{
+    font-family: Arial, Helvetica, sans-serif;
+    font-size:15px;
+    line-height:1.7;
+    color:#000;
+    background:#fff;
+    margin:40px;
+}
+
+#content{
+    max-width:900px;
+    margin:auto;
+}
+
+h1{
+    text-align:center;
+    font-size:28px;
+    margin-bottom:30px;
+}
+
+h2{
+    font-size:22px;
+    margin-top:35px;
+    margin-bottom:15px;
+    border-bottom:1px solid #000;
+    padding-bottom:5px;
+}
+
+h3{
+    font-size:18px;
+    margin-top:25px;
+    margin-bottom:10px;
+}
+
+p{
+    margin:8px 0;
+}
+
+blockquote{
+    margin:10px 0 20px 25px;
+    padding-left:15px;
+    border-left:3px solid #000;
+    font-weight:bold;
+}
+
+ul{
+    margin-top:10px;
+}
+
+li{
+    margin:8px 0;
+}
+
+button{
+    padding:10px 18px;
+    font-size:15px;
+    cursor:pointer;
+    margin-bottom:25px;
+}
+
+@media print{
+    button{
+        display:none;
+    }
+
+    body{
+        margin:25px;
+    }
+}
+</style>
+</head>
+<body>
+
+<button onclick="downloadPDF()">Download PDF</button>
+
+<div id="content">
+
+<h1>Catatan Evaluasi Presentasi</h1>
+
+<h2>1. Kesalahan & Hal yang Kurang (Perlu Ditambah / Diperbaiki)</h2>
+
+<h3>Penulisan Target Kurang Jelas (Belum Terukur)</h3>
+
+<p><strong>Kesalahan:</strong></p>
+<p>
+Target pada slide hanya ditulis <em>"mengantisipasi potensi form hilang"</em>
+sehingga dinilai masih ambigu.
+</p>
+
+<p><strong>Perbaikan:</strong></p>
+
+<blockquote>
+Menurunkan kasus form hilang dari <strong>4 kejadian</strong> menjadi
+<strong>0 kejadian</strong>.
+</blockquote>
+
+<h3>Sistem Masih Memiliki Celah Perubahan Data (Paling Krusial)</h3>
+
+<p><strong>Kesalahan:</strong></p>
+
+<p>
+Setelah admin selesai melakukan verifikasi data lembur, operator masih dapat
+menginput atau mengubah data lembur susulan sehingga data backup menjadi tidak valid.
+</p>
+
+<p><strong>Perbaikan:</strong></p>
+
+<p>
+Tambahkan fitur <strong>Data Locking</strong>. Setelah data diverifikasi admin,
+data harus dikunci. Apabila terdapat input susulan, perubahan hanya dapat dilakukan
+melalui persetujuan admin atau mekanisme <strong>disposition</strong>.
+</p>
+
+<h3>Proses Pengembangan dan Alternatif Solusi Belum Disampaikan</h3>
+
+<p><strong>Kesalahan:</strong></p>
+
+<p>
+Presentasi memberi kesan bahwa pengembangan aplikasi berlangsung dengan mudah.
+</p>
+
+<p><strong>Perbaikan:</strong></p>
+
+<p>
+Jelaskan secara singkat proses pengembangan, seperti penggunaan
+<strong>Laravel</strong> dan bantuan AI, tantangan saat debugging serta integrasi
+backend dan frontend. Sampaikan pula bahwa sempat dipertimbangkan alternatif
+menggunakan vendor atau pihak eksternal.
+</p>
+
+<h3>Alur Presentasi di Awal Kurang Terstruktur</h3>
+
+<p><strong>Kesalahan:</strong></p>
+
+<p>
+Pembukaan presentasi masih berpindah-pindah antara pembahasan lembur dan
+permasalahan umum.
+</p>
+
+<p><strong>Perbaikan:</strong></p>
+
+<p>
+Latar Belakang → Stratifikasi Masalah → Data Kuantitatif
+(4 kejadian form hilang).
+</p>
+
+<h2>2. Pertanyaan Utama dari Juri</h2>
+
+<h3>"Web ini dibuat menggunakan apa dan seberapa sulit proses pembuatannya?"</h3>
+
+<p><strong>Jawaban:</strong></p>
+
+<p>
+Dikembangkan sendiri menggunakan framework <strong>Laravel</strong> dengan bantuan AI.
+Tantangan terbesar adalah proses debugging dan integrasi backend dengan frontend.
+</p>
+
+<h3>"Apa target resmi sistem ini terhadap masalah form hilang?"</h3>
+
+<p><strong>Jawaban:</strong></p>
+
+<p>
+Menurunkan kasus form hilang dari <strong>4 kejadian menjadi 0 kejadian</strong>.
+</p>
+
+<h3>"Apakah sistem ini sudah dikualifikasi atau didaftarkan ke QA (CSV)?"</h3>
+
+<p><strong>Jawaban:</strong></p>
+
+<p>
+Belum. Juri mengingatkan bahwa seluruh sistem komputer internal wajib
+didaftarkan dan dikualifikasi melalui <strong>Quality Assurance (QA)</strong>
+dalam proses <strong>Computer System Validation (CSV)</strong>.
+</p>
+
+<h3>"Apakah SPL dalam bentuk kertas masih digunakan?"</h3>
+
+<p><strong>Jawaban:</strong></p>
+
+<p>
+Masih digunakan karena merupakan dokumen resmi yang wajib dipindai.
+Aplikasi web berfungsi sebagai media backup data agar proses input admin lebih cepat.
+</p>
+
+<h2>3. Action Items</h2>
+
+<ul>
+<li>Ubah target menjadi indikator yang terukur (<strong>4 kejadian → 0 kejadian</strong>).</li>
+<li>Tambahkan fitur <strong>Data Locking</strong> agar data yang telah diverifikasi admin tidak dapat diubah tanpa otorisasi.</li>
+<li>Hubungi <strong>Pak Yudha / Tim QA</strong> untuk proses <strong>Computer System Validation (CSV)</strong>.</li>
+<li>Diskusikan dengan <strong>Pak Yudha</strong> kemungkinan implementasi web backup di site lain, seperti <strong>Cikarang</strong> dan <strong>Medan</strong>.</li>
+</ul>
+
+</div>
+
+<script>
+function downloadPDF(){
+    const element = document.getElementById("content");
+
+    html2pdf().set({
+        margin: 0.6,
+        filename: "Catatan_Evaluasi_Presentasi.pdf",
+        html2canvas: {
+            scale: 2
+        },
+        jsPDF: {
+            unit: "in",
+            format: "a4",
+            orientation: "portrait"
+        }
+    }).from(element).save();
+}
+</script>
+
+</body>
+</html>
