@@ -1,0 +1,453 @@
+You are given a list of exactly 50 English vocabulary words/phrases.
+
+Your task is to create ONE single coherent English passage that uses ALL 50 vocabulary items naturally and correctly.
+
+Core Objective
+
+The primary goal is natural, authentic, useful English usage.
+
+The passage should help a learner understand not only what each target word means, but also:
+
+- how native speakers naturally use it,
+- what words it commonly appears with,
+- what grammatical patterns surround it,
+- and what kind of situation makes that word appropriate.
+
+Do NOT treat this as a race to fit 50 words into a short story.
+
+The vocabulary list is mandatory, but natural English, grammatical correctness, and authentic usage are the highest priorities.
+
+---
+
+1. Use ALL 50 vocabulary items
+
+- Every single item in the input list MUST appear in the passage.
+- No item may be silently omitted.
+- Do not replace an item with a synonym.
+- Do not paraphrase an item.
+- Do not intentionally use a different word form when the supplied form can naturally be used as written.
+- Multi-word vocabulary items must remain intact and recognizable as complete expressions.
+- Capitalization may be adjusted when grammatically necessary, such as "Exiled" → "exiled".
+- Every target item must retain its intended meaning.
+
+Exact-form rule
+
+When a vocabulary item is supplied in a specific grammatical form, first try to construct a sentence that naturally allows that exact form to be used.
+
+For example, if the target item is:
+
+"Corrupting"
+
+Do NOT write:
+
+«“was scheming to corrupting the market”»
+
+because that is grammatically incorrect.
+
+Instead, restructure the sentence so the exact form works naturally:
+
+«“He was corrupting the market while scheming to drive honest businesses out.”»
+
+The target form should never be inserted into an incompatible grammatical structure merely to satisfy the list.
+
+Important distinction
+
+Do not change the target word just because it is inconvenient. Change the surrounding sentence instead.
+
+Only make a grammatical inflection if absolutely necessary and if preserving the original form would make correct natural English impossible.
+
+---
+
+2. ONE coherent scenario
+
+Create one continuous:
+
+- story,
+- situation,
+- conversation,
+- personal experience,
+- investigation,
+- sequence of events,
+- or related real-world situation.
+
+Do NOT create 50 unrelated example sentences.
+
+The passage should have:
+
+- a consistent setting,
+- logical events,
+- meaningful relationships between sentences,
+- and a clear progression from beginning to end.
+
+Characters, locations, and events may recur.
+
+---
+
+3. Choose the scenario AFTER analyzing the vocabulary
+
+Before writing, internally analyze the entire vocabulary list first.
+
+Identify:
+
+- semantic relationships,
+- natural collocations,
+- words that belong to the same domain,
+- words suggesting particular situations,
+- formal vs casual vocabulary,
+- unusual or specialized words,
+- and grammatical forms that require particular sentence structures.
+
+Then choose the scenario that allows the largest number of target words to be used naturally.
+
+Use this process:
+
+Vocabulary → semantic/collocation analysis → scenario selection → story structure → final passage
+
+Do NOT:
+
+generic story → force vocabulary into it
+
+The scenario does NOT have to be ordinary everyday conversation.
+
+If the vocabulary naturally fits a:
+
+- workplace,
+- family situation,
+- business conflict,
+- medical consultation,
+- veterinary situation,
+- investigation,
+- courtroom dispute,
+- political discussion,
+- historical event,
+- community problem,
+- travel experience,
+- technical situation,
+- or other realistic context,
+
+use that context.
+
+Choose the context that best serves the vocabulary.
+
+---
+
+4. Naturalness is the highest priority
+
+NEVER force a target word into an unnatural sentence merely because it must appear.
+
+If a target word is:
+
+- uncommon,
+- formal,
+- technical,
+- old-fashioned,
+- emotionally strong,
+- domain-specific,
+- or unusual in casual conversation,
+
+create a realistic context in which a competent native speaker would genuinely use it.
+
+Do NOT create sentences that are technically grammatical but obviously engineered around the vocabulary list.
+
+For example, if "defecate" appears, a veterinary, medical, biological, or pet-care context may be more natural than forcing it into a random everyday conversation.
+
+If "disarmament" appears, a political, military, diplomatic, or formal context may be appropriate.
+
+If "massless" appears, a scientific or physics-related context may be appropriate.
+
+The scenario may adapt to the vocabulary. The vocabulary must never be distorted to fit an arbitrary scenario.
+
+---
+
+5. Prefer authentic collocations and usage patterns
+
+Use each target word in a combination or grammatical pattern that native speakers would naturally use.
+
+The goal is:
+
+target word + natural collocation + correct grammar + appropriate context + correct meaning
+
+not merely:
+
+target word + grammatically possible sentence
+
+Prefer established or highly plausible usage patterns.
+
+Examples:
+
+- "renounce a claim"
+- "uncover the truth"
+- "get used to something"
+- "be tethered to something"
+- "a baseless accusation"
+- "an inspection revealed..."
+
+Avoid unusual combinations merely because they technically work.
+
+---
+
+6. Avoid vocabulary stuffing
+
+Do NOT cram target vocabulary into every sentence.
+
+Multiple target words may appear in one sentence when they naturally belong together.
+
+If combining them makes the sentence awkward, separate them across different sentences or events.
+
+The passage should NOT feel like a vocabulary checklist.
+
+It should feel like a genuine passage that happens to contain the target vocabulary.
+
+---
+
+7. Do NOT artificially simplify the scenario
+
+The surrounding English should be accessible, but the scenario itself should be whatever is most appropriate for the vocabulary.
+
+Do not avoid a realistic specialized context merely because some words are advanced.
+
+The purpose is to expose the learner to real usage, not to force every word into casual small talk.
+
+---
+
+8. Keep non-target English relatively accessible
+
+The 50 target items are the learning material.
+
+Therefore:
+
+- Prefer common English for non-target words.
+- Avoid unnecessary advanced vocabulary.
+- Avoid unnecessarily complicated sentence structures.
+- Keep the overall story easy enough to follow.
+- Make difficult target words reasonably inferable from context whenever possible.
+
+Do not deliberately add difficult vocabulary that is not part of the target list.
+
+---
+
+9. Prioritize correct grammar around exact target forms
+
+This rule is especially important.
+
+When a target item has an unusual grammatical form, construct the surrounding sentence around that form.
+
+Examples:
+
+If the target is:
+
+"Corrupting"
+
+Use:
+
+«“The company was corrupting the market...”»
+
+not:
+
+«“They planned on corrupting...”»
+
+if the supplied form does not fit the intended grammar.
+
+If the target is:
+
+"Approximates"
+
+use a grammatical subject that naturally takes the singular verb:
+
+«“The estimate approximates the actual cost.”»
+
+If the target is:
+
+"Whatnot"
+
+use it naturally as an informal catch-all expression:
+
+«“They sold tools, spare parts, cables, and whatnot.”»
+
+Never sacrifice grammar to preserve the target form. Restructure the sentence instead.
+
+---
+
+10. Length
+
+Do NOT force the passage into 100 words.
+
+Use approximately 150–300 words as a general target, but this is NOT a hard limit.
+
+If additional length is genuinely necessary to make all 50 items natural and coherent, exceed it.
+
+Do not add filler merely to increase the word count.
+
+Priority order:
+
+Naturalness → grammatical correctness → authentic usage → coherence → vocabulary coverage → reasonable length
+
+---
+
+11. Learning value
+
+The passage should teach usage through context.
+
+Whenever naturally possible, give enough surrounding information for the learner to infer:
+
+- what the target word means,
+- how it functions grammatically,
+- what words commonly appear around it,
+- and why a native speaker would choose that word in that situation.
+
+Do NOT define words explicitly.
+
+Do NOT add translations.
+
+Do NOT turn the passage into a lesson.
+
+Let the context teach the vocabulary naturally.
+
+---
+
+12. Internal planning process
+
+Before producing the final passage, internally perform the following steps.
+
+Step A — Inventory
+
+Identify all 50 target items and their grammatical forms.
+
+Step B — Semantic grouping
+
+Identify words that can naturally belong to the same situation or event.
+
+Step C — Difficult-word analysis
+
+Identify words that require a specific context or grammatical structure.
+
+Step D — Scenario selection
+
+Choose the single most natural realistic scenario for the entire vocabulary set.
+
+Step E — Story construction
+
+Build a coherent sequence of events that gives each target word a legitimate reason to appear.
+
+Step F — Natural drafting
+
+Write the passage as authentic English, not as a vocabulary exercise.
+
+Step G — Exact coverage check
+
+Compare the finished passage against the original 50-item list item by item.
+
+---
+
+Mandatory Final Validation
+
+Before returning the answer, internally verify ALL of the following:
+
+1. All 50 target items are present.
+2. No target item is missing.
+3. No target item has been accidentally replaced by a synonym.
+4. Multi-word expressions remain intact.
+5. Exact supplied grammatical forms are preserved whenever naturally possible.
+6. Every target item has the intended meaning.
+7. Every target item is grammatically correct.
+8. The sentence surrounding each target item is grammatically correct.
+9. Collocations are natural and plausible.
+10. No target word feels artificially inserted.
+11. Difficult words have an appropriate contextual reason for appearing.
+12. The scenario is realistic.
+13. The passage forms ONE coherent situation.
+14. Events logically connect.
+15. The passage reads naturally from beginning to end.
+16. Non-target vocabulary remains relatively accessible.
+17. No unnecessary advanced vocabulary has been introduced.
+18. The passage does not feel like a vocabulary checklist.
+19. The passage does not sacrifice grammar or natural English merely to preserve a target form.
+20. Every one of the 50 items has been independently accounted for.
+
+Critical validation rule
+
+Do not assume that you used all 50 items just because the passage feels complete. Explicitly check each item against the final passage before answering.
+
+If even ONE item is missing, revise the passage before returning it.
+
+---
+
+Conflict Rules
+
+If there is a conflict between:
+
+A. Using a word unnaturally
+
+and
+
+B. Restructuring the sentence or scenario so the word becomes natural
+
+→ ALWAYS choose B.
+
+If there is a conflict between:
+
+A. Keeping the scenario everyday
+
+and
+
+B. Choosing a specialized but realistic context
+
+→ ALWAYS choose B.
+
+If there is a conflict between:
+
+A. Changing the supplied target form
+
+and
+
+B. Restructuring the surrounding grammar
+
+→ ALWAYS choose B whenever possible.
+
+If there is a conflict between:
+
+A. Staying within the suggested word count
+
+and
+
+B. Maintaining natural English
+
+→ ALWAYS choose B.
+
+If there is a conflict between:
+
+A. Combining several target words into one sentence
+
+and
+
+B. Separating them into naturally flowing sentences
+
+→ ALWAYS choose B unless the combination is genuinely natural.
+
+The only non-negotiable content requirement is:
+
+ALL 50 vocabulary items must appear in the final passage.
+
+---
+
+Output Format
+
+Return ONLY the finished English passage.
+
+Do not include:
+
+- the vocabulary list,
+- numbering,
+- explanations,
+- translations,
+- word counts,
+- annotations,
+- vocabulary definitions,
+- analysis,
+- validation results,
+- headings,
+- bold text,
+- or comments about how the passage was generated.
+
+The vocabulary list will be provided below:
+
