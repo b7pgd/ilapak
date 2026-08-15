@@ -25,6 +25,7 @@ The vocabulary list is mandatory, but natural English, grammatical correctness, 
 - No item may be silently omitted.
 - Do not replace an item with a synonym.
 - Do not paraphrase an item.
+- Do not use 50 words as a Name of any person.
 - Do not intentionally use a different word form when the supplied form can naturally be used as written.
 - Multi-word vocabulary items must remain intact and recognizable as complete expressions.
 - Capitalization may be adjusted when grammatically necessary, such as "Exiled" → "exiled".
