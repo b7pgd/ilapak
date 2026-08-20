@@ -47,6 +47,13 @@
             padding: 12px 16px;
             border-radius: 8px;
             border-left: 4px solid #0066cc;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .info-data {
+            flex: 1;
+            margin-right: 8px;
         }
         .label {
             font-size: 12px;
@@ -60,6 +67,25 @@
             color: #1e293b;
             font-weight: 600;
             word-break: break-all;
+        }
+        .btn-copy {
+            background-color: #e2e8f0;
+            color: #334155;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+            white-space: nowrap;
+        }
+        .btn-copy:active {
+            background-color: #cbd5e1;
+        }
+        .btn-copy.copied {
+            background-color: #22c55e;
+            color: #ffffff;
         }
         .btn {
             display: block;
@@ -88,18 +114,41 @@
         </div>
         <div class="content">
             <div class="info-group">
-                <div class="label">User</div>
-                <div class="value">superadmin</div>
+                <div class="info-data">
+                    <div class="label">User</div>
+                    <div class="value" id="val-user">superadmin</div>
+                </div>
+                <button class="btn-copy" onclick="copyToClipboard('val-user', this)">Copy</button>
             </div>
-            
+
             <div class="info-group">
-                <div class="label">Pass</div>
-                <div class="value">Admin@123</div>
+                <div class="info-data">
+                    <div class="label">Pass</div>
+                    <div class="value" id="val-pass">Admin@123</div>
+                </div>
+                <button class="btn-copy" onclick="copyToClipboard('val-pass', this)">Copy</button>
             </div>
 
             <a href="http://10.167.170.56/form-am-v2" class="btn" target="_blank">Buka Form AM Digital</a>
         </div>
     </div>
+
+    <script>
+        function copyToClipboard(elementId, btnElement) {
+            const textToCopy = document.getElementById(elementId).innerText;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const originalText = btnElement.innerText;
+                btnElement.innerText = 'Copied!';
+                btnElement.classList.add('copied');
+                setTimeout(() => {
+                    btnElement.innerText = originalText;
+                    btnElement.classList.remove('copied');
+                }, 1500);
+            }).catch(err => {
+                console.error('Gagal menyalin teks: ', err);
+            });
+        }
+    </script>
 
 </body>
 </html>
