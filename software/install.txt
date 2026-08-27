@@ -2,4 +2,71 @@
  py weighing_spy.py   
  pyinstaller --onefile weighing_spy.py
 
+ pip install pywinauto
+
  go build -o file.exe file.go
+
+
+ pyinstaller --clean --onefile weighing_spy2.py
+
+
+
+ Penimbangan FG
+Informasi Work Order
+Work Order: 262005631-100
+Sub Lot:
+Formula:
+LKMCA
+Material:
+KOMIX COUGH LIQ NIG /30SCH
+Info Penimbangan
+Mode Penimbanga CW
+Nomor Pallet
+PP-262005631-100-06
+Nomor Mb
+0013
+Range (KG):
+14.5335
+To
+14.9300
+Work Station: B7-PGDPRDD13
+Nama Line
+G02
+Nomor Batch JH968 1G
+Jumlah mb untuk menentukar 0
+Penimbang
+Timbangan
+NAZ119
+2PL-TMB-015
+Minimum Weight(KG): 0.050
+COM1: Sartorius
+Actual:
+Kg
+G
+Mg
+0 000 000 Stable
+‹ PREVIOUS
+Packing Info
+1 Pack: 1
+1 MB:
+50
+1 Pallet: 24
+BOX
+Pack
+MB
+Pengepak SRIMULY
+Master Box
+12
+11
+10
+Actual Quantity
+14.592
+14.6005
+11 595
+UOM
+KG
+KG
+IKG
+Master box terakhir
+INCOMPLETE MB
+Keluar
