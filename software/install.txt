@@ -1,0 +1,5 @@
+ pip install pyinstaller
+ py weighing_spy.py   
+ pyinstaller --onefile weighing_spy.py
+
+ go build -o file.exe file.go
