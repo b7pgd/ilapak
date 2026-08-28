@@ -1,0 +1,77 @@
+{
+  "tool": "capture.py",
+  "target": {
+    "title": "Penimbangan FG",
+    "process_name": "3ws.net.exe",
+    "pid": 22016,
+    "hwnd": "0x440694",
+    "attached_at": "2026-08-29 05:17:32.335"
+  },
+  "captures": [
+    {
+      "timestamp": "2026-08-29 05:17:36.533",
+      "event": "activity_detected",
+      "work_order": "262005652-100",
+      "product_code": "KOMIX COUGH LIQ NIG /30SCH",
+      "formula": "LKMCA",
+      "batch": "JH977   1M",
+      "machine": "",
+      "packer": "SNC033",
+      "scale": "2PL-TMB-008",
+      "start_packaging": {
+        "type": "mid process",
+        "timestamp": "2026-08-29 05:17:36.533"
+      },
+      "end_packaging": {
+        "type": "end process",
+        "timestamp": "2026-08-29 05:51:58.516"
+      },
+      "incomplete_mb": {
+        "exists": true,
+        "enabled": true
+      },
+      "last_mb": {
+        "exists": true,
+        "enabled": true
+      }
+    }
+  ]
+}
+
+
+
+
+========================================================================
+PACKAGING SESSION : MID PROCESS
+========================================================================
+Work Order       : 262005652-100
+Product Code     : KOMIX COUGH LIQ NIG /30SCH
+Formula          : LKMCA
+Batch            : JH977   1M
+Packer           : SNC033
+Scale            : 2PL-TMB-008
+------------------------------------------------------------------------
+Start Packaging  : mid process (2026-08-29 05:17:36.533)
+End Packaging    : - (-)
+------------------------------------------------------------------------
+Incomplete MB     : exists=true enabled=true
+Master Box Last   : exists=true enabled=true
+========================================================================
+
+========================================================================
+PACKAGING SESSION : END PROCESS
+========================================================================
+Work Order       : 262005652-100
+Product Code     : KOMIX COUGH LIQ NIG /30SCH
+Formula          : LKMCA
+Batch            : JH977   1M
+Packer           : SNC033
+Scale            : 2PL-TMB-008
+------------------------------------------------------------------------
+Start Packaging  : mid process (2026-08-29 05:17:36.533)
+End Packaging    : end process (2026-08-29 05:51:58.516)
+------------------------------------------------------------------------
+Incomplete MB     : exists=true enabled=true
+Master Box Last   : exists=true enabled=true
+========================================================================
+
