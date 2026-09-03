@@ -1,0 +1,337 @@
+Siap. Ini gue rangkum **workflow deploy B7_3WS Server + NSSM + logging** yang sekarang sudah berhasil, jadi nanti di server lain tinggal ngikutin pola ini.
+
+# Workflow Production B7_3WS + NSSM
+
+## 1. Struktur folder production
+
+Server Go dipasang seperti ini:
+
+```text
+D:\b7_3ws\run_server\
+├── b7_3ws.exe
+├── .env
+├── templates\
+│   ├── dashboard.html
+│   └── monitor.html
+└── static\
+    └── layout.css
+```
+
+`b7_3ws.exe` adalah hasil build:
+
+```powershell
+cd D:\b7_3ws
+go build -o b7_3ws.exe .
+```
+
+Karena kode server sekarang masih membaca `templates` dan `static` dari filesystem, **folder tersebut wajib ikut deploy**.
+
+`.env` juga tetap external untuk konfigurasi database/environment.
+
+---
+
+# 2. NSSM
+
+Di server cukup punya **1 file NSSM**, misalnya:
+
+```text
+D:\b7_stok_opname\nssm.exe
+```
+
+NSSM **tidak perlu disalin ke folder project**.
+
+Satu `nssm.exe` bisa dipakai untuk banyak Windows Service berbeda.
+
+Contoh arsitektur:
+
+```text
+D:\b7_stok_opname\nssm.exe
+
+Services:
+├── B7_3WS
+├── Project2
+├── Project3
+└── dst...
+```
+
+---
+
+# 3. Buat service B7_3WS
+
+PowerShell **Run as Administrator**.
+
+```powershell
+& "D:\b7_stok_opname\nssm.exe" install B7_3WS "D:\b7_3ws\run_server\b7_3ws.exe"
+```
+
+Output yang diharapkan:
+
+```text
+Service "B7_3WS" installed successfully!
+```
+
+---
+
+# 4. Set Working Directory
+
+Ini **penting banget**.
+
+```powershell
+& "D:\b7_stok_opname\nssm.exe" set B7_3WS AppDirectory "D:\b7_3ws\run_server"
+```
+
+Kenapa?
+
+Karena server lu membaca file relatif seperti:
+
+```text
+.env
+templates\
+static\
+```
+
+Working directory harus:
+
+```text
+D:\b7_3ws\run_server
+```
+
+---
+
+# 5. Set auto-start Windows
+
+```powershell
+& "D:\b7_stok_opname\nssm.exe" set B7_3WS Start SERVICE_AUTO_START
+```
+
+Artinya setelah Windows boot:
+
+```text
+Windows Boot
+   ↓
+B7_3WS service
+   ↓
+b7_3ws.exe
+```
+
+Tidak perlu buka terminal dan `go run .`.
+
+---
+
+# 6. Set auto-restart kalau EXE crash
+
+```powershell
+& "D:\b7_stok_opname\nssm.exe" set B7_3WS AppExit Default Restart
+& "D:\b7_stok_opname\nssm.exe" set B7_3WS AppRestartDelay 5000
+```
+
+Flow-nya:
+
+```text
+b7_3ws.exe crash
+      ↓
+NSSM mendeteksi process exit
+      ↓
+tunggu 5 detik
+      ↓
+start lagi
+```
+
+Ini salah satu alasan kenapa untuk server production lu lebih bagus pakai NSSM daripada Startup Shell.
+
+---
+
+# 7. Set logging
+
+Kita pasang:
+
+```powershell
+& "D:\b7_stok_opname\nssm.exe" set B7_3WS AppStdout "D:\b7_3ws\run_server\b7_3ws-service.log"
+
+& "D:\b7_stok_opname\nssm.exe" set B7_3WS AppStderr "D:\b7_3ws\run_server\b7_3ws-service-error.log"
+
+& "D:\b7_stok_opname\nssm.exe" set B7_3WS AppRotateFiles 1
+```
+
+Hasilnya:
+
+```text
+D:\b7_3ws\run_server\
+├── b7_3ws-service.log
+└── b7_3ws-service-error.log
+```
+
+### Catatan penting soal log
+
+Go `log.Println()` / `log.Printf()` secara default masuk ke **stderr**.
+
+Jadi dengan konfigurasi sekarang, sangat mungkin:
+
+```text
+b7_3ws-service.log        → kosong / sedikit
+b7_3ws-service-error.log  → log server utama
+```
+
+Ini **normal**.
+
+Untuk melihat log server:
+
+```powershell
+Get-Content "D:\b7_3ws\run_server\b7_3ws-service-error.log"
+```
+
+Atau live:
+
+```powershell
+Get-Content "D:\b7_3ws\run_server\b7_3ws-service-error.log" -Wait
+```
+
+---
+
+# 8. Start service
+
+```powershell
+& "D:\b7_stok_opname\nssm.exe" start B7_3WS
+```
+
+Lalu cek:
+
+```powershell
+Get-Service B7_3WS
+```
+
+Expected:
+
+```text
+Status   Name
+------   ----
+Running  B7_3WS
+```
+
+---
+
+# 9. Hal yang sempat terjadi
+
+Waktu setup kemarin service sempat:
+
+```text
+Paused
+```
+
+Penyebabnya **bukan NSSM rusak**.
+
+Ternyata masih ada terminal yang menjalankan:
+
+```powershell
+go run .
+```
+
+Server `go run .` tersebut sudah memakai port:
+
+```text
+2005
+```
+
+sehingga `b7_3ws.exe` dari NSSM tidak bisa bind ke port yang sama.
+
+### Rule production:
+
+Setelah service NSSM aktif:
+
+```text
+JANGAN jalankan go run .
+```
+
+Server production harus hanya punya:
+
+```text
+NSSM
+  ↓
+b7_3ws.exe
+```
+
+---
+
+# 10. Kalau mau restart manual
+
+```powershell
+& "D:\b7_stok_opname\nssm.exe" stop B7_3WS
+Start-Sleep -Seconds 2
+& "D:\b7_stok_opname\nssm.exe" start B7_3WS
+```
+
+Cek:
+
+```powershell
+Get-Service B7_3WS
+```
+
+---
+
+# 11. Checklist redeploy server baru
+
+Urutan paling aman:
+
+```text
+1. Install PostgreSQL
+2. Siapkan database db_3ws
+3. Copy:
+      b7_3ws.exe
+      .env
+      templates\
+      static\
+4. Pastikan port 2005 kosong
+5. Siapkan nssm.exe
+6. Install service B7_3WS
+7. Set AppDirectory
+8. Set SERVICE_AUTO_START
+9. Set auto-restart
+10. Set stdout/stderr log
+11. Start service
+12. Get-Service B7_3WS
+13. Test http://SERVER-IP:2005
+```
+
+Command inti yang perlu lu simpan:
+
+```powershell
+& "D:\b7_stok_opname\nssm.exe" install B7_3WS "D:\b7_3ws\run_server\b7_3ws.exe"
+
+& "D:\b7_stok_opname\nssm.exe" set B7_3WS AppDirectory "D:\b7_3ws\run_server"
+
+& "D:\b7_stok_opname\nssm.exe" set B7_3WS Start SERVICE_AUTO_START
+
+& "D:\b7_stok_opname\nssm.exe" set B7_3WS AppExit Default Restart
+
+& "D:\b7_stok_opname\nssm.exe" set B7_3WS AppRestartDelay 5000
+
+& "D:\b7_stok_opname\nssm.exe" set B7_3WS AppStdout "D:\b7_3ws\run_server\b7_3ws-service.log"
+
+& "D:\b7_stok_opname\nssm.exe" set B7_3WS AppStderr "D:\b7_3ws\run_server\b7_3ws-service-error.log"
+
+& "D:\b7_stok_opname\nssm.exe" set B7_3WS AppRotateFiles 1
+
+& "D:\b7_stok_opname\nssm.exe" start B7_3WS
+
+Get-Service B7_3WS
+```
+
+**Inti arsitektur final lu:**
+
+```text
+SERVER
+PostgreSQL
+   ↑
+b7_3ws.exe
+   ↑
+NSSM Windows Service
+   ↑
+AUTO START + AUTO RESTART
+
+11 PC USER
+B7CaptureAgent.exe
+   ↑
+Shell Startup
+```
+
+Jadi saat redeploy nanti, **nggak perlu `go run`, nggak perlu buka terminal**, dan `nssm.exe` cukup satu untuk semua service di server.
