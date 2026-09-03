@@ -61,11 +61,55 @@
       align-items: center;
       justify-content: center;
       gap: 12px;
+      position: relative;
     }
 
     .menu a:hover {
       transform: translateY(-4px);
       box-shadow: 0 16px 30px rgba(0,0,0,0.35);
+    }
+
+    /* Styling khusus untuk menu baru agar notice-able */
+    .menu a.new-item {
+      border: 2px solid #00f2fe;
+      animation: pulse-glow 2s infinite;
+    }
+
+    /* Badge tulisan BARU */
+    .badge-new {
+      background: #ff4757;
+      color: #ffffff;
+      font-size: 0.7rem;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 20px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      box-shadow: 0 2px 5px rgba(255, 71, 87, 0.4);
+      animation: bounce 1.5s infinite;
+    }
+
+    /* Efek pendaran cahaya (glow) */
+    @keyframes pulse-glow {
+      0% {
+        box-shadow: 0 0 0 0 rgba(0, 242, 254, 0.6);
+      }
+      70% {
+        box-shadow: 0 0 0 12px rgba(0, 242, 254, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(0, 242, 254, 0);
+      }
+    }
+
+    /* Efek sedikit membal pada badge */
+    @keyframes bounce {
+      0%, 100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-2px);
+      }
     }
 
     footer {
@@ -83,13 +127,18 @@
 
     <div class="menu">
       <a href="counter.html">🔢 Hitung Counter</a>
-      <a href="setting.html">⚙️ Simulasi Setting Mesin</a>
+      <!-- Menu Baru Ditambahkan Di Sini -->
+      <a href="http://10.167.166.66:2005" class="new-item">
+        📦 Monitoring Batch 
+        <span class="badge-new">BARU</span>
+      </a>
       <a href="https://b7pgd.github.io/ilapak/status/status.html">📋 Cek Status Release</a>
-      <a href="http://10.167.170.74:3000">💻 IPC Digital</a>
+      <a href="http://10.167.170.74">💻 IPC Digital</a>
       <a href="http://10.167.170.74:81">📊 OEE Digital</a>
       <a href="https://b7pgd.github.io/ilapak/am.html">📱 AM Digital</a>
       <a href="https://b7pgd.github.io/ilapak/berat_jenis.html">🧪 Cek Berat Jenis</a>
       <a href="https://docs.google.com/spreadsheets/d/1yWEbd6U4bdMF_HT4W7OZhgZTV9WHQGBGC7-LclXY_14/edit?usp=drivesdk" target="_blank">🏷️ Red Tag / White Tag</a>
+      <a href="setting.html">⚙️ Simulasi Setting Mesin</a>
     </div>
 
     <footer>
