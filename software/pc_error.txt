@@ -1,0 +1,125 @@
+Iya, dari kode lo tersangka utamanya memang global keyboard hook pynput, bukan USB-nya langsung.
+
+keyboard.Listener(on_press=self.on_key_press) itu global, jadi setiap tombol yang dikirim MA160 lewat HID bisa ikut masuk ke Windows sebagai keyboard input. Kalau MA160 mengirim banyak karakter + Enter/Tab, hook ini bisa bikin input/event queue Windows kebanjiran atau aplikasi lain ikut kena efek.
+
+Kalau PC lo sekarang sudah terasa ada window/browser yang "bengong", kita bisa kill proses Python + proses pynput/GUI yang terkait dulu.
+
+1. Kill semua Python yang kemungkinan menjalankan program lo
+
+Buka PowerShell sebagai Administrator, lalu:
+
+Get-Process python,pythonw -ErrorAction SilentlyContinue | Stop-Process -Force
+
+
+Kalau executable lo sudah di-build jadi .exe, cari dulu:
+
+Get-Process | Where-Object {
+    $_.ProcessName -match 'MA160|Sartorius|Analyzer'
+} | Select-Object Id,ProcessName,Path
+
+
+Kalau ketemu, kill:
+
+Get-Process | Where-Object {
+    $_.ProcessName -match 'MA160|Sartorius|Analyzer'
+} | Stop-Process -Force
+
+2. Kalau keyboard/HID masih terasa aneh
+
+Cek proses yang sedang jalan:
+
+Get-Process | Sort-Object CPU -Descending |
+Select-Object -First 20 ProcessName,Id,CPU
+
+
+Terus cek Python:
+
+Get-CimInstance Win32_Process |
+Where-Object { $_.Name -match 'python|pythonw|MA160|Sartorius|Analyzer' } |
+Select-Object ProcessId,Name,CommandLine
+
+
+Kalau program lo masih hidup walaupun namanya bukan python.exe, command kedua ini biasanya bakal kelihatan command line yang menjalankan script lo.
+
+3. Tapi ada hal penting di kode lo
+
+Ini bagian yang paling gue curigai:
+
+listener = keyboard.Listener(on_press=self.on_key_press)
+listener.daemon = True
+listener.start()
+
+
+Lo memasang global keyboard hook.
+
+Dan lebih parahnya, setiap karakter langsung melakukan:
+
+self.append_raw(char)
+
+
+yang kemudian:
+
+self.root.after(0, lambda: self._append_raw(clean))
+
+
+Jadi kalau MA160 nge-print report dengan ratusan karakter cepat:
+
+MA160 → HID keyboard → pynput hook → Python callback → Tkinter after() → update Text widget
+
+Itu bisa menghasilkan ratusan queued Tkinter callbacks dalam waktu sangat singkat.
+
+Selain itu ada ini:
+
+self.root.after(800, self.process_report)
+
+
+dan:
+
+self.root.after(500, self.check_inactivity)
+
+
+Jadi event loop Tkinter memang bisa makin penuh.
+
+4. Buat emergency cleanup tanpa matiin semua Python
+
+Kalau lo punya nama executable tertentu, misalnya MA160Analyzer.exe, lebih aman:
+
+Stop-Process -Name "MA160Analyzer" -Force -ErrorAction SilentlyContinue
+
+
+Kalau script masih pythonw.exe, lihat command line dulu:
+
+Get-CimInstance Win32_Process -Filter "Name = 'pythonw.exe'" |
+Select-Object ProcessId,CommandLine
+
+
+Lalu kill PID yang benar:
+
+Stop-Process -Id <PID> -Force
+
+
+Contoh:
+
+Stop-Process -Id 12345 -Force
+
+
+Jangan langsung Stop-Process semua python.exe kalau ada program Python lain yang sedang lo butuhkan.
+
+Yang menurut gue perlu dibenerin di program
+
+Jangan update Tkinter untuk setiap key.
+
+Sekarang:
+
+self.append_raw(char)
+
+
+sebaiknya data dikumpulkan di background/listener, lalu GUI di-update secara batch, misalnya setiap 50–100 ms.
+
+Dan bahkan lebih bagus lagi: jangan pakai global keyboard hook kalau MA160 sebenarnya muncul sebagai USB HID keyboard yang bisa ditangkap secara lebih spesifik.
+
+Karena dengan desain sekarang, MA160 bukan cuma "masuk ke aplikasi lo". Windows juga bisa melihatnya sebagai keyboard input. Itu sangat mungkin menjelaskan gejala:
+
+browser/window diklik → nggak respons → pindah aplikasi → balik → baru respons
+
+Kalau lo mau, gue bisa bedah kode lo dan ubah arsitekturnya supaya MA160 tetap bisa PRINT → otomatis kebaca → PDF, tapi input HID-nya nggak mengacaukan keyboard/browser Windows.
