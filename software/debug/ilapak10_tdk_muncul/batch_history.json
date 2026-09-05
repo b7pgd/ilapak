@@ -1,0 +1,102 @@
+[
+  {
+    "identity": "262005870-100|JJ256 1K|LKJTA",
+    "created_at": "2026-09-03T10:14:50.227037+00:00",
+    "updated_at": "2026-09-03T11:06:25.421965+00:00",
+    "data": {
+      "work_order": "262005870-100",
+      "product_code": "KOMIX RASA JAHE LIQ /30SCH",
+      "formula": "LKJTA",
+      "batch": "JJ256 1K",
+      "work_station": "B7-PGDPRDD10",
+      "machine": "MZA120",
+      "packer": "MNS361",
+      "scale": "2PL-TMB-013",
+      "pallet": "PP-262005870-100-08",
+      "nomor_mb": "0017",
+      "master_box": "terakhir",
+      "incomplete_mb": "enabled",
+      "last_mb": "enabled"
+    }
+  },
+  {
+    "identity": "262005872-100|JJ258 1K|LKJTA",
+    "created_at": "2026-09-03T12:28:18.875014+00:00",
+    "updated_at": "2026-09-03T18:21:23.766581+00:00",
+    "data": {
+      "work_order": "262005872-100",
+      "product_code": "KOMIX RASA JAHE LIQ /30SCH",
+      "formula": "LKJTA",
+      "batch": "JJ258 1K",
+      "work_station": "B7-PGDPRDD10",
+      "machine": "FPR151",
+      "packer": "TAM365",
+      "scale": "2PL-TMB-013",
+      "pallet": "PP-262005872-100-08",
+      "nomor_mb": "0017",
+      "master_box": "terakhir",
+      "incomplete_mb": "enabled",
+      "last_mb": "enabled"
+    }
+  },
+  {
+    "identity": "262005874-100|JJ260 1K|LKJTA",
+    "created_at": "2026-09-03T19:27:06.426109+00:00",
+    "updated_at": "2026-09-04T03:18:29.791354+00:00",
+    "data": {
+      "work_order": "262005874-100",
+      "product_code": "KOMIX RASA JAHE LIQ /30SCH",
+      "formula": "LKJTA",
+      "batch": "JJ260 1K",
+      "work_station": "B7-PGDPRDD10",
+      "machine": "MZA120",
+      "packer": "MNS361",
+      "scale": "2PL-TMB-013",
+      "pallet": "PP-262005874-100-08",
+      "nomor_mb": "0017",
+      "master_box": "terakhir",
+      "incomplete_mb": "enabled",
+      "last_mb": "enabled"
+    }
+  },
+  {
+    "identity": "262005875-100|JJ261 1K|LKJTA",
+    "created_at": "2026-09-04T04:06:28.436258+00:00",
+    "updated_at": "2026-09-04T12:24:16.882955+00:00",
+    "data": {
+      "work_order": "262005875-100",
+      "product_code": "KOMIX RASA JAHE LIQ /30SCH",
+      "formula": "LKJTA",
+      "batch": "JJ261 1K",
+      "work_station": "B7-PGDPRDD10",
+      "machine": "FPR151",
+      "packer": "DCA411",
+      "scale": "2PL-TMB-013",
+      "pallet": "PP-262005875-100-08",
+      "nomor_mb": "0018",
+      "master_box": "terakhir",
+      "incomplete_mb": "enabled",
+      "last_mb": "enabled"
+    }
+  },
+  {
+    "identity": "262005879-100|JJ265 1K|LKJTA",
+    "created_at": "2026-09-04T22:13:37.019819+00:00",
+    "updated_at": "2026-09-05T03:56:18.963521+00:00",
+    "data": {
+      "work_order": "262005879-100",
+      "product_code": "KOMIX RASA JAHE LIQ /30SCH",
+      "formula": "LKJTA",
+      "batch": "JJ265 1K",
+      "work_station": "B7-PGDPRDD10",
+      "machine": "MZA120",
+      "packer": "MNS361",
+      "scale": "2PL-TMB-013",
+      "pallet": "PP-262005879-100-08",
+      "nomor_mb": "0018",
+      "master_box": "terakhir",
+      "incomplete_mb": "enabled",
+      "last_mb": "enabled"
+    }
+  }
+]
