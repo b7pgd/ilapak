@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutorial Builder & Composer</title>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #f4f6f9;
+            --card-bg: #ffffff;
+            --accent-color: #2563eb;
+            --accent-hover: #1d4ed8;
+            --danger-color: #dc2626;
+            --danger-hover: #b91c1c;
+            --text-color: #1f2937;
+            --border-color: #e5e7eb;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+            max-width: 850px;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            color: #111827;
+            margin-bottom: 8px;
+        }
+
+        header p {
+            color: #6b7280;
+            font-size: 0.95rem;
+        }
+
+        .btn {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background-color: #4b5563;
+        }
+
+        .btn-secondary:hover {
+            background-color: #374151;
+        }
+
+        .btn-success {
+            background-color: #059669;
+        }
+
+        .btn-success:hover {
+            background-color: #047857;
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            padding: 6px 12px;
+            font-size: 0.8rem;
+        }
+
+        .btn-danger:hover {
+            background-color: var(--danger-hover);
+        }
+
+        .btn-action {
+            background-color: #e5e7eb;
+            color: #374151;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+        }
+
+        .btn-action:hover {
+            background-color: #d1d5db;
+        }
+
+        #items-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .add-step-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+
+        .item-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            position: relative;
+        }
+
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .item-title {
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .item-title.text {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+
+        .item-title.image {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 80px;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            resize: vertical;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+        }
+
+        .image-uploader-box {
+            border: 2px dashed var(--border-color);
+            border-radius: 6px;
+            padding: 16px;
+            text-align: center;
+            background: #fafafa;
+            cursor: pointer;
+            transition: border-color 0.2s, background-color 0.2s;
+        }
+
+        .image-uploader-box:hover, .image-uploader-box.dragover {
+            border-color: var(--accent-color);
+            background-color: #eff6ff;
+        }
+
+        .image-preview-wrapper {
+            margin-top: 8px;
+            text-align: center;
+        }
+
+        .image-preview-wrapper img {
+            max-width: 100%;
+            max-height: 320px;
+            width: auto;
+            height: auto;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            object-fit: contain;
+            margin: 0 auto;
+            display: block;
+        }
+
+        .file-info {
+            font-size: 0.8rem;
+            color: #6b7280;
+            margin-top: 6px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            background: var(--card-bg);
+            border-radius: 8px;
+            border: 2px dashed var(--border-color);
+            color: #6b7280;
+        }
+
+        .bottom-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 24px;
+        }
+
+        /* Modal Preview & Proporsi Tutorial */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background-color: white;
+            max-width: 750px;
+            margin: 40px auto;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .close-modal {
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            background: none;
+            color: #6b7280;
+        }
+
+        .preview-body {
+            line-height: 1.6;
+            color: #111827;
+            font-size: 1rem;
+        }
+
+        .preview-body p {
+            margin-bottom: 12px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .preview-body img {
+            max-width: 100%;
+            max-height: 420px;
+            width: auto;
+            height: auto;
+            display: block;
+            margin: 12px auto 24px auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+            object-fit: contain;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            background-color: #fee2e2;
+            border-left: 4px solid var(--danger-color);
+            color: #991b1b;
+            border-radius: 4px;
+            margin-bottom: 16px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Tutorial Builder & Composer</h1>
+    </header>
+
+    <div id="alert-box" class="alert"></div>
+
+    <div id="items-container">
+        <div class="empty-state" id="empty-state">
+            Belum ada konten. Klik "Add Step" di bawah untuk mulai membuat tutorial.
+        </div>
+    </div>
+
+    <div class="add-step-container">
+        <button class="btn" onclick="addPairItem()">+ Add Step (Text & Image)</button>
+    </div>
+
+    <div class="bottom-actions">
+        <button class="btn btn-secondary" onclick="openPreviewModal()">Preview</button>
+        <button class="btn btn-success" onclick="generateZip()">Generate ZIP</button>
+    </div>
+
+    <div id="preview-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Preview Tutorial</h2>
+                <button class="close-modal" onclick="closePreviewModal()">&times;</button>
+            </div>
+            <div id="preview-body" class="preview-body"></div>
+        </div>
+    </div>
+
+    <script>
+        let items = []; // Menyimpan state item: { id, type, content: string | File }
+
+        function showAlert(message) {
+            const alertBox = document.getElementById('alert-box');
+            alertBox.innerText = '⚠ ' + message;
+            alertBox.style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            setTimeout(() => {
+                alertBox.style.display = 'none';
+            }, 6000);
+        }
+
+        function escapeHtml(str) {
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function addTextItem(initialContent = '', render = true) {
+            items.push({
+                id: Date.now() + Math.random(),
+                type: 'text',
+                content: initialContent
+            });
+            if (render) renderItems();
+        }
+
+        function addImageItem(render = true) {
+            items.push({
+                id: Date.now() + Math.random(),
+                type: 'image',
+                content: null
+            });
+            if (render) renderItems();
+        }
+
+        function addImageAfter(id) {
+            const index = items.findIndex(i => i.id === id);
+            if (index !== -1) {
+                const newItem = {
+                    id: Date.now() + Math.random(),
+                    type: 'image',
+                    content: null
+                };
+                items.splice(index + 1, 0, newItem);
+                renderItems();
+            }
+        }
+
+        function addPairItem() {
+            addTextItem('', false);
+            addImageItem('', false);
+            renderItems();
+        }
+
+        function clearContent(id) {
+            const item = items.find(i => i.id === id);
+            if (item) {
+                item.content = item.type === 'text' ? '' : null;
+                renderItems();
+            }
+        }
+
+        function deleteContentWithConfirm(id) {
+            const item = items.find(i => i.id === id);
+            if (!item) return;
+            const jenis = item.type === 'text' ? 'teks' : 'gambar';
+            if (confirm(`Apakah Anda yakin ingin menghapus isi ${jenis} ini?`)) {
+                clearContent(id);
+            }
+        }
+
+        async function pasteContent(id) {
+            const item = items.find(i => i.id === id);
+            if (!item) return;
+
+            try {
+                if (item.type === 'text') {
+                    const text = await navigator.clipboard.readText();
+                    if (text) {
+                        item.content = text;
+                        renderItems();
+                    } else {
+                        showAlert('Clipboard kosong atau tidak berisi teks.');
+                    }
+                }
+            } catch (err) {
+                console.error(err);
+                showAlert('Gagal membaca clipboard. Pastikan izin akses clipboard sudah diberikan.');
+            }
+        }
+
+        function updateTextContent(id, value) {
+            const item = items.find(i => i.id === id);
+            if (item) item.content = value;
+        }
+
+        function handleFileSelect(id, file) {
+            if (!file) return;
+            if (!file.type.startsWith('image/')) {
+                showAlert('File harus berupa gambar (JPG, PNG, WEBP, GIF, dll).');
+                return;
+            }
+            const item = items.find(i => i.id === id);
+            if (item) {
+                item.content = file;
+                renderItems();
+            }
+        }
+
+        function renderItems() {
+            const container = document.getElementById('items-container');
+            const emptyState = document.getElementById('empty-state');
+
+            if (items.length === 0) {
+                container.innerHTML = '';
+                container.appendChild(emptyState);
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            container.innerHTML = '';
+            let imageCounter = 0;
+
+            items.forEach((item) => {
+                const card = document.createElement('div');
+                card.className = 'item-card';
+
+                if (item.type === 'image') imageCounter++;
+
+                const header = document.createElement('div');
+                header.className = 'item-header';
+
+                const title = document.createElement('span');
+                title.className = `item-title ${item.type}`;
+                title.innerText = item.type === 'text' ? 'TEXT' : `IMAGE #${imageCounter}`;
+
+                const actions = document.createElement('div');
+                actions.className = 'item-actions';
+
+                if (item.type === 'text') {
+                    const btnPaste = document.createElement('button');
+                    btnPaste.className = 'btn btn-action';
+                    btnPaste.innerText = 'Paste';
+                    btnPaste.onclick = () => pasteContent(item.id);
+
+                    const btnClear = document.createElement('button');
+                    btnClear.className = 'btn btn-action';
+                    btnClear.innerText = 'Clear';
+                    btnClear.onclick = () => clearContent(item.id);
+
+                    const btnHapus = document.createElement('button');
+                    btnHapus.className = 'btn btn-danger';
+                    btnHapus.innerText = 'Hapus';
+                    btnHapus.onclick = () => deleteContentWithConfirm(item.id);
+
+                    actions.appendChild(btnPaste);
+                    actions.appendChild(btnClear);
+                    actions.appendChild(btnHapus);
+                } else {
+                    const btnAdd = document.createElement('button');
+                    btnAdd.className = 'btn btn-action';
+                    btnAdd.innerText = 'Add';
+                    btnAdd.onclick = () => addImageAfter(item.id);
+
+                    const btnClear = document.createElement('button');
+                    btnClear.className = 'btn btn-action';
+                    btnClear.innerText = 'Clear';
+                    btnClear.onclick = () => clearContent(item.id);
+
+                    const btnHapus = document.createElement('button');
+                    btnHapus.className = 'btn btn-danger';
+                    btnHapus.innerText = 'Hapus';
+                    btnHapus.onclick = () => deleteContentWithConfirm(item.id);
+
+                    actions.appendChild(btnAdd);
+                    actions.appendChild(btnClear);
+                    actions.appendChild(btnHapus);
+                }
+
+                header.appendChild(title);
+                header.appendChild(actions);
+                card.appendChild(header);
+
+                if (item.type === 'text') {
+                    const textarea = document.createElement('textarea');
+                    textarea.placeholder = 'Ketik teks tutorial di sini...';
+                    textarea.value = item.content;
+                    textarea.oninput = (e) => updateTextContent(item.id, e.target.value);
+                    card.appendChild(textarea);
+                } else {
+                    const uploadBox = document.createElement('div');
+                    uploadBox.className = 'image-uploader-box';
+
+                    const fileInput = document.createElement('input');
+                    fileInput.type = 'file';
+                    fileInput.accept = 'image/*';
+                    fileInput.style.display = 'none';
+                    fileInput.onchange = (e) => handleFileSelect(item.id, e.target.files[0]);
+
+                    uploadBox.onclick = () => fileInput.click();
+
+                    uploadBox.ondragover = (e) => {
+                        e.preventDefault();
+                        uploadBox.classList.add('dragover');
+                    };
+                    uploadBox.ondragleave = () => uploadBox.classList.remove('dragover');
+                    uploadBox.ondrop = (e) => {
+                        e.preventDefault();
+                        uploadBox.classList.remove('dragover');
+                        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                            handleFileSelect(item.id, e.dataTransfer.files[0]);
+                        }
+                    };
+
+                    if (item.content) {
+                        const previewWrapper = document.createElement('div');
+                        previewWrapper.className = 'image-preview-wrapper';
+
+                        const img = document.createElement('img');
+                        img.src = URL.createObjectURL(item.content);
+
+                        const fileInfo = document.createElement('div');
+                        fileInfo.className = 'file-info';
+                        fileInfo.innerText = `${item.content.name} (${(item.content.size / 1024).toFixed(1)} KB) - Klik atau drag untuk mengganti`;
+
+                        previewWrapper.appendChild(img);
+                        previewWrapper.appendChild(fileInfo);
+                        uploadBox.appendChild(previewWrapper);
+                    } else {
+                        uploadBox.innerText = 'Klik atau seret (drag & drop) gambar ke sini';
+                    }
+
+                    uploadBox.appendChild(fileInput);
+                    card.appendChild(uploadBox);
+                }
+
+                container.appendChild(card);
+            });
+        }
+
+        function convertToJpegBlob(file) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                const url = URL.createObjectURL(file);
+
+                img.onload = () => {
+                    URL.revokeObjectURL(url);
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.naturalWidth || img.width;
+                    canvas.height = img.naturalHeight || img.height;
+
+                    const ctx = canvas.getContext('2d');
+                    if (!ctx) {
+                        reject(new Error('Gagal menginisialisasi Canvas Context.'));
+                        return;
+                    }
+
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(img, 0, 0);
+
+                    canvas.toBlob((blob) => {
+                        if (blob) {
+                            resolve(blob);
+                        } else {
+                            reject(new Error('Konversi gambar ke JPEG gagal.'));
+                        }
+                    }, 'image/jpeg', 0.9);
+                };
+
+                img.onerror = () => {
+                    URL.revokeObjectURL(url);
+                    reject(new Error(`Gagal membaca file gambar: ${file.name}`));
+                };
+
+                img.src = url;
+            });
+        }
+
+        function generateHtmlString() {
+            let htmlContent = '<!DOCTYPE html>\n<html lang="id">\n<head>\n';
+            htmlContent += '  <meta charset="UTF-8">\n';
+            htmlContent += '  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n';
+            htmlContent += '  <title>Tutorial</title>\n';
+            htmlContent += '  <style>\n';
+            htmlContent += '    body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; max-width: 750px; margin: 0 auto; padding: 20px; color: #111827; }\n';
+            htmlContent += '    p { margin-bottom: 12px; white-space: pre-wrap; word-break: break-word; font-size: 1rem; }\n';
+            htmlContent += '    img { max-width: 100%; max-height: 420px; width: auto; height: auto; display: block; margin: 12px auto 24px auto; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); object-fit: contain; }\n';
+            htmlContent += '  </style>\n';
+            htmlContent += '</head>\n<body>\n';
+
+            let imageIndex = 0;
+
+            items.forEach(item => {
+                if (item.type === 'text') {
+                    const textValue = item.content ? item.content.trim() : '';
+                    if (textValue) {
+                        const escapedText = escapeHtml(textValue);
+                        htmlContent += `  <p>${escapedText}</p>\n`;
+                    }
+                } else if (item.type === 'image') {
+                    imageIndex++;
+                    htmlContent += `  <img src="${imageIndex}.jpg" alt="Step ${imageIndex}">\n`;
+                }
+            });
+
+            htmlContent += '</body>\n</html>';
+            return htmlContent;
+        }
+
+        function openPreviewModal() {
+            if (items.length === 0) {
+                showAlert('Tidak ada item untuk dipreview.');
+                return;
+            }
+
+            const previewBody = document.getElementById('preview-body');
+            previewBody.innerHTML = '';
+
+            let imageIndex = 0;
+
+            items.forEach(item => {
+                if (item.type === 'text') {
+                    const textVal = item.content ? item.content.trim() : '';
+                    if (textVal) {
+                        const p = document.createElement('p');
+                        p.innerText = textVal;
+                        previewBody.appendChild(p);
+                    }
+                } else if (item.type === 'image') {
+                    imageIndex++;
+                    const img = document.createElement('img');
+                    if (item.content) {
+                        img.src = URL.createObjectURL(item.content);
+                    } else {
+                        img.alt = `[ Gambar #${imageIndex} belum dipilih ]`;
+                        img.style.padding = '20px';
+                        img.style.background = '#f3f4f6';
+                        img.style.border = '1px dashed #9ca3af';
+                    }
+                    previewBody.appendChild(img);
+                }
+            });
+
+            document.getElementById('preview-modal').style.display = 'block';
+        }
+
+        function closePreviewModal() {
+            document.getElementById('preview-modal').style.display = 'none';
+        }
+
+        async function generateZip() {
+            if (typeof JSZip === 'undefined') {
+                showAlert('Library JSZip gagal dimuat. Pastikan koneksi internet aktif untuk memuat CDN JSZip.');
+                return;
+            }
+
+            if (items.length === 0) {
+                showAlert('Tidak ada konten untuk diexport.');
+                return;
+            }
+
+            const emptyImages = items.filter(i => i.type === 'image' && !i.content);
+            if (emptyImages.length > 0) {
+                showAlert('Terdapat kotak gambar yang belum diisi. Mohon atur file gambar terlebih dahulu.');
+                return;
+            }
+
+            const zip = new JSZip();
+
+            try {
+                let imageIndex = 0;
+
+                for (let i = 0; i < items.length; i++) {
+                    const item = items[i];
+                    if (item.type === 'image' && item.content) {
+                        imageIndex++;
+                        const jpegBlob = await convertToJpegBlob(item.content);
+                        zip.file(`${imageIndex}.jpg`, jpegBlob);
+                    }
+                }
+
+                const htmlContent = generateHtmlString();
+                zip.file('text.html', htmlContent);
+
+                const content = await zip.generateAsync({ type: 'blob' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(content);
+                link.download = 'tutorial.zip';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+
+            } catch (err) {
+                console.error(err);
+                showAlert(`Gagal membuat ZIP: ${err.message}`);
+            }
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('preview-modal');
+            if (event.target === modal) {
+                closePreviewModal();
+            }
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            addPairItem();
+        });
+    </script>
+</body>
+</html>
