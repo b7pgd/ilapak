@@ -1,0 +1,15 @@
+Split codebase JavaScript yang saya berikan menjadi 2 atau lebih file sesuai pembagian yang saya minta.
+
+Poin utama:
+
+- Jangan ubah HTML apa pun. HTML harus tetap hanya memuat 1 file JS utama.
+- File JS utama menjadi entry point/loader yang otomatis memuat file JS hasil pecahan lainnya.
+- Nama file akan saya tentukan. Gunakan nama file yang saya berikan.
+- Pastikan urutan eksekusi, dependency, variable, function, event listener, dan initialization tetap benar.
+- Jangan sampai ada function/variable yang bentrok, dieksekusi dua kali, dependency belum tersedia, circular dependency, atau masalah loading/import.
+- Jangan mengubah behavior atau logic aplikasi yang sudah ada.
+- Pembagian file harus berdasarkan fungsi/tanggung jawab agar setiap file tetap mudah dikelola.
+- Setelah dipecah, aplikasi harus berjalan sama seperti sebelum dipecah.
+- Berikan kode lengkap untuk setiap file hasil split, bukan potongan kode.
+
+Fokus utama: 1 JS utama tetap menjadi satu-satunya file yang dimuat HTML, lalu JS tersebut mengatur loading dan hubungan seluruh file hasil split dengan aman dan berurutan.
