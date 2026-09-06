@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image -> Spatial Structured Data Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .canvas-container {
+            position: relative;
+            display: inline-block;
+            user-select: none;
+        }
+        #overlayCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            cursor: crosshair;
+        }
+        pre {
+            font-family: 'Courier New', Courier, monospace;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-sans pb-12">
+
+    <header class="bg-blue-600 p-4 text-white shadow-md sticky top-0 z-20 flex justify-between items-center">
+        <div class="flex items-center gap-2">
+            <i data-lucide="scan-spatial" class="w-6 h-6"></i>
+            <h1 class="text-lg font-bold tracking-wide">Spatial Converter</h1>
+        </div>
+        <span class="text-[10px] bg-blue-700 text-blue-100 px-2 py-0.5 rounded-full font-mono border border-blue-500">v2.0 OCR.Space Engine</span>
+    </header>
+
+    <div id="progressContainer" class="hidden bg-white border-b border-blue-100 p-3 shadow-inner">
+        <div class="flex justify-between items-center mb-1 text-xs text-blue-700 font-medium">
+            <span id="progressStatus" class="flex items-center gap-1.5">
+                <i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin text-blue-600"></i> Processing OCR...
+            </span>
+            <span id="progressPercent" class="font-bold">0%</span>
+        </div>
+        <div class="w-full bg-blue-100 rounded-full h-2.5 overflow-hidden">
+            <div id="progressBar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-200" style="width: 0%"></div>
+        </div>
+    </div>
+
+    <main class="flex-1 p-4 max-w-md mx-auto w-full flex flex-col gap-4">
+
+        <div class="border-2 border-dashed border-blue-300 hover:border-blue-500 rounded-xl p-5 text-center cursor-pointer transition-colors bg-white shadow-sm" id="dropZone">
+            <input type="file" id="fileInput" multiple accept="image/png, image/jpeg, image/webp, image/gif" class="hidden">
+            <i data-lucide="upload-cloud" class="w-10 h-10 mx-auto text-blue-500 mb-2"></i>
+            <p class="text-sm font-semibold text-slate-700">Upload Screenshot / Gambar</p>
+            <p class="text-xs text-slate-400 mt-1">PNG, JPG, WEBP, GIF</p>
+        </div>
+
+        <div id="imageListContainer" class="hidden bg-white p-3 rounded-xl border border-blue-100 shadow-sm">
+            <label class="text-[11px] font-bold uppercase text-blue-600 tracking-wider block mb-2">Pilih Gambar</label>
+            <div id="imageList" class="flex flex-col gap-1.5 max-h-32 overflow-y-auto pr-1"></div>
+        </div>
+
+        <div class="flex flex-col gap-2">
+            <button id="btnAnalyze" disabled class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-semibold py-2.5 rounded-lg text-sm flex items-center justify-center gap-2 shadow-sm transition-colors">
+                <i data-lucide="play" class="w-4 h-4"></i> Jalankan Analisis Spasial
+            </button>
+            <div class="flex gap-2">
+                <button id="btnAddElement" class="flex-1 bg-white hover:bg-slate-50 text-slate-700 py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1 border border-slate-200 shadow-sm">
+                    <i data-lucide="plus" class="w-3.5 h-3.5 text-blue-600"></i> Tambah Box
+                </button>
+                <button id="btnClearAll" class="flex-1 bg-white hover:bg-slate-50 text-red-600 py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1 border border-slate-200 shadow-sm">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Hapus Semua
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-blue-100 shadow-sm overflow-hidden flex flex-col">
+            <div class="px-3 py-2 border-b border-slate-100 bg-slate-50 flex items-center justify-between text-xs">
+                <span id="imageMeta" class="text-slate-500 font-mono text-[11px] truncate max-w-[200px]">Belum ada gambar</span>
+                <span id="analysisStatus" class="text-blue-600 font-medium hidden">Memproses...</span>
+            </div>
+            <div class="p-2 overflow-auto max-h-[350px] flex items-center justify-center bg-slate-100" id="viewport">
+                <div class="canvas-container" id="canvasContainer">
+                    <img id="sourceImage" class="max-w-none hidden" alt="Source">
+                    <canvas id="overlayCanvas"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div id="inspectorPanel" class="border border-blue-200 rounded-xl p-3.5 bg-blue-50/50 shadow-sm hidden">
+            <div class="flex justify-between items-center mb-2.5">
+                <span class="text-xs font-bold text-blue-800 uppercase tracking-wider" id="inspectorTitle">Edit Elemen</span>
+                <button id="btnDeleteSelected" class="text-red-500 hover:text-red-700 p-1"><i data-lucide="trash" class="w-4 h-4"></i></button>
+            </div>
+            <div class="space-y-2 text-xs">
+                <div>
+                    <label class="block text-slate-500 mb-1 font-medium">Tipe Elemen</label>
+                    <select id="editType" class="w-full bg-white border border-slate-300 rounded-md px-2 py-1.5 text-slate-800 focus:outline-none focus:border-blue-500">
+                        <option value="text">text</option>
+                        <option value="text_line">text_line</option>
+                        <option value="text_block">text_block</option>
+                        <option value="button">button</option>
+                        <option value="input">input</option>
+                        <option value="checkbox">checkbox</option>
+                        <option value="radio">radio</option>
+                        <option value="dropdown">dropdown</option>
+                        <option value="table">table</option>
+                        <option value="image">image</option>
+                        <option value="icon">icon</option>
+                        <option value="panel">panel</option>
+                        <option value="window">window</option>
+                        <option value="header">header</option>
+                        <option value="footer">footer</option>
+                        <option value="unknown">unknown</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-slate-500 mb-1 font-medium font-sans">Teks / Label</label>
+                    <input type="text" id="editText" class="w-full bg-white border border-slate-300 rounded-md px-2 py-1.5 text-slate-800 focus:outline-none focus:border-blue-500">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-slate-500 mb-1 font-medium">X</label>
+                        <input type="number" id="editX" class="w-full bg-white border border-slate-300 rounded-md px-2 py-1.5 text-slate-800">
+                    </div>
+                    <div>
+                        <label class="block text-slate-500 mb-1 font-medium">Y</label>
+                        <input type="number" id="editY" class="w-full bg-white border border-slate-300 rounded-md px-2 py-1.5 text-slate-800">
+                    </div>
+                    <div>
+                        <label class="block text-slate-500 mb-1 font-medium">Width</label>
+                        <input type="number" id="editW" class="w-full bg-white border border-slate-300 rounded-md px-2 py-1.5 text-slate-800">
+                    </div>
+                    <div>
+                        <label class="block text-slate-500 mb-1 font-medium">Height</label>
+                        <input type="number" id="editH" class="w-full bg-white border border-slate-300 rounded-md px-2 py-1.5 text-slate-800">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm space-y-2 text-xs">
+            <label class="flex items-center gap-2 cursor-pointer text-slate-700 font-medium">
+                <input type="checkbox" id="chkShowBoxes" checked class="rounded border-slate-300 text-blue-600 focus:ring-0">
+                <span>Tampilkan Bounding Overlay</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer text-slate-700 font-medium">
+                <input type="checkbox" id="chkIncludeThumbnail" class="rounded border-slate-300 text-blue-600 focus:ring-0">
+                <span>Sertakan Thumbnail Low-Res</span>
+            </label>
+        </div>
+
+        <div class="bg-white rounded-xl border border-blue-100 shadow-sm p-3 flex flex-col gap-3">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                <div class="flex gap-1 bg-slate-100 p-1 rounded-lg">
+                    <button id="btnTabMarkdown" class="px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-600 text-white shadow-sm">Markdown</button>
+                    <button id="btnTabJSON" class="px-2.5 py-1 rounded-md text-xs font-semibold text-slate-500 hover:text-slate-800">JSON</button>
+                </div>
+                <div class="flex gap-1 bg-slate-100 p-1 rounded-lg text-xs">
+                    <button id="btnModeNormal" class="px-2 py-0.5 rounded-md font-semibold bg-white text-blue-700 shadow-sm">Normal</button>
+                    <button id="btnModeCompact" class="px-2 py-0.5 rounded-md font-semibold text-slate-500 hover:text-slate-800">Compact</button>
+                </div>
+            </div>
+
+            <div class="h-48 relative bg-slate-900 rounded-lg overflow-hidden border border-slate-800">
+                <textarea id="outputDisplay" readonly class="w-full h-full p-3 font-mono text-[11px] text-emerald-400 bg-transparent resize-none focus:outline-none leading-relaxed"></textarea>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 text-xs">
+                <button id="btnCopy" class="bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg flex items-center justify-center gap-1.5 font-semibold shadow-sm transition-colors">
+                    <i data-lucide="copy" class="w-3.5 h-3.5"></i> Salin Data
+                </button>
+                <button id="btnDownload" class="bg-white hover:bg-slate-50 text-slate-700 py-2.5 rounded-lg flex items-center justify-center gap-1.5 font-semibold border border-slate-200 shadow-sm transition-colors">
+                    <i data-lucide="download" class="w-3.5 h-3.5 text-blue-600"></i> Unduh
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <script src="img.js"></script>
+</body>
+</html>
