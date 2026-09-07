@@ -1,0 +1,42 @@
+[
+  {
+    "identity": "262005975-100|JJ824 1Y|LKXOB",
+    "created_at": "2026-09-03T10:40:07.962573+00:00",
+    "updated_at": "2026-09-04T02:17:24.846066+00:00",
+    "data": {
+      "work_order": "262005975-100",
+      "product_code": "KOMIX HERBAL ORIGINAL LIQ /4TUBE",
+      "formula": "LKXOB",
+      "batch": "JJ824 1Y",
+      "work_station": "B7-PGDPRDD61",
+      "machine": "MAI134",
+      "packer": "NNF161",
+      "scale": "2PP-TMB-003",
+      "pallet": "PP-262005975-100-11",
+      "nomor_mb": "0054",
+      "master_box": "terakhir",
+      "incomplete_mb": "enabled",
+      "last_mb": "enabled"
+    }
+  },
+  {
+    "identity": "262006015-100|JJ825 1Y|LKXOB",
+    "created_at": "2026-09-07T05:51:06.055723+00:00",
+    "updated_at": "2026-09-07T07:18:08.607956+00:00",
+    "data": {
+      "work_order": "262006015-100",
+      "product_code": "KOMIX HERBAL ORIGINAL LIQ /4TUBE",
+      "formula": "LKXOB",
+      "batch": "JJ825 1Y",
+      "work_station": "B7-PGDPRDD61",
+      "machine": "MAI134",
+      "packer": "SNA203",
+      "scale": "2PP-TMB-003",
+      "pallet": "PP-262006015-100-02",
+      "nomor_mb": "0028",
+      "master_box": "terakhir",
+      "incomplete_mb": "enabled",
+      "last_mb": "enabled"
+    }
+  }
+]
