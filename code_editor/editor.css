@@ -1,0 +1,597 @@
+/* ==========================================================================
+   DEVELOPER WORKSPACE - STYLESHEET (editor.css)
+   ========================================================================== */
+
+/* 1. Reset & Global Styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg-main: #f4f5f7;
+  --bg-panel: #ffffff;
+  --bg-alt: #ebedf0;
+  --bg-gutter: #f0f2f5;
+  --border-color: #d0d5dd;
+  --text-main: #1d2129;
+  --text-muted: #667085;
+
+  --primary-color: #0052cc;
+  --primary-hover: #0043a8;
+  --primary-active: #003482;
+
+  --error-color: #d32f2f;
+  --error-bg: #ffebee;
+  --warning-color: #ed6c02;
+  --warning-bg: #fff4e5;
+  --success-color: #2e7d32;
+  --success-bg: #edf7ed;
+  --info-color: #0288d1;
+  --info-bg: #e5f6fd;
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: "Consolas", "Courier New", Courier, monospace;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--text-main);
+  background-color: var(--bg-main);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 2. Header (Folder Loader) */
+header {
+  height: 40px;
+  background-color: var(--bg-panel);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  flex-shrink: 0;
+}
+
+header h1 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.folder-loader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#status {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+#status.status-success {
+  color: var(--success-color);
+  font-weight: 500;
+}
+
+#status.status-error {
+  color: var(--error-color);
+  font-weight: 500;
+}
+
+#status.status-neutral {
+  color: var(--text-muted);
+}
+
+/* 3. Main Split Layout (Sisi Kiri & Sisi Kanan) */
+main {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  gap: 1px;
+  background-color: var(--border-color);
+}
+
+.left-panel,
+.right-panel {
+  background-color: var(--bg-panel);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.left-panel {
+  flex: 5;
+  min-width: 300px;
+}
+
+.right-panel {
+  flex: 5;
+  min-width: 300px;
+  border-left: 1px solid var(--border-color);
+}
+
+/* 4. Sisi Kiri: File Explorer & Code Editor */
+.file-explorer {
+  height: 140px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-panel);
+  flex-shrink: 0;
+}
+
+.file-explorer h2 {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  padding: 6px 12px;
+  background-color: var(--bg-alt);
+  border-bottom: 1px solid var(--border-color);
+}
+
+#file-tree {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+  font-family: var(--font-sans);
+}
+
+/* Nested Tree Styling */
+#file-tree ul {
+  list-style: none;
+  padding-left: 12px;
+}
+
+#file-tree > ul {
+  padding-left: 0;
+}
+
+#file-tree li {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+#file-tree .tree-item {
+  display: flex;
+  align-items: center;
+  padding: 3px 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+#file-tree .tree-item:hover {
+  background-color: var(--bg-alt);
+}
+
+#file-tree .tree-item.selected {
+  background-color: #e6f0ff;
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+#file-tree .tree-folder {
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+#file-tree .tree-file {
+  color: var(--text-main);
+}
+
+.editor-container {
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: var(--bg-panel);
+}
+
+.editor-header {
+  height: 32px;
+  background-color: var(--bg-alt);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  flex-shrink: 0;
+}
+
+#current-file {
+  font-weight: 500;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.editor-body {
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  position: relative;
+  overflow: hidden;
+  background-color: var(--bg-panel);
+}
+
+#line-numbers {
+  width: 45px;
+  background-color: var(--bg-gutter);
+  border-right: 1px solid var(--border-color);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 20px;
+  padding: 6px 6px 6px 0;
+  text-align: right;
+  user-select: none;
+  overflow: hidden;
+  flex-shrink: 0;
+  white-space: pre;
+  box-sizing: border-box;
+}
+
+#editor {
+  flex: 1 1 0;
+  width: 0;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  align-self: stretch;
+  border: none;
+  outline: none;
+  resize: none;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 20px;
+  padding: 6px;
+  color: var(--text-main);
+  background-color: transparent;
+  white-space: pre;
+  word-break: normal;
+  overflow-wrap: normal;
+  overflow: auto;
+  tab-size: 2;
+  box-sizing: border-box;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Sisi kiri bawah: Operasi Save, Clear, Copy, Paste, Run */
+.editor-actions {
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px;
+  background-color: var(--bg-alt);
+  border-top: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+/* 5. Sisi Kanan: Terminal & Log (VS Code Style) */
+.mode-tabs {
+  display: flex;
+  background-color: var(--bg-alt);
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.mode-tabs button {
+  border: none;
+  border-radius: 0;
+  border-right: 1px solid var(--border-color);
+  background: transparent;
+  padding: 8px 16px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.mode-tabs button.active {
+  background-color: var(--bg-panel);
+  color: var(--primary-color);
+  border-bottom: 2px solid var(--primary-color);
+}
+
+.terminal-container {
+  padding: 8px 12px;
+  background-color: var(--bg-panel);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+#terminal-input {
+  width: 100%;
+  height: 80px;
+  resize: vertical;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 6px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  outline: none;
+  background-color: #fafafa;
+  overflow-y: auto;
+}
+
+#terminal-input:focus {
+  border-color: var(--primary-color);
+  background-color: #ffffff;
+}
+
+#output {
+  flex: 1;
+  min-height: 0;
+  padding: 8px 12px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  background-color: #1e1e1e;
+  color: #d4d4d4;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* Sisi kanan bawah: Operasi Run, Paste, Copy, Clear */
+.terminal-actions {
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px;
+  background-color: var(--bg-alt);
+  border-top: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.preview-container {
+  height: 30%;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-panel);
+  flex-shrink: 0;
+}
+
+.preview-header {
+  height: 28px;
+  background-color: var(--bg-alt);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+#preview-frame-wrapper {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  background-color: #ffffff;
+}
+
+#preview-frame-wrapper iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* 6. Buttons */
+button {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  padding: 4px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  background-color: var(--bg-panel);
+  color: var(--text-main);
+  cursor: pointer;
+  outline: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+button:hover {
+  background-color: var(--bg-alt);
+}
+
+button:focus-visible {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(0, 82, 204, 0.2);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: var(--bg-alt);
+}
+
+#editor-run,
+#terminal-run,
+#open-folder {
+  background-color: var(--primary-color);
+  color: #ffffff;
+  border-color: var(--primary-color);
+}
+
+#editor-run:hover,
+#terminal-run:hover,
+#open-folder:hover {
+  background-color: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+#editor-run:active,
+#terminal-run:active,
+#open-folder:active {
+  background-color: var(--primary-active);
+}
+
+/* 7. Diagnostics Styling */
+.diagnostic-item {
+  padding: 6px 8px;
+  margin-bottom: 4px;
+  border-left: 3px solid var(--border-color);
+  background-color: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.diagnostic-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.diagnostic-error {
+  border-left-color: var(--error-color);
+  color: #f87171;
+}
+
+.diagnostic-warning {
+  border-left-color: var(--warning-color);
+  color: #fbbf24;
+}
+
+.diagnostic-info {
+  border-left-color: var(--info-color);
+  color: #38bdf8;
+}
+
+.diagnostic-success {
+  border-left-color: var(--success-color);
+  color: #4ade80;
+}
+
+/* 8. Responsive Fallbacks */
+@media (max-width: 768px) {
+  body {
+    overflow-y: auto;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  main {
+    flex-direction: column;
+    overflow: visible;
+    gap: 0;
+  }
+
+  .left-panel,
+  .right-panel {
+    flex: none;
+    width: 100%;
+    height: auto;
+    min-height: auto;
+    min-width: 0;
+    border-left: none;
+  }
+
+  .right-panel {
+    border-top: 2px solid var(--border-color);
+  }
+
+  .file-explorer {
+    height: 120px;
+  }
+
+  .editor-container {
+    flex: none;
+    width: 100%;
+    height: 60vh;
+    min-height: 400px;
+    max-height: none;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .editor-body {
+    flex: 1 1 0;
+    height: auto;
+    min-height: 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  #line-numbers {
+    font-size: 12px;
+    line-height: 20px;
+    white-space: pre;
+    display: block;
+    height: 100%;
+    padding: 6px 6px 6px 0;
+  }
+
+  #editor {
+    flex: 1 1 0;
+    width: 0;
+    height: 100%;
+    max-height: none;
+    min-height: 0;
+    align-self: stretch;
+    font-size: 12px;
+    line-height: 20px;
+    white-space: pre;
+    word-break: normal;
+    overflow-wrap: normal;
+    padding: 6px;
+    overflow: auto;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  #output {
+    flex: none;
+    height: 250px;
+    max-height: 250px;
+    min-height: 200px;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  .preview-container {
+    height: 180px;
+    min-height: 120px;
+  }
+
+  .terminal-container,
+  .terminal-actions,
+  .editor-actions {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  #terminal-input {
+    font-size: 13px;
+    min-height: 34px;
+  }
+
+  #output {
+    font-size: 12px;
+    line-height: 20px;
+  }
+}

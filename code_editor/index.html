@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Developer Workspace</title>
+  <link rel="stylesheet" href="editor.css">
+</head>
+<body>
+  <header>
+    <h1>Developer Workspace</h1>
+    <div class="folder-loader">
+      <button id="open-folder">Open Folder</button>
+      <span id="status">No folder opened</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="left-panel">
+      <nav class="file-explorer">
+        <h2>File Explorer</h2>
+        <div id="file-tree"></div>
+      </nav>
+
+      <section class="editor-container">
+        <div class="editor-header">
+          <span id="current-file">No file selected</span>
+          <div class="editor-actions">
+            <button id="editor-save">Save</button>
+            <button id="editor-clear">Clear</button>
+            <button id="editor-copy">Copy</button>
+            <button id="editor-paste">Paste</button>
+            <button id="editor-run">Run</button>
+          </div>
+        </div>
+
+        <div class="editor-body">
+          <div id="line-numbers"></div>
+          <textarea id="editor" spellcheck="false" placeholder="Select a file to edit..."></textarea>
+        </div>
+      </section>
+    </section>
+
+    <aside class="right-panel">
+      <div class="mode-tabs">
+        <button id="mode-terminal">Terminal</button>
+        <button id="mode-log">Log / Problems</button>
+      </div>
+
+      <div class="terminal-container">
+        <input type="text" id="terminal-input" placeholder="Enter PowerShell-like command..." />
+        <div class="terminal-actions">
+          <button id="terminal-run">Run</button>
+          <button id="terminal-paste">Paste</button>
+          <button id="terminal-copy">Copy</button>
+          <button id="terminal-clear">Clear</button>
+        </div>
+      </div>
+
+      <div id="output"></div>
+
+      <section class="preview-container">
+        <div class="preview-header">
+          <span>Web Preview</span>
+        </div>
+        <div id="preview-frame-wrapper"></div>
+      </section>
+    </aside>
+  </main>
+
+  <script src="engine.js"></script>
+</body>
+</html>
