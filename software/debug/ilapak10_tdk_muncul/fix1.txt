@@ -1,0 +1,131 @@
+Sip. **Queue-nya aman untuk kasus ini**: `enqueue()` melakukan `INSERT + COMMIT`, lalu `True`; kalau gagal, `False`.
+
+Jadi patch bisa kita buat **minimal**.
+
+### Ubah `trigger_end_click()` menjadi ini
+
+Di `D:\b7_3ws\B7CaptureAgent.py`, ganti fungsi:
+
+```python
+def trigger_end_click(self, label, click_timestamp=None):
+    if not self.session_active:
+        return
+    self.pending_end_trigger = True
+    self.end_click_timestamp = click_timestamp or datetime.now(timezone.utc).isoformat()
+    self.end_type_label = label
+```
+
+menjadi:
+
+```python
+def trigger_end_click(self, label, click_timestamp=None):
+    if not self.session_active:
+        return
+
+    end_time = click_timestamp or datetime.now(timezone.utc).isoformat()
+    end_data = dict(self.last_extracted_data)
+
+    if not end_data:
+        return
+
+    success = self._emit_event(
+        "END",
+        "start process" if self.has_start_event else "mid process",
+        label,
+        end_data,
+        end_time,
+    )
+
+    if success:
+        self._reset_session()
+```
+
+### Lalu ubah `_emit_event()`
+
+Sekarang:
+
+```python
+self.queue.enqueue(unique_event_id, event_type, payload)
+```
+
+ubah menjadi:
+
+```python
+return self.queue.enqueue(unique_event_id, event_type, payload)
+```
+
+Jadi fungsi lengkap bagian akhirnya:
+
+```python
+def _emit_event(self, event_type, start_type, end_type, data, timestamp):
+    unique_event_id = str(uuid.uuid4())
+    payload = {
+        "event_id": unique_event_id,
+        "agent_id": self.agent_id,
+        "event_type": event_type,
+        "timestamp": timestamp,
+        "work_order": data.get("work_order", ""),
+        "product_code": data.get("product_code", ""),
+        "formula": data.get("formula", ""),
+        "batch": data.get("batch", ""),
+        "work_station": data.get("work_station", ""),
+        "pallet": data.get("pallet", ""),
+        "nomor_mb": data.get("nomor_mb", ""),
+        "master_box": data.get("master_box", ""),
+        "start_type": start_type,
+        "end_type": end_type
+    }
+    return self.queue.enqueue(unique_event_id, event_type, payload)
+```
+
+### Tapi ada satu perubahan penting lagi
+
+Karena END sekarang **langsung diproses saat click**, blok ini di `process_extraction()` sudah tidak diperlukan:
+
+```python
+if self.pending_end_trigger:
+    end_time = self.end_click_timestamp or now_iso
+    start_type = "start process" if self.has_start_event else "mid process"
+    self._emit_event("END", start_type, self.end_type_label, data, end_time)
+    self._reset_session()
+    return
+```
+
+Hapus blok tersebut.
+
+Dan blok CASE 3 ini juga:
+
+```python
+if self.pending_end_trigger:
+    end_time = self.end_click_timestamp or now_iso
+    start_type = "start process" if self.has_start_event else "mid process"
+    self._emit_event("END", start_type, self.end_type_label, self.last_extracted_data, end_time)
+    self._reset_session()
+```
+
+hapus juga.
+
+Dengan begitu alurnya menjadi:
+
+```text
+CLICK INCOMPLETE MB
+        ↓
+trigger_end_click()
+        ↓
+ambil last_extracted_data
+        ↓
+buat END
+        ↓
+SQLite INSERT + COMMIT
+        ↓
+berhasil?
+   ┌────┴────┐
+  YES       NO
+   ↓         ↓
+RESET     tetap active
+SESSION   → END tidak hilang
+```
+
+**Ini fix Bug #1 yang tepat**, karena tidak lagi bergantung pada extraction berikutnya.
+
+Setelah edit, **jangan build dulu**. Kirim bagian `SessionEngine` sekitar line 845–970 sekali lagi, supaya gue validasi patch-nya sebelum kita lanjut ke **Bug #2 ILAPAK 9/10**.
