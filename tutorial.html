@@ -43,9 +43,63 @@
             margin-bottom: 8px;
         }
 
-        header p {
-            color: #6b7280;
-            font-size: 0.95rem;
+        .title-box-container {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .title-box-container label {
+            display: block;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: #1e40af;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+        }
+
+        .title-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .title-input {
+            width: 100%;
+            padding: 12px 40px 12px 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: #1e293b;
+        }
+
+        .title-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+        }
+
+        .clear-title-btn {
+            position: absolute;
+            right: 12px;
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #9ca3af;
+            cursor: pointer;
+            line-height: 1;
+            padding: 4px;
+            transition: color 0.2s;
+        }
+
+        .clear-title-btn:hover {
+            color: #ef4444;
         }
 
         .btn {
@@ -87,6 +141,14 @@
             background-color: #047857;
         }
 
+        .btn-warning {
+            background-color: #d97706;
+        }
+
+        .btn-warning:hover {
+            background-color: #b45309;
+        }
+
         .btn-danger {
             background-color: var(--danger-color);
             padding: 6px 12px;
@@ -108,6 +170,18 @@
             background-color: #d1d5db;
         }
 
+        .btn-code-add {
+            background-color: #e0e7ff;
+            color: #3730a3;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .btn-code-add:hover {
+            background-color: #c7d2fe;
+        }
+
         #items-container {
             display: flex;
             flex-direction: column;
@@ -118,6 +192,8 @@
         .add-step-container {
             display: flex;
             justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
             margin-bottom: 24px;
         }
 
@@ -137,6 +213,8 @@
             margin-bottom: 12px;
             padding-bottom: 8px;
             border-bottom: 1px solid var(--border-color);
+            flex-wrap: wrap;
+            gap: 8px;
         }
 
         .item-title {
@@ -158,23 +236,33 @@
             color: #92400e;
         }
 
+        .item-title.code {
+            background-color: #e0e7ff;
+            color: #3730a3;
+        }
+
         .item-actions {
             display: flex;
             gap: 6px;
             align-items: center;
+            flex-wrap: wrap;
         }
 
-        textarea {
+        textarea, input[type="text"] {
             width: 100%;
-            min-height: 80px;
             padding: 10px;
             border: 1px solid var(--border-color);
             border-radius: 6px;
             font-size: 0.95rem;
+            margin-bottom: 8px;
+        }
+
+        textarea {
+            min-height: 80px;
             resize: vertical;
         }
 
-        textarea:focus {
+        textarea:focus, input[type="text"]:focus {
             outline: none;
             border-color: var(--accent-color);
             box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
@@ -234,7 +322,7 @@
             margin-top: 24px;
         }
 
-        /* Modal Preview & Proporsi Tutorial */
+        /* Modal Preview Window */
         .modal {
             display: none;
             position: fixed;
@@ -250,8 +338,8 @@
 
         .modal-content {
             background-color: white;
-            max-width: 750px;
-            margin: 40px auto;
+            max-width: 900px;
+            margin: 20px auto;
             border-radius: 8px;
             padding: 24px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
@@ -275,28 +363,11 @@
             color: #6b7280;
         }
 
-        .preview-body {
-            line-height: 1.6;
-            color: #111827;
-            font-size: 1rem;
-        }
-
-        .preview-body p {
-            margin-bottom: 12px;
-            white-space: pre-wrap;
-            word-break: break-word;
-        }
-
-        .preview-body img {
-            max-width: 100%;
-            max-height: 420px;
-            width: auto;
-            height: auto;
-            display: block;
-            margin: 12px auto 24px auto;
-            border-radius: 6px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-            object-fit: contain;
+        .iframe-preview {
+            width: 100%;
+            height: 70vh;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
         }
 
         .alert {
@@ -318,9 +389,17 @@
 
     <div id="alert-box" class="alert"></div>
 
+    <div class="title-box-container">
+        <label for="main-tutorial-title">JUDUL TUTORIAL (HEADER WRAPPER)</label>
+        <div class="title-input-wrapper">
+            <input type="text" id="main-tutorial-title" class="title-input" placeholder="Masukkan Judul Tutorial di sini..." value="Tutorial Guide">
+            <button class="clear-title-btn" onclick="clearMainTitle()" title="Clear Judul">&times;</button>
+        </div>
+    </div>
+
     <div id="items-container">
         <div class="empty-state" id="empty-state">
-            Belum ada konten. Klik "Add Step" di bawah untuk mulai membuat tutorial.
+            Belum ada konten. Klik tombol di bawah untuk mulai membuat tutorial.
         </div>
     </div>
 
@@ -331,6 +410,8 @@
     <div class="bottom-actions">
         <button class="btn btn-secondary" onclick="openPreviewModal()">Preview</button>
         <button class="btn btn-success" onclick="generateZip()">Generate ZIP</button>
+<input type="file" id="zip-file-input" accept=".zip" style="display: none;" onchange="loadZipFile(event)">
+        <button class="btn btn-warning" onclick="document.getElementById('zip-file-input').click()">📁 Load ZIP</button>
     </div>
 
     <div id="preview-modal" class="modal">
@@ -339,12 +420,17 @@
                 <h2>Preview Tutorial</h2>
                 <button class="close-modal" onclick="closePreviewModal()">&times;</button>
             </div>
-            <div id="preview-body" class="preview-body"></div>
+            <iframe id="preview-frame" class="iframe-preview"></iframe>
         </div>
     </div>
 
     <script>
-        let items = []; // Menyimpan state item: { id, type, content: string | File }
+        let items = []; // State: { id, type: 'text'|'image'|'code', content: string|File, filename?: string }
+
+        function clearMainTitle() {
+            document.getElementById('main-tutorial-title').value = '';
+            document.getElementById('main-tutorial-title').focus();
+        }
 
         function showAlert(message) {
             const alertBox = document.getElementById('alert-box');
@@ -383,6 +469,19 @@
             if (render) renderItems();
         }
 
+        function addCodeAfter(id) {
+            const index = items.findIndex(i => i.id === id);
+            if (index !== -1) {
+                const newItem = {
+                    id: Date.now() + Math.random(),
+                    type: 'code',
+                    content: ''
+                };
+                items.splice(index + 1, 0, newItem);
+                renderItems();
+            }
+        }
+
         function addImageAfter(id) {
             const index = items.findIndex(i => i.id === id);
             if (index !== -1) {
@@ -405,7 +504,8 @@
         function clearContent(id) {
             const item = items.find(i => i.id === id);
             if (item) {
-                item.content = item.type === 'text' ? '' : null;
+                if (item.type === 'text' || item.type === 'code') item.content = '';
+                else item.content = null;
                 renderItems();
             }
         }
@@ -413,9 +513,14 @@
         function deleteContentWithConfirm(id) {
             const item = items.find(i => i.id === id);
             if (!item) return;
-            const jenis = item.type === 'text' ? 'teks' : 'gambar';
-            if (confirm(`Apakah Anda yakin ingin menghapus isi ${jenis} ini?`)) {
-                clearContent(id);
+            let jenis = 'item';
+            if (item.type === 'text') jenis = 'teks';
+            else if (item.type === 'image') jenis = 'gambar';
+            else if (item.type === 'code') jenis = 'kode/link';
+
+            if (confirm(`Apakah Anda yakin ingin menghapus ${jenis} ini?`)) {
+                items = items.filter(i => i.id !== id);
+                renderItems();
             }
         }
 
@@ -424,7 +529,7 @@
             if (!item) return;
 
             try {
-                if (item.type === 'text') {
+                if (item.type === 'text' || item.type === 'code') {
                     const text = await navigator.clipboard.readText();
                     if (text) {
                         item.content = text;
@@ -469,25 +574,32 @@
             }
 
             container.innerHTML = '';
+
+            let textCounter = 0;
             let imageCounter = 0;
+            let codeCounter = 0;
 
             items.forEach((item) => {
                 const card = document.createElement('div');
                 card.className = 'item-card';
 
-                if (item.type === 'image') imageCounter++;
+                if (item.type === 'text') textCounter++;
+                else if (item.type === 'image') imageCounter++;
+                else if (item.type === 'code') codeCounter++;
 
                 const header = document.createElement('div');
                 header.className = 'item-header';
 
                 const title = document.createElement('span');
                 title.className = `item-title ${item.type}`;
-                title.innerText = item.type === 'text' ? 'TEXT' : `IMAGE #${imageCounter}`;
+                if (item.type === 'text') title.innerText = `TEXT #${textCounter}`;
+                else if (item.type === 'image') title.innerText = `IMAGE #${imageCounter}`;
+                else if (item.type === 'code') title.innerText = `CODE LINK BLOCK #${codeCounter}`;
 
                 const actions = document.createElement('div');
                 actions.className = 'item-actions';
 
-                if (item.type === 'text') {
+                if (item.type === 'text' || item.type === 'code') {
                     const btnPaste = document.createElement('button');
                     btnPaste.className = 'btn btn-action';
                     btnPaste.innerText = 'Paste';
@@ -503,15 +615,16 @@
                     btnHapus.innerText = 'Hapus';
                     btnHapus.onclick = () => deleteContentWithConfirm(item.id);
 
+                    const btnAddCodeHere = document.createElement('button');
+                    btnAddCodeHere.className = 'btn btn-code-add';
+                    btnAddCodeHere.innerText = '+ Code/Link';
+                    btnAddCodeHere.onclick = () => addCodeAfter(item.id);
+
                     actions.appendChild(btnPaste);
                     actions.appendChild(btnClear);
                     actions.appendChild(btnHapus);
+                    actions.appendChild(btnAddCodeHere);
                 } else {
-                    const btnAdd = document.createElement('button');
-                    btnAdd.className = 'btn btn-action';
-                    btnAdd.innerText = 'Add';
-                    btnAdd.onclick = () => addImageAfter(item.id);
-
                     const btnClear = document.createElement('button');
                     btnClear.className = 'btn btn-action';
                     btnClear.innerText = 'Clear';
@@ -522,9 +635,14 @@
                     btnHapus.innerText = 'Hapus';
                     btnHapus.onclick = () => deleteContentWithConfirm(item.id);
 
-                    actions.appendChild(btnAdd);
+                    const btnAdd = document.createElement('button');
+                    btnAdd.className = 'btn btn-action';
+                    btnAdd.innerText = '+ Image';
+                    btnAdd.onclick = () => addImageAfter(item.id);
+
                     actions.appendChild(btnClear);
                     actions.appendChild(btnHapus);
+                    actions.appendChild(btnAdd);
                 }
 
                 header.appendChild(title);
@@ -536,6 +654,14 @@
                     textarea.placeholder = 'Ketik teks tutorial di sini...';
                     textarea.value = item.content;
                     textarea.oninput = (e) => updateTextContent(item.id, e.target.value);
+                    card.appendChild(textarea);
+                } else if (item.type === 'code') {
+                    const textarea = document.createElement('textarea');
+                    textarea.placeholder = 'Tempelkan kode atau teks link di sini...';
+                    textarea.value = item.content;
+                    textarea.style.fontFamily = 'monospace';
+                    textarea.oninput = (e) => updateTextContent(item.id, e.target.value);
+
                     card.appendChild(textarea);
                 } else {
                     const uploadBox = document.createElement('div');
@@ -577,7 +703,7 @@
                         previewWrapper.appendChild(fileInfo);
                         uploadBox.appendChild(previewWrapper);
                     } else {
-                        uploadBox.innerText = 'Klik atau seret (drag & drop) gambar ke sini';
+                        uploadBox.innerText = 'Klik atau seret (drag & drop) gambar ke sini (Opsional)';
                     }
 
                     uploadBox.appendChild(fileInput);
@@ -627,34 +753,371 @@
             });
         }
 
-        function generateHtmlString() {
-            let htmlContent = '<!DOCTYPE html>\n<html lang="id">\n<head>\n';
-            htmlContent += '  <meta charset="UTF-8">\n';
-            htmlContent += '  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n';
-            htmlContent += '  <title>Tutorial</title>\n';
-            htmlContent += '  <style>\n';
-            htmlContent += '    body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; max-width: 750px; margin: 0 auto; padding: 20px; color: #111827; }\n';
-            htmlContent += '    p { margin-bottom: 12px; white-space: pre-wrap; word-break: break-word; font-size: 1rem; }\n';
-            htmlContent += '    img { max-width: 100%; max-height: 420px; width: auto; height: auto; display: block; margin: 12px auto 24px auto; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); object-fit: contain; }\n';
-            htmlContent += '  </style>\n';
-            htmlContent += '</head>\n<body>\n';
+        // Generator HTML untuk Preview & Export ZIP
+        function generateHtmlString(isPreview = false, imageMap = {}) {
+            const rawTitle = document.getElementById('main-tutorial-title').value;
+            const mainTitle = rawTitle.trim() ? escapeHtml(rawTitle.trim()) : 'Tutorial Guide';
 
+            let htmlContent = `<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${mainTitle}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1e40af;
+            --primary-hover: #1d4ed8;
+            --primary-light: #eff6ff;
+            --primary-border: #bfdbfe;
+            --accent: #2563eb;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --border-color: #e2e8f0;
+            --code-bg: #2d3748;
+            --code-text: #edf2f7;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 20px 15px 60px 15px;
+        }
+
+        .container { max-width: 860px; margin: 0 auto; }
+
+        .header {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            color: #ffffff;
+            padding: 32px 28px;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 25px -5px rgba(30, 64, 175, 0.25);
+        }
+
+        .header h1 { font-size: 1.85rem; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.02em; }
+
+        .step-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .step-card:hover { box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.06); }
+
+        .step-header { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 16px; }
+
+        .step-number {
+            background-color: var(--primary-light);
+            color: var(--primary);
+            border: 1px solid var(--primary-border);
+            font-weight: 700;
+            font-size: 0.95rem;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .step-title {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--text-main);
+            padding-top: 4px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .image-container { margin-top: 16px; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+
+        .img-wrapper {
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            background-color: #f1f5f9;
+            cursor: pointer;
+            max-width: 550px;
+            width: 100%;
+        }
+
+        .img-wrapper img { width: 100%; display: block; height: auto; transition: transform 0.25s ease; }
+        .img-wrapper:hover img { transform: scale(1.015); }
+
+        .code-block {
+            margin-top: 16px;
+            background: var(--code-bg);
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #4a5568;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .code-header {
+            background: #1a202c;
+            padding: 10px 16px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            border-bottom: 1px solid #4a5568;
+        }
+
+        .copy-btn {
+            background: #4a5568;
+            color: #edf2f7;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover { background: var(--accent); color: white; }
+
+        .code-content {
+            padding: 16px;
+            color: var(--code-text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            overflow-x: auto;
+            white-space: pre;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(15, 23, 42, 0.88);
+            backdrop-filter: blur(6px);
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            padding: 20px;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+
+        .modal.show { display: flex; opacity: 1; }
+        .modal-content { max-width: 92%; max-height: 82vh; border-radius: 8px; object-fit: contain; background: #fff; }
+        .modal-actions { margin-top: 16px; display: flex; gap: 12px; }
+        .modal-btn {
+            background: #ffffff; color: var(--text-main); border: none; padding: 10px 20px;
+            border-radius: 8px; font-weight: 600; font-size: 0.88rem; cursor: pointer; text-decoration: none;
+            display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s;
+        }
+        .modal-btn:hover { background: #f1f5f9; }
+        .modal-btn-primary { background: var(--accent); color: white; }
+        .modal-btn-primary:hover { background: var(--primary-hover); }
+
+        .close-modal {
+            position: absolute; top: 20px; right: 25px; color: #ffffff;
+            font-size: 32px; font-weight: bold; cursor: pointer; line-height: 1;
+        }
+
+        .footer {
+            text-align: center; color: var(--text-muted); font-size: 0.85rem;
+            margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border-color);
+        }
+
+        @media (max-width: 640px) {
+            .header h1 { font-size: 1.4rem; }
+            .step-card { padding: 18px; }
+            .img-wrapper { max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>${mainTitle}</h1>
+    </div>
+`;
+
+            let stepCounter = 0;
             let imageIndex = 0;
+            let codeCounter = 0;
 
-            items.forEach(item => {
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i];
+
                 if (item.type === 'text') {
-                    const textValue = item.content ? item.content.trim() : '';
-                    if (textValue) {
-                        const escapedText = escapeHtml(textValue);
-                        htmlContent += `  <p>${escapedText}</p>\n`;
+                    stepCounter++;
+                    const textVal = item.content ? item.content.trim() : '';
+                    let innerContentHtml = '';
+
+                    // Periksa elemen setelah text jika berupa code atau image untuk dimasukkan dalam 1 Step Card
+                    while (i + 1 < items.length && (items[i + 1].type === 'code' || items[i + 1].type === 'image')) {
+                        const nextItem = items[i + 1];
+                        if (nextItem.type === 'code') {
+                            const codeVal = nextItem.content ? nextItem.content : '';
+                            if (codeVal.trim()) {
+                                codeCounter++;
+                                const codeId = `codeBlock_${codeCounter}`;
+                                const btnId = `copyBtn_${codeCounter}`;
+
+                                innerContentHtml += `
+        <div class="code-block">
+            <div class="code-header">
+                <button class="copy-btn" onclick="copyCodeText('${codeId}', '${btnId}')" id="${btnId}">
+                    📋 Copy Code
+                </button>
+            </div>
+            <pre class="code-content" id="${codeId}">${escapeHtml(codeVal)}</pre>
+        </div>`;
+                            }
+                        } else if (nextItem.type === 'image') {
+                            if (nextItem.content) {
+                                imageIndex++;
+                                const imgSrc = isPreview ? imageMap[nextItem.id] : `${imageIndex}.jpg`;
+                                innerContentHtml += `
+        <div class="image-container">
+            <div class="img-wrapper" onclick="openModal('${imgSrc}')">
+                <img src="${imgSrc}" alt="Gambar Step ${stepCounter}" loading="lazy">
+            </div>
+        </div>`;
+                            }
+                        }
+                        i++; // Geser index karena item sudah diproses dalam card ini
+                    }
+
+                    htmlContent += `
+    <div class="step-card">
+        <div class="step-header">
+            <div class="step-number">${stepCounter}</div>
+            <div class="step-title">${escapeHtml(textVal)}</div>
+        </div>${innerContentHtml}
+    </div>\n`;
+                } else if (item.type === 'code') {
+                    // Jika berdiri sendiri tanpa diawali text
+                    const codeVal = item.content ? item.content : '';
+                    if (codeVal.trim()) {
+                        codeCounter++;
+                        stepCounter++;
+                        const codeId = `codeBlock_${codeCounter}`;
+                        const btnId = `copyBtn_${codeCounter}`;
+
+                        htmlContent += `
+    <div class="step-card">
+        <div class="step-header">
+            <div class="step-number">${stepCounter}</div>
+            <div class="step-title">Salin Kode / Link Berikut</div>
+        </div>
+        <div class="code-block">
+            <div class="code-header">
+                <button class="copy-btn" onclick="copyCodeText('${codeId}', '${btnId}')" id="${btnId}">
+                    📋 Copy Code
+                </button>
+            </div>
+            <pre class="code-content" id="${codeId}">${escapeHtml(codeVal)}</pre>
+        </div>
+    </div>\n`;
                     }
                 } else if (item.type === 'image') {
-                    imageIndex++;
-                    htmlContent += `  <img src="${imageIndex}.jpg" alt="Step ${imageIndex}">\n`;
+                    // Jika berdiri sendiri tanpa diawali text
+                    if (item.content) {
+                        imageIndex++;
+                        stepCounter++;
+                        const imgSrc = isPreview ? imageMap[item.id] : `${imageIndex}.jpg`;
+                        htmlContent += `
+    <div class="step-card">
+        <div class="step-header">
+            <div class="step-number">${stepCounter}</div>
+            <div class="step-title">Petunjuk Gambar #${imageIndex}</div>
+        </div>
+        <div class="image-container">
+            <div class="img-wrapper" onclick="openModal('${imgSrc}')">
+                <img src="${imgSrc}" alt="Gambar Step ${stepCounter}" loading="lazy">
+            </div>
+        </div>
+    </div>\n`;
+                    }
                 }
-            });
+            }
 
-            htmlContent += '</body>\n</html>';
+            htmlContent += `
+    <div class="footer">
+        &copy; Tutorial System
+    </div>
+</div>
+
+<div id="imageModal" class="modal">
+    <span class="close-modal" onclick="closeModal()">&times;</span>
+    <img class="modal-content" id="modalImg" alt="Preview Gambar">
+    <div class="modal-actions">
+        <a id="downloadBtn" class="modal-btn modal-btn-primary" download target="_blank">
+            ⬇️ Unduh / Simpan Gambar
+        </a>
+        <button class="modal-btn" onclick="closeModal()">Tutup</button>
+    </div>
+</div>
+
+<script>
+    function copyCodeText(elementId, btnId) {
+        const codeText = document.getElementById(elementId).innerText;
+        navigator.clipboard.writeText(codeText).then(() => {
+            const btn = document.getElementById(btnId);
+            btn.innerHTML = '✅ Copied!';
+            btn.style.backgroundColor = '#16a34a';
+            setTimeout(() => {
+                btn.innerHTML = '📋 Copy Code';
+                btn.style.backgroundColor = '#4a5568';
+            }, 2000);
+        }).catch(err => {
+            alert('Gagal menyalin teks: ' + err);
+        });
+    }
+
+    const modal = document.getElementById('imageModal');
+    const modalImg = document.getElementById('modalImg');
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    function openModal(src) {
+        modal.classList.add('show');
+        modalImg.src = src;
+        downloadBtn.href = src;
+    }
+
+    function closeModal() {
+        modal.classList.remove('show');
+    }
+
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) closeModal();
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeModal();
+    });
+<\/script>
+
+</body>
+</html>`;
+
             return htmlContent;
         }
 
@@ -664,33 +1127,16 @@
                 return;
             }
 
-            const previewBody = document.getElementById('preview-body');
-            previewBody.innerHTML = '';
-
-            let imageIndex = 0;
-
+            const imageMap = {};
             items.forEach(item => {
-                if (item.type === 'text') {
-                    const textVal = item.content ? item.content.trim() : '';
-                    if (textVal) {
-                        const p = document.createElement('p');
-                        p.innerText = textVal;
-                        previewBody.appendChild(p);
-                    }
-                } else if (item.type === 'image') {
-                    imageIndex++;
-                    const img = document.createElement('img');
-                    if (item.content) {
-                        img.src = URL.createObjectURL(item.content);
-                    } else {
-                        img.alt = `[ Gambar #${imageIndex} belum dipilih ]`;
-                        img.style.padding = '20px';
-                        img.style.background = '#f3f4f6';
-                        img.style.border = '1px dashed #9ca3af';
-                    }
-                    previewBody.appendChild(img);
+                if (item.type === 'image' && item.content) {
+                    imageMap[item.id] = URL.createObjectURL(item.content);
                 }
             });
+
+            const htmlString = generateHtmlString(true, imageMap);
+            const iframe = document.getElementById('preview-frame');
+            iframe.srcdoc = htmlString;
 
             document.getElementById('preview-modal').style.display = 'block';
         }
@@ -701,18 +1147,12 @@
 
         async function generateZip() {
             if (typeof JSZip === 'undefined') {
-                showAlert('Library JSZip gagal dimuat. Pastikan koneksi internet aktif untuk memuat CDN JSZip.');
+                showAlert('Library JSZip gagal dimuat. Pastikan koneksi internet aktif.');
                 return;
             }
 
             if (items.length === 0) {
                 showAlert('Tidak ada konten untuk diexport.');
-                return;
-            }
-
-            const emptyImages = items.filter(i => i.type === 'image' && !i.content);
-            if (emptyImages.length > 0) {
-                showAlert('Terdapat kotak gambar yang belum diisi. Mohon atur file gambar terlebih dahulu.');
                 return;
             }
 
@@ -730,8 +1170,8 @@
                     }
                 }
 
-                const htmlContent = generateHtmlString();
-                zip.file('text.html', htmlContent);
+                const htmlContent = generateHtmlString(false);
+                zip.file('index.html', htmlContent);
 
                 const content = await zip.generateAsync({ type: 'blob' });
                 const link = document.createElement('a');
@@ -745,6 +1185,94 @@
             } catch (err) {
                 console.error(err);
                 showAlert(`Gagal membuat ZIP: ${err.message}`);
+            }
+        }
+
+        // Fungsi Zip Loader untuk mengembalikan data tutorial ke editor
+        async function loadZipFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (typeof JSZip === 'undefined') {
+                showAlert('Library JSZip gagal dimuat.');
+                return;
+            }
+
+            try {
+                const zip = await JSZip.loadAsync(file);
+                const htmlFile = zip.file("index.html");
+
+                if (!htmlFile) {
+                    showAlert("File index.html tidak ditemukan dalam file ZIP!");
+                    return;
+                }
+
+                const htmlText = await htmlFile.async("string");
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(htmlText, "text/html");
+
+                // Set Header Judul
+                const pageTitle = doc.querySelector('.header h1');
+                if (pageTitle) {
+                    document.getElementById('main-tutorial-title').value = pageTitle.innerText.trim();
+                }
+
+                const stepCards = doc.querySelectorAll('.step-card');
+                if (stepCards.length === 0) {
+                    showAlert("Tidak ada konten step yang ditemukan dalam file HTML.");
+                    return;
+                }
+
+                const newItems = [];
+
+                for (const card of stepCards) {
+                    const titleElem = card.querySelector('.step-title');
+                    let textVal = titleElem ? titleElem.innerText.trim() : '';
+
+                    if (textVal && textVal !== 'Salin Kode / Link Berikut') {
+                        newItems.push({
+                            id: Date.now() + Math.random(),
+                            type: 'text',
+                            content: textVal
+                        });
+                    }
+
+                    const codeBlocks = card.querySelectorAll('.code-block pre');
+                    for (const codeElem of codeBlocks) {
+                        newItems.push({
+                            id: Date.now() + Math.random(),
+                            type: 'code',
+                            content: codeElem.innerText
+                        });
+                    }
+
+                    const imgElems = card.querySelectorAll('.img-wrapper img');
+                    for (const imgElem of imgElems) {
+                        const imgSrc = imgElem.getAttribute('src');
+                        let imgFile = null;
+
+                        if (imgSrc && zip.file(imgSrc)) {
+                            const blob = await zip.file(imgSrc).async("blob");
+                            imgFile = new File([blob], imgSrc, { type: 'image/jpeg' });
+                        }
+
+                        newItems.push({
+                            id: Date.now() + Math.random(),
+                            type: 'image',
+                            content: imgFile
+                        });
+                    }
+                }
+
+                items = newItems;
+                renderItems();
+                showAlert("Berhasil memuat tutorial dari file ZIP!");
+
+            } catch (err) {
+                console.error(err);
+                showAlert("Gagal membaca file ZIP: " + err.message);
+            } finally {
+                event.target.value = ''; // Reset input file
             }
         }
 
