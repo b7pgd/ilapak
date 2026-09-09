@@ -706,6 +706,14 @@ function setStatus(message, type = "neutral") {
   elements['status'].className = `status-${type}`;
 }
 
+/*
+ * Terminal command execution is implemented by engine2.js.
+ *
+ * engine1.js only keeps the application state/UI layer.
+ *
+ * Do NOT define runTerminalCommand() here.
+ */
+
 function recordSearchResult(result) {
   const normalized =
     normalizeSearchResult(result);
@@ -781,6 +789,7 @@ function setMode(mode) {
 
   renderOutput();
 }
+
 
 /* ==========================================================================
    FOLDER & FILE SYSTEM ACCESS API

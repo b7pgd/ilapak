@@ -15,7 +15,6 @@ async function runWebProject() {
     render: false
   });
 
-
   const wrapper = elements['preview-wrapper'];
   if (!wrapper) return;
 
@@ -99,112 +98,257 @@ function parseVariableAssignment(rawCommand) {
 }
 
 function parseCommand(rawCommand) {
-  const trimmed = rawCommand.trim();
+  let source = String(rawCommand || '').trim();
 
-  if (!trimmed) {
+  if (!source) {
     return null;
   }
 
-  const assignment = parseVariableAssignment(trimmed);
+  /*
+   * Split top-level statements.
+   *
+   * Normal newline:
+   *   statement 1
+   *
+   *   statement 2
+   *
+   * becomes two commands.
+   *
+   * PowerShell continuation:
+   *   command `
+   *   | next-command
+   *
+   * remains one command.
+   */
+  const statements = [];
+  let currentStatement = "";
+  let quote = null;
 
-  if (assignment) {
-    const parsedRhs = parseCommand(assignment.command);
+  for (let i = 0; i < source.length; i++) {
+    const char = source[i];
 
-    if (!parsedRhs || !parsedRhs.operations.length) {
-      throw new Error(
-        `Invalid assignment: $${assignment.name}`
-      );
+    /*
+     * PowerShell-style line continuation.
+     */
+    if (char === "`") {
+      if (
+        i + 1 < source.length &&
+        (source[i + 1] === "\n" || source[i + 1] === "\r")
+      ) {
+        currentStatement += " ";
+
+        if (source[i + 1] === "\r") {
+          i++;
+          if (
+            i + 1 < source.length &&
+            source[i + 1] === "\n"
+          ) {
+            i++;
+          }
+        } else {
+          i++;
+        }
+
+        while (
+          i + 1 < source.length &&
+          /\s/.test(source[i + 1])
+        ) {
+          i++;
+        }
+
+        continue;
+      }
+
+      currentStatement += char;
+      continue;
     }
 
-    return {
-      type: "assignment",
-      variable: assignment.name,
-      operations: parsedRhs.operations
-    };
+    /*
+     * Quote handling.
+     */
+    if (char === "\\" && i + 1 < source.length) {
+      currentStatement += char;
+      currentStatement += source[i + 1];
+      i++;
+      continue;
+    }
+
+    if (char === '"' || char === "'") {
+      if (quote === null) {
+        quote = char;
+      } else if (quote === char) {
+        quote = null;
+      }
+
+      currentStatement += char;
+      continue;
+    }
+
+    /*
+     * Normal newline outside quotes = new statement.
+     */
+    if (
+  (char === "\n" || char === "\r") &&
+  quote === null
+) {
+  /*
+   * PowerShell allows a newline after a pipe
+   * without requiring a backtick.
+   *
+   * Example:
+   *
+   * Get-ChildItem "." |
+   * Select-String -Pattern "foo" |
+   * Select-Object Path,Line
+   *
+   * This must remain ONE pipeline statement.
+   */
+  if (currentStatement.trim().endsWith("|")) {
+    currentStatement += " ";
+
+    if (
+      char === "\r" &&
+      i + 1 < source.length &&
+      source[i + 1] === "\n"
+    ) {
+      i++;
+    }
+
+    while (
+      i + 1 < source.length &&
+      /\s/.test(source[i + 1])
+    ) {
+      i++;
+    }
+
+    continue;
   }
 
   /*
-   * Split pipeline ONLY on | outside quotes.
-   *
-   * Example:
-   * Select-String -Pattern 'foo|bar'
-   *
-   * The | inside the regex is NOT a pipeline separator.
+   * Normal top-level newline = new statement.
    */
-  const pipelines = [];
-  let current = "";
-  let quote = null;
+  if (currentStatement.trim()) {
+    statements.push(currentStatement.trim());
+  }
 
-  for (let i = 0; i < trimmed.length; i++) {
-    const char = trimmed[i];
+  currentStatement = "";
 
-    if (char === "\\") {
-  current += char;
-
-  if (i + 1 < trimmed.length) {
-    current += trimmed[i + 1];
+  if (
+    char === "\r" &&
+    i + 1 < source.length &&
+    source[i + 1] === "\n"
+  ) {
     i++;
   }
 
   continue;
 }
 
-if (char === '"' || char === "'") {
-  if (quote === null) {
-    quote = char;
-  } else if (quote === char) {
-    quote = null;
-  }
-
-  current += char;
-  continue;
-}
-
-    if (char === "|" && quote === null) {
-      if (current.trim()) {
-        pipelines.push(current.trim());
-      }
-
-      current = "";
-      continue;
-    }
-
-    current += char;
+    currentStatement += char;
   }
 
   if (quote !== null) {
     throw new Error(`Unclosed quote: ${quote}`);
   }
 
-  if (current.trim()) {
-    pipelines.push(current.trim());
+  if (currentStatement.trim()) {
+    statements.push(currentStatement.trim());
   }
 
-  const operations = [];
+  /*
+   * Parse each statement as an independent pipeline.
+   */
+  const parsedStatements = [];
 
-  for (const pipe of pipelines) {
-    const tokens = tokenizeCommand(pipe);
+  for (const statement of statements) {
+    const pipelines = [];
+    let current = "";
+    let pipelineQuote = null;
 
-    if (tokens.length === 0) {
-      continue;
+    for (let i = 0; i < statement.length; i++) {
+      const char = statement[i];
+
+      if (char === "\\" && i + 1 < statement.length) {
+        current += char;
+        current += statement[i + 1];
+        i++;
+        continue;
+      }
+
+      if (char === '"' || char === "'") {
+        if (pipelineQuote === null) {
+          pipelineQuote = char;
+        } else if (pipelineQuote === char) {
+          pipelineQuote = null;
+        }
+
+        current += char;
+        continue;
+      }
+
+      if (char === "|" && pipelineQuote === null) {
+        if (current.trim()) {
+          pipelines.push(current.trim());
+        }
+
+        current = "";
+        continue;
+      }
+
+      current += char;
     }
 
-    const command = tokens[0];
-    const args = parseArgs(tokens.slice(1));
+    if (pipelineQuote !== null) {
+      throw new Error(`Unclosed quote: ${pipelineQuote}`);
+    }
 
-    operations.push({
-      command,
-      args
-    });
+    if (current.trim()) {
+      pipelines.push(current.trim());
+    }
+
+    const operations = [];
+
+    for (const pipe of pipelines) {
+      const tokens = tokenizeCommand(pipe);
+
+      if (tokens.length === 0) {
+        continue;
+      }
+
+      const command = tokens[0];
+      const args = parseArgs(tokens.slice(1));
+
+      operations.push({
+        command,
+        args
+      });
+    }
+
+    if (operations.length > 0) {
+      parsedStatements.push({
+        type: "pipeline",
+        operations
+      });
+    }
   }
 
-  if (operations.length === 0) {
+  if (parsedStatements.length === 0) {
     return null;
   }
 
+  /*
+   * One statement keeps the existing API unchanged.
+   */
+  if (parsedStatements.length === 1) {
+    return parsedStatements[0];
+  }
+
+  /*
+   * Multiple top-level statements.
+   */
   return {
-    type: "pipeline",
-    operations
+    type: "script",
+    statements: parsedStatements
   };
 }
 
@@ -337,8 +481,15 @@ function parseArgs(tokens) {
 }
 
 function validateCommand(parsedCommand) {
-  if (!parsedCommand || !parsedCommand.operations) {
+  if (!parsedCommand || (!parsedCommand.operations && !parsedCommand.statements)) {
     throw new Error("Invalid command.");
+  }
+
+  if (parsedCommand.statements) {
+    for (const stmt of parsedCommand.statements) {
+      validateCommand(stmt);
+    }
+    return true;
   }
 
   for (const op of parsedCommand.operations) {
@@ -373,6 +524,7 @@ function unregisterSearchCommand(commandName) {
   }
 }
 
+
 /* ==========================================================================
    BROWSER SEARCH ENGINE IMPLEMENTATION
    ========================================================================== */
@@ -394,27 +546,86 @@ async function runTerminalCommand() {
 
     const result = await executeSearch(parsed);
 
-    const normalized = recordSearchResult(result);
-    const formatted = formatSearchDiagnostic(normalized);
+    if (
+      result &&
+      result.__scriptResult === true
+    ) {
+      /*
+       * Multiline script.
+       *
+       * Write-Host output is displayed directly.
+       * Only the final search result goes through
+       * the normal search formatter.
+       */
+      if (
+        Array.isArray(result.hostOutput) &&
+        result.hostOutput.length > 0
+      ) {
+        state.terminalOutput +=
+          result.hostOutput.join("\n") + "\n";
+      }
 
-    state.lastSearchResult = formatted;
-    state.terminalOutput += formatted + "\n";
+      const normalized =
+        recordSearchResult(result.result);
 
-    if (normalized.ok) {
-      setStatus(
-        normalized.type === SEARCH_RESULT_TYPES.EMPTY
-          ? "Search complete: no matches"
-          : "Search complete",
-        normalized.type === SEARCH_RESULT_TYPES.EMPTY
-          ? "neutral"
-          : "success"
-      );
+      const formatted =
+        formatSearchDiagnostic(normalized);
+
+      state.lastSearchResult = formatted;
+
+      state.terminalOutput +=
+        formatted + "\n";
+
+      if (normalized.ok) {
+        setStatus(
+          normalized.type === SEARCH_RESULT_TYPES.EMPTY
+            ? "Search complete: no matches"
+            : "Search complete",
+          normalized.type === SEARCH_RESULT_TYPES.EMPTY
+            ? "neutral"
+            : "success"
+        );
+      } else {
+        setStatus(
+          normalized.message ||
+            "Search command failed",
+          "error"
+        );
+      }
+
     } else {
-      setStatus(
-        normalized.message || "Search command failed",
-        "error"
-      );
+      /*
+       * Existing single-command behavior.
+       */
+      const normalized =
+        recordSearchResult(result);
+
+      const formatted =
+        formatSearchDiagnostic(normalized);
+
+      state.lastSearchResult = formatted;
+
+      state.terminalOutput +=
+        formatted + "\n";
+
+      if (normalized.ok) {
+        setStatus(
+          normalized.type === SEARCH_RESULT_TYPES.EMPTY
+            ? "Search complete: no matches"
+            : "Search complete",
+          normalized.type === SEARCH_RESULT_TYPES.EMPTY
+            ? "neutral"
+            : "success"
+        );
+      } else {
+        setStatus(
+          normalized.message ||
+            "Search command failed",
+          "error"
+        );
+      }
     }
+
   } catch (err) {
     const diagnostic = createSearchError(err, {
       type: SEARCH_RESULT_TYPES.ENGINE_ERROR,
@@ -433,7 +644,8 @@ async function runTerminalCommand() {
       formatted;
 
     setStatus(
-      err.message || "Search engine failure",
+      err.message ||
+        "Search engine failure",
       "error"
     );
   }
@@ -457,6 +669,63 @@ async function executeSearch(parsedCommand) {
   }
 
   let intermediate = null;
+
+
+  /*
+   * Execute multiple top-level statements sequentially.
+   *
+   * Example:
+   *
+   * Write-Host "===== X ====="
+   *
+   * Get-ChildItem ... |
+   * Select-String ...
+   */
+  if (
+    parsedCommand &&
+    parsedCommand.type === "script"
+  ) {
+    let finalResult = null;
+    const hostOutput = [];
+
+    for (const statement of parsedCommand.statements) {
+      const result = await executeSearch(statement);
+
+      /*
+       * Write-Host produces a plain string array.
+       * Keep it as host output instead of treating it
+       * as search matches.
+       */
+      const firstOperation =
+        statement.operations &&
+        statement.operations[0];
+
+      if (
+        firstOperation &&
+        typeof firstOperation.command === "string" &&
+        firstOperation.command.toLowerCase() === "write-host"
+      ) {
+        if (Array.isArray(result)) {
+          hostOutput.push(
+            ...result.map(value => String(value))
+          );
+        } else if (
+          result !== undefined &&
+          result !== null
+        ) {
+          hostOutput.push(String(result));
+        }
+      } else {
+        finalResult = result;
+      }
+    }
+
+    return {
+      __scriptResult: true,
+      hostOutput,
+      result: finalResult
+    };
+  }
 
   if (parsedCommand && parsedCommand.type === "assignment") {
     const commandResult = await executeSearch({
@@ -873,7 +1142,6 @@ async function selectString(inputData, args = {}) {
 
   return matches;
 }
-
 
 /* ==========================================================================
    SELECT-OBJECT
