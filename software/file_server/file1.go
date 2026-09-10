@@ -2,7 +2,6 @@ package main
 
 import (
 	"archive/zip"
-	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -10,9 +9,10 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
-	"sync"
+	"syscall"
 	"time"
 )
 
@@ -22,12 +22,7 @@ const (
 	RootDirName = "shared_files"
 )
 
-var (
-	server      *http.Server
-	serverMutex sync.Mutex
-	isRunning   bool
-	absRootDir  string
-)
+var absRootDir string
 
 func main() {
 	var err error
@@ -36,58 +31,9 @@ func main() {
 		fmt.Printf("Error resolving root path: %v\n", err)
 		return
 	}
+
 	if err := os.MkdirAll(absRootDir, 0755); err != nil {
 		fmt.Printf("Error creating shared folder: %v\n", err)
-		return
-	}
-
-	reader := bufio.NewReader(os.Stdin)
-
-	for {
-		fmt.Println("\n========================================")
-		fmt.Println("         SIMPLE FILE BRIDGE            ")
-		fmt.Println("========================================")
-		fmt.Println(" Root Dir :", absRootDir)
-		fmt.Println(" Status   :", getStatusText())
-		fmt.Println("----------------------------------------")
-		fmt.Println(" [R] Run")
-		fmt.Println(" [S] Stop")
-		fmt.Println(" [Q] Quit")
-		fmt.Print("\nCommand: ")
-
-		input, _ := reader.ReadString('\n')
-		cmd := strings.ToUpper(strings.TrimSpace(input))
-
-		switch cmd {
-		case "R":
-			startServer()
-		case "S":
-			stopServer()
-		case "Q":
-			stopServer()
-			fmt.Println("Exiting application...")
-			return
-		default:
-			fmt.Println("Invalid command!")
-		}
-	}
-}
-
-func getStatusText() string {
-	serverMutex.Lock()
-	defer serverMutex.Unlock()
-	if isRunning {
-		return "RUNNING"
-	}
-	return "STOPPED"
-}
-
-func startServer() {
-	serverMutex.Lock()
-	defer serverMutex.Unlock()
-
-	if isRunning {
-		fmt.Println("\n[INFO] Server is already running!")
 		return
 	}
 
@@ -99,50 +45,34 @@ func startServer() {
 	mux.HandleFunc("/api/download", handleDownload)
 	mux.HandleFunc("/api/upload", handleUpload)
 
-	server = &http.Server{
+	server := &http.Server{
 		Addr:    addr,
 		Handler: mux,
 	}
 
-	listener, err := net.Listen("tcp", addr)
-	if err != nil {
-		fmt.Printf("\n[ERROR] Failed to bind %s: %v\n", addr, err)
-		return
-	}
-
-	isRunning = true
+	// Menjalankan server di goroutine
 	go func() {
-		if err := server.Serve(listener); err != nil && err != http.ErrServerClosed {
-			fmt.Printf("\n[ERROR] Server stopped with error: %v\n", err)
-			serverMutex.Lock()
-			isRunning = false
-			serverMutex.Unlock()
+		fmt.Printf("Starting Simple File Bridge on %s...\n", addr)
+		printLocalIPs()
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			fmt.Printf("[ERROR] Server listen error: %v\n", err)
 		}
 	}()
 
-	fmt.Printf("\n[RUNNING]\nServer listening on %s\n\n", addr)
-	printLocalIPs()
-}
+	// Menangkap SIGHUP, SIGINT, SIGTERM untuk Graceful Shutdown (Cocok untuk NSSM / Windows Service)
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+	<-stop
 
-func stopServer() {
-	serverMutex.Lock()
-	defer serverMutex.Unlock()
-
-	if !isRunning || server == nil {
-		fmt.Println("\n[INFO] Server is not running.")
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	fmt.Println("\nShutting down server...")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
-		fmt.Printf("\n[ERROR] Server forced shutdown: %v\n", err)
+		fmt.Printf("Server forced shutdown: %v\n", err)
 	} else {
-		fmt.Println("\n[STOPPED] Server stopped safely.")
+		fmt.Println("Server stopped gracefully.")
 	}
-	isRunning = false
-	server = nil
 }
 
 func printLocalIPs() {
@@ -197,6 +127,28 @@ func safePath(subPath string) (string, error) {
 	}
 
 	return targetPath, nil
+}
+
+// getUniquePath memeriksa apakah file/folder sudah ada.
+// Jika sudah ada, menambahkan suffix (1), (2), dst. agar file asli tidak ter-rewrite.
+func getUniquePath(targetPath string) string {
+	if _, err := os.Stat(targetPath); os.IsNotExist(err) {
+		return targetPath
+	}
+
+	dir := filepath.Dir(targetPath)
+	ext := filepath.Ext(targetPath)
+	base := strings.TrimSuffix(filepath.Base(targetPath), ext)
+
+	counter := 1
+	for {
+		newName := fmt.Sprintf("%s (%d)%s", base, counter, ext)
+		newPath := filepath.Join(dir, newName)
+		if _, err := os.Stat(newPath); os.IsNotExist(err) {
+			return newPath
+		}
+		counter++
+	}
 }
 
 type FileItem struct {
@@ -359,6 +311,9 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 			src.Close()
 			continue
 		}
+
+		// CEK UNTUK MENCEGAH REWRITE (AMBIL UNIQUE PATH JIKA SUDAH ADA)
+		dstPath = getUniquePath(dstPath)
 
 		dst, err := os.Create(dstPath)
 		if err != nil {
