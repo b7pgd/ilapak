@@ -1,0 +1,6 @@
+1. batach aktual masih running tapi timestamp end sudah ada
+
+262006081-100	UNIFILL B	LKXOB	JJ827 1Y	(mid) 2026-09-08 22:43:47	2026-09-09 09:06:46	09	0035
+
+2. timestamp start malah actual start nya ke lock ke (mid) padahal timestamp sesuai aktual start pallet 01 MB 0002 
+262006005-100	ILAPAK 5/8	LPRGQ	JJ604 1H	(mid) 2026-09-09 13:58:57	Running	01	0019
