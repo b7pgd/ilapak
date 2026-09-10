@@ -1,0 +1,14 @@
+# Setup Path NSSM dan Variabel Service
+$nssm        = "D:\b7_stok_opname\nssm.exe"
+$serviceName = "file_sharing"
+$exePath     = "D:\b7_3ws\shared_files\file_sharing.exe"
+$workDir     = "D:\b7_3ws\shared_files"
+
+# Deploy dan Jalankan Service
+& $nssm install $serviceName $exePath
+& $nssm set $serviceName AppDirectory $workDir
+& $nssm set $serviceName Start SERVICE_AUTO_START
+& $nssm start $serviceName
+
+# Cek Status Service
+& $nssm status $serviceName
