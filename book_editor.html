@@ -198,6 +198,7 @@ to {bottom: 0; opacity: 0;}
 </div>
 <button class="copy-btn download-btn" id="downloadTxtBtn">Download TXT</button>
 <button class="copy-btn" id="copyTxtBtn">Copy Teks</button>
+<button class="copy-btn" id="copyPromptBtn">Copy Prompt</button>
 </div>
 <div class="toast" id="toastBox">Copied to clipboard!</div>
 <script>
@@ -205,7 +206,24 @@ const notesBox = document.getElementById('notesBox');
 const fileNameBox = document.getElementById('fileNameBox');
 const downloadTxtBtn = document.getElementById('downloadTxtBtn');
 const copyTxtBtn = document.getElementById('copyTxtBtn');
+const copyPromptBtn = document.getElementById('copyPromptBtn');
 const toastBox = document.getElementById('toastBox');
+
+const PROMPT_TEXT = `Anda adalah seorang ahli penyunting teks OCR dan editor bahasa. Tugas Anda adalah merapikan dan memperbaiki teks hasil OCR dari buku dengan standar tinggi.
+
+IKUTI ATURAN PERBAIKAN BERIKUT:
+1. Pemformatan: Rapikan alur bacaan, penomoran, inden, dan struktur hierarki teks.
+2. Paragraf: Gabungkan kalimat-kalimat yang terpotong akibat baris baru OCR menjadi paragraf yang kohesif.
+3. Typo: Perbaiki semua kesalahan ketik (typo), karakter aneh akibat kegagalan OCR, dan tanda baca yang salah.
+4. Korelasi Teks: Perbaiki alur antar-kalimat atau antar-paragraf yang melompat/tidak nyambung agar dibaca dengan logis dan mengalir.
+5. TANPA TABEL: DILARANG KERAS menggunakan format tabel dalam bentuk apa pun. Gunakan hanya teks biasa, penomoran, atau daftar berpoin (bullet points).
+
+ATURAN OUTPUT (STRICT):
+- HANYA kembalikan hasil teks yang sudah diperbaiki secara lengkap.
+- JANGAN sertakan kalimat pengantar (seperti "Berikut adalah hasil...", "Tentu,", dll).
+- JANGAN sertakan kalimat penutup atau salam (seperti "Semoga membantu", "Silakan periksa kembali", dll).
+- JANGAN berikan penjelasan atas perubahan yang Anda buat.
+- Output HARUS dimulai langsung dari kata pertama teks yang sudah diperbaiki dan berakhir di kata terakhir teks tersebut.`;
 
 // AUTO SAVE & PERSISTENCE ENGINE (LOCALSTORAGE)
 // Mengunci isi field agar tidak hilang jika tab tidak sengaja tertutup
@@ -359,6 +377,11 @@ alert('Tidak ada teks untuk disalin!');
 return;
 }
 executeCopy(notesText, "Teks berhasil disalin!");
+});
+
+// FITUR COPY PROMPT DI BAWAH BUTTON COPY TEKS
+copyPromptBtn.addEventListener('click', () => {
+executeCopy(PROMPT_TEXT, "Prompt berhasil disalin!");
 });
 </script>
 </body>
