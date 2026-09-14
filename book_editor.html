@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Text Generator</title>
+<style>
+* {
+box-sizing: border-box;
+margin: 0;
+padding: 0;
+font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+body {
+background-color: #f0f4f8;
+color: #1e293b;
+padding: 15px;
+display: flex;
+justify-content: center;
+align-items: flex-start;
+min-height: 100vh;
+}
+.container {
+width: 100%;
+max-width: 1000px; /* Diperlebar biar mantap */
+background-color: #ffffff;
+padding: 20px;
+border-radius: 8px;
+border: 1px solid #cbd5e1;
+box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+margin-top: 10px;
+}
+h2 {
+margin-bottom: 15px;
+font-size: 1.3rem;
+color: #1d4ed8;
+text-align: center;
+}
+/* Header di atas setiap field penampung label dan tombol aksi */
+.textarea-header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 6px;
+}
+.textarea-header label {
+font-weight: 600;
+font-size: 0.9rem;
+color: #475569;
+}
+/* Group tombol Copy, Paste, Clear di kanan */
+.btn-group {
+display: flex;
+gap: 4px;
+}
+/* Ukuran tombol disamakan dengan tombol clear lama */
+.action-btn {
+color: white;
+border: none;
+padding: 4px 10px;
+border-radius: 4px;
+cursor: pointer;
+font-size: 0.75rem;
+font-weight: bold;
+transition: background 0.2s;
+}
+.btn-copy {
+background-color: #2563eb;
+}
+.btn-copy:hover {
+background-color: #1d4ed8;
+}
+.btn-paste {
+background-color: #0b8457;
+}
+.btn-paste:hover {
+background-color: #096b46;
+}
+.btn-clear {
+background-color: #ef4444;
+}
+.btn-clear:hover {
+background-color: #dc2626;
+}
+/* Textbox Utama Gede dan Lebar */
+.notes-textarea {
+width: 100%;
+height: 420px; /* Dibikin jauh lebih tinggi dan gede */
+background-color: #ffffff;
+border: 1px solid #cbd5e1;
+color: #0f172a;
+padding: 12px;
+border-radius: 6px;
+font-size: 0.95rem;
+resize: vertical;
+outline: none;
+margin-bottom: 15px;
+}
+.notes-textarea:focus, .filename-input:focus {
+border-color: #2563eb;
+box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+/* Input Nama File */
+.filename-group {
+margin-bottom: 15px;
+}
+.filename-input {
+width: 100%;
+background-color: #ffffff;
+border: 1px solid #cbd5e1;
+color: #0f172a;
+padding: 10px;
+border-radius: 6px;
+font-size: 0.9rem;
+outline: none;
+}
+/* Button Copy/Copas Biru Polos */
+.copy-btn {
+width: 100%;
+background-color: #2563eb;
+color: white;
+border: none;
+padding: 12px;
+border-radius: 6px;
+font-size: 1rem;
+font-weight: bold;
+cursor: pointer;
+transition: background 0.2s;
+margin-bottom: 10px;
+}
+.copy-btn:hover {
+background-color: #1d4ed8;
+}
+.copy-btn:active {
+background-color: #1e40af;
+}
+.download-btn {
+background-color: #16a34a;
+margin-bottom: 10px;
+}
+.download-btn:hover {
+background-color: #15803d;
+}
+.download-btn:active {
+background-color: #166534;
+}
+/* Toast Notification */
+.toast {
+visibility: hidden;
+min-width: 200px;
+background-color: #1e293b;
+color: #ffffff;
+text-align: center;
+border-radius: 4px;
+padding: 10px;
+position: fixed;
+z-index: 10;
+bottom: 30px;
+font-size: 0.9rem;
+font-weight: bold;
+box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+.toast.show {
+visibility: visible;
+animation: fadein 0.3s, fadeout 0.3s 2.2s;
+}
+@keyframes fadein {
+from {bottom: 0; opacity: 0;}
+to {bottom: 30px; opacity: 1;}
+}
+@keyframes fadeout {
+from {bottom: 30px; opacity: 1;}
+to {bottom: 0; opacity: 0;}
+}
+</style>
+</head>
+<body>
+<div class="container">
+<h2>Text Editor</h2>
+<!-- Field Utama: Notes -->
+<div class="textarea-header">
+<label for="notesBox">Notes</label>
+<div class="btn-group">
+<button class="action-btn btn-copy" onclick="copySingle('notesBox')">Copy</button>
+<button class="action-btn btn-paste" onclick="pasteSingle('notesBox')">Paste</button>
+<button class="action-btn btn-clear" onclick="clearSingle('notesBox')">Clear</button>
+</div>
+</div>
+<textarea class="notes-textarea" id="notesBox" placeholder="Tulis notes di sini..."></textarea>
+<!-- Field Nama File untuk Simpan -->
+<div class="filename-group">
+<div class="textarea-header">
+<label for="fileNameBox">Nama File TXT:</label>
+<div class="btn-group">
+<button class="action-btn btn-clear" onclick="clearSingle('fileNameBox')">Clear</button>
+</div>
+</div>
+<input type="text" class="filename-input" id="fileNameBox" value="Bab 1" placeholder="Masukkan nama file...">
+</div>
+<button class="copy-btn download-btn" id="downloadTxtBtn">Download TXT</button>
+<button class="copy-btn" id="copyTxtBtn">Copy Teks</button>
+</div>
+<div class="toast" id="toastBox">Copied to clipboard!</div>
+<script>
+const notesBox = document.getElementById('notesBox');
+const fileNameBox = document.getElementById('fileNameBox');
+const downloadTxtBtn = document.getElementById('downloadTxtBtn');
+const copyTxtBtn = document.getElementById('copyTxtBtn');
+const toastBox = document.getElementById('toastBox');
+
+// AUTO SAVE & PERSISTENCE ENGINE (LOCALSTORAGE)
+// Mengunci isi field agar tidak hilang jika tab tidak sengaja tertutup
+const STORAGE_KEYS = {
+notesBox: 'text_editor_notesBox',
+fileNameBox: 'text_editor_fileNameBox'
+};
+
+function loadSavedData() {
+if (localStorage.getItem(STORAGE_KEYS.notesBox) !== null) {
+notesBox.value = localStorage.getItem(STORAGE_KEYS.notesBox);
+}
+if (localStorage.getItem(STORAGE_KEYS.fileNameBox) !== null) {
+fileNameBox.value = localStorage.getItem(STORAGE_KEYS.fileNameBox);
+}
+}
+
+function saveToLocalStorage(key, value) {
+localStorage.setItem(key, value);
+}
+
+// Bind real-time input event listeners for instant local persistence
+notesBox.addEventListener('input', (e) => saveToLocalStorage(STORAGE_KEYS.notesBox, e.target.value));
+fileNameBox.addEventListener('input', (e) => saveToLocalStorage(STORAGE_KEYS.fileNameBox, e.target.value));
+
+// Inisialisasi pemuatan data tersimpan saat browser dibuka
+loadSavedData();
+
+// Fungsi Global Aksi Clear per Field
+function clearSingle(targetId) {
+const target = document.getElementById(targetId);
+target.value = '';
+if (STORAGE_KEYS[targetId]) {
+localStorage.removeItem(STORAGE_KEYS[targetId]);
+}
+target.focus();
+}
+
+// Fungsi Global Aksi Copy per Field
+function copySingle(targetId) {
+const target = document.getElementById(targetId);
+const textToCopy = target.value;
+if (!textToCopy.trim()) return;
+executeCopy(textToCopy, "Copied text!");
+}
+
+// Fungsi Global Aksi Paste per Field (Support HTTPS & Modern Device Browser)
+function pasteSingle(targetId) {
+const target = document.getElementById(targetId);
+if (navigator.clipboard && window.isSecureContext) {
+navigator.clipboard.readText()
+.then(text => {
+if (target.value.length > 0) {
+target.value += '\n\n' + text;
+} else {
+target.value = text;
+}
+if (STORAGE_KEYS[targetId]) {
+saveToLocalStorage(STORAGE_KEYS[targetId], target.value);
+}
+target.focus();
+})
+.catch(err => {
+console.error('Failed to read clipboard: ', err);
+alert('Gagal membaca clipboard otomatis. Izinkan akses clipboard di browser Anda atau gunakan paste manual HP.');
+});
+} else {
+alert('Fitur auto-paste membutuhkan koneksi HTTPS / Local Server aman. Gunakan fitur bawaan keyboard perangkat Anda.');
+}
+}
+
+// Core execution copy engine dengan fallback
+function executeCopy(text, successMessage) {
+if (navigator.clipboard && window.isSecureContext) {
+navigator.clipboard.writeText(text)
+.then(() => showToast(successMessage))
+.catch(() => fallbackCopyText(text, successMessage));
+} else {
+fallbackCopyText(text, successMessage);
+}
+}
+
+// Fungsi Fallback Copy (Pasti berhasil di lingkungan non-HTTPS / Lokal HP)
+function fallbackCopyText(text, successMessage) {
+const textArea = document.createElement("textarea");
+textArea.value = text;
+textArea.style.top = "0";
+textArea.style.left = "0";
+textArea.style.position = "fixed";
+textArea.style.opacity = "0";
+document.body.appendChild(textArea);
+textArea.focus();
+textArea.select();
+try {
+const successful = document.execCommand('copy');
+if (successful) {
+showToast(successMessage);
+} else {
+alert('Gagal menyalin teks, silahkan seleksi manual.');
+}
+} catch (err) {
+console.error('Fallback error:', err);
+alert('Gagal menyalin teks, silahkan seleksi manual.');
+}
+document.body.removeChild(textArea);
+}
+
+// Fungsi menampilkan pop-up sukses copy dengan kustomisasi pesan text
+function showToast(message = "Copied to clipboard!") {
+toastBox.textContent = message;
+toastBox.classList.add('show');
+setTimeout(() => {
+toastBox.classList.remove('show');
+}, 2500);
+}
+
+// FITUR DOWNLOAD TXT FILE
+downloadTxtBtn.addEventListener('click', () => {
+const notesText = notesBox.value;
+
+if (!notesText.trim()) {
+alert('Tidak ada teks untuk diunduh!');
+return;
+}
+
+let rawFileName = fileNameBox.value.trim();
+if (!rawFileName) {
+rawFileName = "Bab 1";
+}
+// Sanitize nama file untuk menghilangkan karakter ilegal nama file
+let safeFileName = rawFileName.replace(/[/\\?%*:|"<>]/g, '').trim();
+if (!safeFileName.toLowerCase().endsWith('.txt')) {
+safeFileName += '.txt';
+}
+
+const blob = new Blob([notesText], { type: 'text/plain;charset=utf-8' });
+const link = document.createElement('a');
+link.href = URL.createObjectURL(blob);
+link.download = safeFileName;
+document.body.appendChild(link);
+link.click();
+document.body.removeChild(link);
+URL.revokeObjectURL(link.href);
+});
+
+// FITUR COPY TEKS DI BAWAH BUTTON DOWNLOAD TXT
+copyTxtBtn.addEventListener('click', () => {
+const notesText = notesBox.value;
+if (!notesText.trim()) {
+alert('Tidak ada teks untuk disalin!');
+return;
+}
+executeCopy(notesText, "Teks berhasil disalin!");
+});
+</script>
+</body>
+</html>
