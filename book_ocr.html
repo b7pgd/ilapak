@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo to Text OCR</title>
+    <!-- Cropper.js CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <style>
+        /* UI Fresh White & Blue */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; color: #333; text-align: center; padding: 20px; margin: 0; }
+        .container { background: #ffffff; padding: 30px; border-radius: 16px; max-width: 500px; margin: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #e1e4e8; }
+
+        h2 { color: #1a73e8; margin-bottom: 5px; font-weight: 600; }
+        .sub-text { font-size: 13px; color: #666; margin-bottom: 20px; }
+
+        /* Hidden elements */
+        input[type="file"] { display: none; }
+        #canvas { display: none; }
+
+        /* Image Toolbar */
+        .img-toolbar {
+            display: none;
+            justify-content: flex-end;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        /* Cropper Container - Diperbesar agar nyaman untuk crop */
+        .crop-container {
+            width: 100%;
+            max-height: 600px;
+            margin: 0 0 15px 0;
+            display: none;
+            background-color: #f7f7f7;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .crop-container img {
+            max-width: 100%;
+            display: block;
+        }
+
+        /* Penyesuaian handle cropper agar lebih besar & gampang dipilih */
+        .cropper-point {
+            width: 14px !important;
+            height: 14px !important;
+            background-color: #1a73e8 !important;
+            opacity: 0.9 !important;
+        }
+        .cropper-point.point-e, .cropper-point.point-w { margin-top: -7px !important; }
+        .cropper-point.point-n, .cropper-point.point-s { margin-left: -7px !important; }
+        .cropper-point.point-ne, .cropper-point.point-nw, .cropper-point.point-se, .cropper-point.point-sw {
+            width: 16px !important;
+            height: 16px !important;
+        }
+
+        /* Status & Loading */
+        #status { margin: 15px 0; font-size: 14px; font-weight: bold; color: #1a73e8; min-height: 20px; }
+
+        /* Output: Teks Hitam */
+        #output {
+            white-space: pre-wrap;
+            background: #f8f9fa;
+            color: #1a1a1a;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: left;
+            font-size: 14px;
+            min-height: 120px;
+            border: 1px solid #ced4da;
+            line-height: 1.5;
+        }
+
+        /* Button Biru */
+        button {
+            background: #1a73e8;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            width: 100%;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.2s;
+            box-shadow: 0 4px 6px rgba(26, 115, 232, 0.2);
+        }
+        button:hover { background: #1557b0; }
+        button:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; }
+
+        .engine-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            background: #e8f0fe;
+            color: #1a73e8;
+            font-size: 11px;
+            margin-top: 5px;
+        }
+
+        /* Header di atas textbox menampung label kiri dan tombol aksi di kanan */
+        .textarea-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 25px;
+            margin-bottom: 6px;
+        }
+
+        .textarea-header label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #475569;
+        }
+
+        /* Group tombol Copy & Clear */
+        .btn-group {
+            display: flex;
+            gap: 4px;
+        }
+
+        .action-btn {
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        .btn-copy { background-color: #2563eb; }
+        .btn-copy:hover { background-color: #1d4ed8; }
+
+        .btn-clear { background-color: #ef4444; }
+        .btn-clear:hover { background-color: #dc2626; }
+
+        .btn-edit { background-color: #f59e0b; }
+        .btn-edit:hover { background-color: #d97706; }
+
+        .btn-save { background-color: #10b981; }
+        .btn-save:hover { background-color: #059669; }
+
+        .btn-cancel { background-color: #6b7280; }
+        .btn-cancel:hover { background-color: #4b5563; }
+
+        .btn-retake { background-color: #8b5cf6; }
+        .btn-retake:hover { background-color: #7c3aed; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>📷 Photo to Text</h2>
+    <div class="sub-text">Scan buku langsung via kamera</div>
+
+    <!-- Input file tersembunyi untuk langsung membuka Kamera HP Native -->
+    <input type="file" id="imageInput" accept="image/*" capture="environment">
+    <button id="cameraBtn">📸 BUKA KAMERA</button>
+
+    <!-- Image Toolbar (Edit | Save | Cancel | Retake) -->
+    <div class="img-toolbar" id="imgToolbar">
+        <button class="action-btn btn-retake" id="retakeBtn">Kamera</button>
+        <button class="action-btn btn-edit" id="editBtn">Edit Crop</button>
+        <button class="action-btn btn-save" id="saveBtn" style="display: none;">Save Crop</button>
+        <button class="action-btn btn-cancel" id="cancelBtn" style="display: none;">Cancel</button>
+    </div>
+
+    <div class="crop-container" id="cropContainer">
+        <img id="imageToCrop" src="" alt="Foto Awal">
+    </div>
+    <canvas id="canvas"></canvas>
+
+    <div id="status">Silakan ambil foto dokumen.</div>
+    <button id="scanBtn" disabled>MULAI SCAN</button>
+
+    <!-- Action Toolbar di atas Textbox -->
+    <div class="textarea-header">
+        <label>Hasil Scan:</label>
+        <div class="btn-group">
+            <button class="action-btn btn-copy" id="copyBtn">Copy</button>
+            <button class="action-btn btn-clear" id="clearBtn">Clear</button>
+        </div>
+    </div>
+    <div id="output">Hasil scan teks akan muncul di sini...</div>
+</div>
+
+<!-- Cropper.js JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+<script>
+    const imageInput = document.getElementById('imageInput');
+    const cameraBtn = document.getElementById('cameraBtn');
+    const scanBtn = document.getElementById('scanBtn');
+    const status = document.getElementById('status');
+    const output = document.getElementById('output');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const imageToCrop = document.getElementById('imageToCrop');
+    const cropContainer = document.getElementById('cropContainer');
+    const imgToolbar = document.getElementById('imgToolbar');
+
+    const editBtn = document.getElementById('editBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const retakeBtn = document.getElementById('retakeBtn');
+
+    const copyBtn = document.getElementById('copyBtn');
+    const clearBtn = document.getElementById('clearBtn');
+
+    let cropper = null;
+    let originalCapturedSrc = '';
+
+    const API_KEY = 'K81551206988957';
+
+    // Buka Kamera HP Asli
+    cameraBtn.onclick = () => {
+        imageInput.click();
+    };
+
+    // Auto Portrait Function: Memastikan gambar selalu dalam orientasi portrait di browser
+    function ensurePortraitImage(imgElement) {
+        const origW = imgElement.naturalWidth || imgElement.width;
+        const origH = imgElement.naturalHeight || imgElement.height;
+        const isLandscape = origW > origH;
+
+        if (!isLandscape) {
+            return imgElement.src;
+        }
+
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = origH;
+        tempCanvas.height = origW;
+        const tempCtx = tempCanvas.getContext('2d');
+
+        tempCtx.translate(origH / 2, origW / 2);
+        tempCtx.rotate(90 * Math.PI / 180);
+        tempCtx.drawImage(imgElement, -origW / 2, -origH / 2, origW, origH);
+
+        return tempCanvas.toDataURL('image/jpeg', 0.95);
+    }
+
+    // Handler ketika foto selesai diambil via Kamera HP Native
+    imageInput.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            originalCapturedSrc = event.target.result;
+
+            const tempImg = new Image();
+            tempImg.onload = () => {
+                const portraitSrc = ensurePortraitImage(tempImg);
+                imageToCrop.src = portraitSrc;
+
+                cameraBtn.style.display = 'none';
+                cropContainer.style.display = 'block';
+                imgToolbar.style.display = 'flex';
+
+                editBtn.style.display = 'inline-block';
+                saveBtn.style.display = 'none';
+                cancelBtn.style.display = 'none';
+
+                status.textContent = "Foto berhasil diambil. Klik Scan untuk OCR.";
+                scanBtn.disabled = false;
+            };
+            tempImg.src = originalCapturedSrc;
+        };
+        reader.readAsDataURL(file);
+    };
+
+    retakeBtn.onclick = () => {
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+        imageInput.value = '';
+        imageInput.click();
+    };
+
+    // Filter Enhancement vFlat-style & Force Portrait Fix
+    function applyEnhancementsAndDrawToCanvas(imgElement) {
+        const origW = imgElement.naturalWidth || imgElement.width;
+        const origH = imgElement.naturalHeight || imgElement.height;
+        const isLandscape = origW > origH;
+
+        // Fiksasi orientasi ke Portrait (Jika Landscape, tukar ukuran W & H)
+        const targetW = isLandscape ? origH : origW;
+        const targetH = isLandscape ? origW : origH;
+
+        const scale = Math.min(1, 1200 / Math.max(targetW, targetH));
+        const w = targetW * scale;
+        const h = targetH * scale;
+
+        canvas.width = w;
+        canvas.height = h;
+
+        ctx.save();
+        if (isLandscape) {
+            // Rotasi 90 derajat agar tegak (portrait)
+            ctx.translate(w / 2, h / 2);
+            ctx.rotate(90 * Math.PI / 180);
+            ctx.drawImage(imgElement, -h / 2, -w / 2, h, w);
+        } else {
+            ctx.drawImage(imgElement, 0, 0, w, h);
+        }
+        ctx.restore();
+
+        const imgData = ctx.getImageData(0, 0, w, h);
+        const d = imgData.data;
+
+        // Binarization & Auto High Contrast Filter
+        for (let i = 0; i < d.length; i += 4) {
+            let avg = (d[i] + d[i + 1] + d[i + 2]) / 3;
+            // Contrast stretching
+            avg = (avg - 128) * 1.4 + 128;
+            if (avg > 165) {
+                avg = 255; // Latar belakang menjadi putih bersih
+            } else if (avg < 110) {
+                avg = 0;   // Teks menjadi hitam pekat
+            }
+            d[i] = avg;
+            d[i + 1] = avg;
+            d[i + 2] = avg;
+        }
+        ctx.putImageData(imgData, 0, 0);
+    }
+
+    // Tombol Clear & Copy
+    clearBtn.onclick = () => { output.textContent = ''; };
+
+    copyBtn.onclick = () => {
+        const textToCopy = output.textContent;
+        if (!textToCopy || textToCopy === "Hasil scan teks akan muncul di sini..." || textToCopy === "Menganalisa gambar...") return;
+
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(textToCopy)
+                .then(() => alert('Teks berhasil disalin!'))
+                .catch(() => fallbackCopyText(textToCopy));
+        } else {
+            fallbackCopyText(textToCopy);
+        }
+    };
+
+    function fallbackCopyText(text) {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed";
+        textArea.style.opacity = "0";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            alert('Teks berhasil disalin!');
+        } catch (err) {
+            alert('Gagal menyalin teks.');
+        }
+        document.body.removeChild(textArea);
+    }
+
+    editBtn.onclick = () => {
+        if (cropper) return;
+        cropper = new Cropper(imageToCrop, {
+            viewMode: 1,
+            autoCropArea: 0.95,
+            responsive: true,
+            zoomable: true,
+            rotatable: true,
+            scalable: false
+        });
+
+        editBtn.style.display = 'none';
+        saveBtn.style.display = 'inline-block';
+        cancelBtn.style.display = 'inline-block';
+        status.textContent = "Atur area crop & ratakan kemiringan lalu klik Save.";
+    };
+
+    saveBtn.onclick = () => {
+        if (!cropper) return;
+        const croppedCanvas = cropper.getCroppedCanvas();
+        if (!croppedCanvas) return;
+
+        const croppedDataUrl = croppedCanvas.toDataURL('image/jpeg', 0.95);
+
+        cropper.destroy();
+        cropper = null;
+
+        imageToCrop.src = croppedDataUrl;
+
+        status.textContent = "Foto berhasil dicrop. Klik scan untuk OCR.";
+
+        editBtn.style.display = 'inline-block';
+        saveBtn.style.display = 'none';
+        cancelBtn.style.display = 'none';
+    };
+
+    cancelBtn.onclick = () => {
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+
+        editBtn.style.display = 'inline-block';
+        saveBtn.style.display = 'none';
+        cancelBtn.style.display = 'none';
+        status.textContent = "Batal crop. Gambar siap diproses.";
+    };
+
+    scanBtn.onclick = async () => {
+        // Auto Save Crop jika user masih dalam mode edit crop saat menekan Scan
+        if (cropper) {
+            const croppedCanvas = cropper.getCroppedCanvas();
+            if (croppedCanvas) {
+                const croppedDataUrl = croppedCanvas.toDataURL('image/jpeg', 0.95);
+                cropper.destroy();
+                cropper = null;
+
+                imageToCrop.src = croppedDataUrl;
+
+                editBtn.style.display = 'inline-block';
+                saveBtn.style.display = 'none';
+                cancelBtn.style.display = 'none';
+            }
+        }
+
+        // Render & Enhance gambar secara tersembunyi ke Canvas sebelum dikirim ke API
+        await new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+                applyEnhancementsAndDrawToCanvas(img);
+                resolve();
+            };
+            img.src = imageToCrop.src;
+        });
+
+        scanBtn.disabled = true;
+        output.textContent = "Menganalisa gambar...";
+
+        const callOCR = async (engine, timeoutMs = null) => {
+            status.innerHTML = `🚀 Memproses... <div class="engine-badge">Engine ${engine}</div>`;
+
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            const formData = new FormData();
+            formData.append('base64Image', dataUrl);
+            formData.append('apikey', API_KEY);
+            formData.append('language', 'eng');
+            formData.append('OCREngine', engine);
+            formData.append('scale', 'false');
+
+            const controller = new AbortController();
+            let timeoutId = null;
+
+            if (timeoutMs) {
+                timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+            }
+
+            try {
+                const response = await fetch('https://api.ocr.space/parse/image', {
+                    method: 'POST',
+                    body: formData,
+                    signal: controller.signal
+                });
+                if (timeoutId) clearTimeout(timeoutId);
+                return await response.json();
+            } catch (err) {
+                if (err.name === 'AbortError') {
+                    throw new Error("Timeout: Antrean Engine 2 terlalu lama.");
+                }
+                throw err;
+            }
+        };
+
+        try {
+            // Step 1: Coba Engine 2 dengan Timeout 2 Detik (2000ms)
+            let result;
+            try {
+                result = await callOCR('2', 2000);
+            } catch (e) {
+                console.warn(e.message);
+                result = { OCRExitCode: 99, ErrorMessage: e.message };
+            }
+
+            if (result.OCRExitCode === 1) {
+                output.textContent = result.ParsedResults[0].ParsedText || "Teks tidak ditemukan.";
+                status.textContent = "✅ Scan Selesai!";
+            } else {
+                // Step 2: Fallback ke Engine 1
+                console.warn("Pindah ke Engine 1...");
+                let result2 = await callOCR('1');
+
+                if (result2.OCRExitCode === 1) {
+                    output.textContent = result2.ParsedResults[0].ParsedText;
+                    status.textContent = "✅ Selesai (Engine 1)";
+                } else {
+                    status.textContent = "❌ Gagal";
+                    output.textContent = "Error: " + (result2.ErrorMessage || result2.ErrorDetails || "Terjadi kesalahan pada OCR");
+                }
+            }
+        } catch (err) {
+            status.textContent = "❌ Masalah Koneksi";
+            output.textContent = "Error: " + err.message;
+        } finally {
+            scanBtn.disabled = false;
+        }
+    };
+</script>
+
+</body>
+</html>
