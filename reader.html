@@ -221,7 +221,7 @@
             }
         });
 
-        window.addEventListener('beforeunload', () => {
+        function saveSafetyBookmarkOnExit() {
             if (!currentLoadedFileName) return;
             const targetEl = getVisibleTopElement();
             if (!targetEl) return;
@@ -229,6 +229,13 @@
             const index = elements.indexOf(targetEl);
             if (index !== -1) {
                 localStorage.setItem(`bookmark_index_${currentLoadedFileName}`, index);
+            }
+        }
+
+        window.addEventListener('beforeunload', saveSafetyBookmarkOnExit);
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') {
+                saveSafetyBookmarkOnExit();
             }
         });
 
