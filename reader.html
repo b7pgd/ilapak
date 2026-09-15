@@ -221,6 +221,17 @@
             }
         });
 
+        window.addEventListener('beforeunload', () => {
+            if (!currentLoadedFileName) return;
+            const targetEl = getVisibleTopElement();
+            if (!targetEl) return;
+            const elements = Array.from(outputPreview.querySelectorAll('p, h2, h1, h3, h4, div.epub-section'));
+            const index = elements.indexOf(targetEl);
+            if (index !== -1) {
+                localStorage.setItem(`bookmark_index_${currentLoadedFileName}`, index);
+            }
+        });
+
         function getVisibleTopElement() {
             const elements = outputPreview.querySelectorAll('p, h2, h1, h3, h4, div.epub-section');
             const wrapperRect = outputWrapper.getBoundingClientRect();
@@ -277,11 +288,11 @@
             bookmarkLine.id = 'reading-bookmark-line';
             bookmarkLine.className = 'w-full my-4 border-b-2 border-blue-500 relative flex items-center justify-end';
             bookmarkLine.innerHTML = `<span class="bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-l-md shadow-xs -mt-3.5">📌 Pembatas Halaman</span>`;
-            
+
             targetEl.parentNode.insertBefore(bookmarkLine, targetEl);
         }
 
-        function setBookmarkAtCurrentPosition() {
+        function setBookmarkAtCurrentPosition(showFeedback = true) {
             if (!currentLoadedFileName) return;
             const targetEl = getVisibleTopElement();
             if (!targetEl) return;
@@ -291,10 +302,20 @@
             if (index !== -1) {
                 localStorage.setItem(`bookmark_index_${currentLoadedFileName}`, index);
                 renderBookmarkIndicator(targetEl);
+
+                if (showFeedback) {
+                    btnSetBookmark.classList.remove('bg-slate-700', 'hover:bg-slate-600', 'text-slate-200', 'border-slate-600');
+                    btnSetBookmark.classList.add('bg-blue-600', 'hover:bg-blue-500', 'text-white', 'border-blue-500');
+
+                    setTimeout(() => {
+                        btnSetBookmark.classList.remove('bg-blue-600', 'hover:bg-blue-500', 'text-white', 'border-blue-500');
+                        btnSetBookmark.classList.add('bg-slate-700', 'hover:bg-slate-600', 'text-slate-200', 'border-slate-600');
+                    }, 1000);
+                }
             }
         }
 
-        btnSetBookmark.addEventListener('click', () => setBookmarkAtCurrentPosition());
+        btnSetBookmark.addEventListener('click', () => setBookmarkAtCurrentPosition(true));
 
         function triggerScrollRestore() {
             restoreScrollToBookmark();
