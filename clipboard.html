@@ -97,6 +97,14 @@
         .btn-pdf:hover { background-color: #096b46; }
         .btn-pdf:disabled { background-color: #cbd5e1; cursor: not-allowed; }
 
+        .btn-pdf-mobile {
+            background-color: #8b5cf6;
+            color: white;
+        }
+
+        .btn-pdf-mobile:hover { background-color: #7c3aed; }
+        .btn-pdf-mobile:disabled { background-color: #cbd5e1; cursor: not-allowed; }
+
         .btn-clear {
             background-color: #ef4444;
             color: white;
@@ -173,7 +181,7 @@
 
         #pdf-content pre, #pdf-content code {
             background-color: #f1f5f9 !important;
-            padding: 4px 8px !important;
+            padding: 2px 6px !important;
             border-radius: 4px !important;
             font-family: Consolas, monospace !important;
             font-size: 13px !important;
@@ -181,6 +189,15 @@
 
         #pdf-content p {
             margin-bottom: 12px;
+        }
+
+        #pdf-content ul, #pdf-content ol {
+            margin-left: 20px;
+            margin-bottom: 12px;
+        }
+
+        #pdf-content li {
+            margin-bottom: 4px;
         }
 
         #pdf-content img, #pdf-content table {
@@ -203,17 +220,18 @@
 <div class="container">
     <h2>📄 Clioboard to PDF</h2>
     <div class="sub-text instruction">Ubah salinan chat langsung jadi dokumen cetak PDF</div>
-    
+
     <div class="instruction-box">
         <strong>Cara Pakai:</strong><br>
         1. Klik icon <strong>Copy</strong> bawaan atau blok teks jawaban.<br>
         2. Klik tombol <strong>"1. Ambil & Paste"</strong>.<br>
-        3. Web akan otomatis mendeteksi format (HTML/Markdown) dan menyusun tabel secara rapi. Klik <strong>"2. Cetak ke PDF"</strong>!
+        3. Web akan otomatis mendeteksi format (HTML/Markdown) dan menyusun tabel secara rapi. Klik <strong>"2. Cetak ke PDF"</strong> atau <strong>"3. Cetak PDF Versi Mobile"</strong>!
     </div>
 
     <div class="toolbar">
         <button class="btn btn-paste" id="pasteBtn">1. Paste dari Clipboard</button>
         <button class="btn btn-pdf" id="pdfBtn" disabled>2. Cetak ke PDF</button>
+        <button class="btn btn-pdf-mobile" id="pdfMobileBtn" disabled>3. Cetak PDF Versi Mobile</button>
         <button class="btn btn-clear" id="clearBtn">Clear</button>
     </div>
 
@@ -226,6 +244,7 @@
 <script>
     const pasteBtn = document.getElementById('pasteBtn');
     const pdfBtn = document.getElementById('pdfBtn');
+    const pdfMobileBtn = document.getElementById('pdfMobileBtn');
     const clearBtn = document.getElementById('clearBtn');
     const pdfContent = document.getElementById('pdf-content');
 
@@ -270,7 +289,7 @@
 
             if (line.startsWith('#')) {
                 if (inTable) { htmlOutput += buildHTMLTable(tableRows); tableRows = []; inTable = false; }
-                
+
                 const match = line.match(/^(#{1,6})\s+(.*)$/);
                 if (match) {
                     const level = match[1].length;
@@ -294,11 +313,19 @@
                     inTable = false;
                 }
                 if (line !== '') {
-                    htmlOutput += `<p>${processInlineMarkdown(line)}</p>`;
+                    if (line.match(/^[\*\-\+]\s+/)) {
+                        const listText = line.replace(/^[\*\-\+]\s+/, '');
+                        htmlOutput += `<ul><li>${processInlineMarkdown(listText)}</li></ul>`;
+                    } else if (line.match(/^\d+\.\s+/)) {
+                        const listText = line.replace(/^\d+\.\s+/, '');
+                        htmlOutput += `<ol><li>${processInlineMarkdown(listText)}</li></ol>`;
+                    } else {
+                        htmlOutput += `<p>${processInlineMarkdown(line)}</p>`;
+                    }
                 }
             }
         }
-        
+
         if (inTable && tableRows.length > 0) {
             htmlOutput += buildHTMLTable(tableRows);
         }
@@ -307,7 +334,10 @@
     }
 
     function processInlineMarkdown(text) {
-        return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        return text
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/`(.*?)`/g, '<code>$1</code>');
     }
 
     function buildHTMLTable(rows) {
@@ -317,7 +347,7 @@
             tableHtml += `<th>${processInlineMarkdown(cell)}</th>`;
         });
         tableHtml += '</tr></thead><tbody>';
-        
+
         for (let r = 1; r < rows.length; r++) {
             tableHtml += '<tr>';
             rows[r].forEach(cell => {
@@ -329,30 +359,30 @@
         return tableHtml;
     }
 
-    // Fungsi pembantu untuk memproses teks inline (bold) ke format array object pdfmake
+    // Fungsi pembantu untuk memproses teks inline (bold, italic, code) ke format array object pdfmake
     function parseInlineToPdfMake(text) {
-        const parts = [];
-        const regex = /\*\*(.*?)\*\*/g;
-        let lastIndex = 0;
-        let match;
+        const tokenRegex = /(\*\*.*?\*\*|\*.*?\*|`.*?`)/g;
+        const tokens = text.split(tokenRegex);
+        const result = [];
 
-        while ((match = regex.exec(text)) !== null) {
-            if (match.index > lastIndex) {
-                parts.push({ text: text.substring(lastIndex, match.index) });
+        tokens.forEach(part => {
+            if (!part) return;
+            if (part.startsWith('**') && part.endsWith('**') && part.length >= 4) {
+                result.push({ text: part.slice(2, -2), bold: true });
+            } else if (part.startsWith('*') && part.endsWith('*') && part.length >= 2) {
+                result.push({ text: part.slice(1, -1), italics: true });
+            } else if (part.startsWith('`') && part.endsWith('`') && part.length >= 2) {
+                result.push({ text: part.slice(1, -1), font: 'Roboto', background: '#f1f5f9' });
+            } else {
+                result.push({ text: part });
             }
-            parts.push({ text: match[1], bold: true });
-            lastIndex = regex.lastIndex;
-        }
+        });
 
-        if (lastIndex < text.length) {
-            parts.push({ text: text.substring(lastIndex) });
-        }
-
-        return parts.length > 0 ? parts : [{ text: text }];
+        return result.length > 0 ? result : [{ text: text }];
     }
 
     // Engine Konverter dari teks terstruktur Clipboard/Markdown langsung menjadi skema Document Definition pdfmake
-    function generatePdfMakeDefinition(markdownText) {
+    function generatePdfMakeDefinition(markdownText, isMobile = false) {
         // Melakukan normalisasi karakter sebelum di-parse ke PDF definisi objek
         const cleanMarkdown = normalizeUnicode(markdownText);
         const lines = cleanMarkdown.split('\n');
@@ -360,29 +390,31 @@
         let inTable = false;
         let tableRows = [];
 
+        const baseFontSize = isMobile ? 12 : 10.5;
+
         for (let i = 0; i < lines.length; i++) {
             let line = lines[i].trim();
 
             if (line.startsWith('#')) {
-                if (inTable) { 
-                    docContent.push(buildPdfMakeTable(tableRows)); 
-                    tableRows = []; 
-                    inTable = false; 
+                if (inTable) {
+                    docContent.push(buildPdfMakeTable(tableRows, isMobile));
+                    tableRows = [];
+                    inTable = false;
                 }
                 const match = line.match(/^(#{1,6})\s+(.*)$/);
                 if (match) {
                     const level = match[1].length;
                     const textContent = match[2];
-                    let fontSize = 14;
-                    if (level === 1) fontSize = 20;
-                    if (level === 2) fontSize = 18;
-                    if (level === 3) fontSize = 16;
+                    let fontSize = isMobile ? 16 : 14;
+                    if (level === 1) fontSize = isMobile ? 22 : 20;
+                    if (level === 2) fontSize = isMobile ? 20 : 18;
+                    if (level === 3) fontSize = isMobile ? 18 : 16;
 
                     docContent.push({
                         text: parseInlineToPdfMake(textContent),
                         fontSize: fontSize,
                         bold: true,
-                        margin: [0, 12, 0, 6]
+                        margin: isMobile ? [0, 8, 0, 4] : [0, 12, 0, 6]
                     });
                     continue;
                 }
@@ -397,33 +429,51 @@
                 tableRows.push(cells);
             } else {
                 if (inTable) {
-                    docContent.push(buildPdfMakeTable(tableRows));
+                    docContent.push(buildPdfMakeTable(tableRows, isMobile));
                     tableRows = [];
                     inTable = false;
                 }
                 if (line !== '') {
-                    docContent.push({
-                        text: parseInlineToPdfMake(line),
-                        fontSize: 10.5,
-                        lineHeight: 1.4,
-                        margin: [0, 0, 0, 8]
-                    });
+                    if (line.match(/^[\*\-\+]\s+/)) {
+                        const listText = line.replace(/^[\*\-\+]\s+/, '');
+                        docContent.push({
+                            ul: [parseInlineToPdfMake(listText)],
+                            fontSize: baseFontSize,
+                            lineHeight: isMobile ? 1.3 : 1.4,
+                            margin: isMobile ? [0, 0, 0, 4] : [0, 0, 0, 6]
+                        });
+                    } else if (line.match(/^\d+\.\s+/)) {
+                        const listText = line.replace(/^\d+\.\s+/, '');
+                        docContent.push({
+                            ol: [parseInlineToPdfMake(listText)],
+                            fontSize: baseFontSize,
+                            lineHeight: isMobile ? 1.3 : 1.4,
+                            margin: isMobile ? [0, 0, 0, 4] : [0, 0, 0, 6]
+                        });
+                    } else {
+                        docContent.push({
+                            text: parseInlineToPdfMake(line),
+                            fontSize: baseFontSize,
+                            lineHeight: isMobile ? 1.3 : 1.4,
+                            margin: isMobile ? [0, 0, 0, 6] : [0, 0, 0, 8]
+                        });
+                    }
                 }
             }
         }
 
         if (inTable && tableRows.length > 0) {
-            docContent.push(buildPdfMakeTable(tableRows));
+            docContent.push(buildPdfMakeTable(tableRows, isMobile));
         }
 
         return {
             content: docContent,
-            pageSize: 'A4',
-            pageMargins: [40, 40, 40, 40],
+            pageSize: isMobile ? { width: 226.77, height: 453.54 } : 'A4', // 80mm x 160mm untuk tampilan HP
+            pageMargins: isMobile ? [12, 12, 12, 12] : [40, 40, 40, 40],
             styles: {
                 tableHeader: {
                     bold: true,
-                    fontSize: 10,
+                    fontSize: isMobile ? 10 : 10,
                     color: '#1e293b',
                     fillColor: '#f1f5f9'
                 }
@@ -431,21 +481,23 @@
         };
     }
 
-    function buildPdfMakeTable(rows) {
+    function buildPdfMakeTable(rows, isMobile = false) {
         if (rows.length === 0) return {};
-        
+
         const tableBody = [];
-        
+        const cellMargin = isMobile ? [3, 3, 3, 3] : [6, 6, 6, 6];
+        const bodyFontSize = isMobile ? 9 : 9.5;
+
         // Buat baris header
         const headerRow = rows[0].map(cell => {
-            return { text: parseInlineToPdfMake(cell), style: 'tableHeader', margin: [6, 6, 6, 6] };
+            return { text: parseInlineToPdfMake(cell), style: 'tableHeader', margin: cellMargin };
         });
         tableBody.push(headerRow);
 
         // Buat baris data body
         for (let r = 1; r < rows.length; r++) {
             const dataRow = rows[r].map(cell => {
-                return { text: parseInlineToPdfMake(cell), fontSize: 9.5, margin: [6, 6, 6, 6] };
+                return { text: parseInlineToPdfMake(cell), fontSize: bodyFontSize, margin: cellMargin };
             });
             tableBody.push(dataRow);
         }
@@ -460,7 +512,7 @@
                 widths: colWidths,
                 body: tableBody
             },
-            margin: [0, 10, 0, 15],
+            margin: isMobile ? [0, 6, 0, 10] : [0, 10, 0, 15],
             layout: {
                 hLineWidth: function (i, node) { return 1; },
                 vLineWidth: function (i, node) { return 1; },
@@ -481,12 +533,13 @@
             rawClipboardContent = plainText; // Simpan cache string mentah untuk diolah engine pdfmake
 
             if (plainText.trim()) {
-                if (plainText.includes('|') || plainText.includes('#')) {
+                if (plainText.includes('|') || plainText.includes('#') || plainText.includes('*')) {
                     pdfContent.innerHTML = parseMarkdownToHTML(plainText);
                 } else {
                     pdfContent.innerHTML = plainText.split('\n').map(line => line.trim() ? `<p>${processInlineMarkdown(line)}</p>` : '').join('');
                 }
                 pdfBtn.disabled = false;
+                pdfMobileBtn.disabled = false;
             } else {
                 alert('Clipboard kosong.');
             }
@@ -500,8 +553,8 @@
     pdfBtn.addEventListener('click', () => {
         try {
             // Bangun definisi dokumen pdfmake dari cache text plain
-            const docDefinition = generatePdfMakeDefinition(rawClipboardContent);
-            
+            const docDefinition = generatePdfMakeDefinition(rawClipboardContent, false);
+
             // Eksekusi pembuatan dan download file PDF menggunakan pdfMake
             pdfMake.createPdf(docDefinition).download('pdf_files.pdf');
         } catch (error) {
@@ -510,10 +563,24 @@
         }
     });
 
+    pdfMobileBtn.addEventListener('click', () => {
+        try {
+            // Bangun definisi dokumen pdfmake khusus tampilan mobile
+            const docDefinition = generatePdfMakeDefinition(rawClipboardContent, true);
+
+            // Eksekusi pembuatan dan download file PDF menggunakan pdfMake
+            pdfMake.createPdf(docDefinition).download('pdf_files_mobile.pdf');
+        } catch (error) {
+            console.error(error);
+            alert('Terjadi kesalahan saat mengekspor PDF versi mobile.');
+        }
+    });
+
     clearBtn.addEventListener('click', () => {
         pdfContent.innerHTML = '<p style="color: #94a3b8; text-align: center; margin-top: 100px;">Hasil copy text akan dirender di sini beserta struktur tabelnya...</p>';
         rawClipboardContent = "";
         pdfBtn.disabled = true;
+        pdfMobileBtn.disabled = true;
     });
 </script>
 
