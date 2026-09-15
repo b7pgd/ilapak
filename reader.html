@@ -34,7 +34,7 @@
                         <p class="text-[10px] text-slate-400 font-medium code-font" id="docType">Ready to load (.txt, .epub, .pdf)</p>
                     </div>
                 </div>
-                
+
                 <div class="w-full sm:w-auto flex flex-wrap items-center justify-start sm:justify-end gap-2.5">
                     <div class="flex items-center bg-slate-700/60 rounded-lg p-1 border border-slate-600/40 min-h-[40px]">
                         <button id="btnFontDecrease" class="text-sm font-bold text-slate-300 hover:text-white px-3 py-1.5 hover:bg-slate-600 rounded-md transition-colors min-w-[35px]" title="Kecilkan Teks">A-</button>
@@ -62,6 +62,10 @@
                         </select>
                     </div>
 
+                    <button id="btnSetBookmark" class="text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-2.5 rounded-lg transition-colors border border-slate-600 shadow-xs flex items-center gap-1.5 min-h-[40px]" title="Buat Pembatas Halaman">
+                        <span>🔖</span> <span>Pembatas</span>
+                    </button>
+
                     <button id="btnFullScreen" class="text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-2.5 rounded-lg transition-colors border border-slate-600 shadow-xs flex items-center gap-1.5 min-h-[40px]" title="Toggle Full Screen Mode">
                         <span id="fsIcon">📺</span> <span id="fsText">Full Screen</span>
                     </button>
@@ -77,7 +81,7 @@
 
     <main class="flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8 bg-slate-950/40 transition-all duration-300" id="mainContainer">
         <div class="max-w-3xl mx-auto h-full flex flex-col transition-all duration-300" id="viewportWrapper">
-            
+
             <div class="flex-1 bg-amber-50 rounded-2xl p-5 md:p-10 shadow-xl border border-amber-100/20 overflow-y-auto custom-scrollbar transition-colors duration-200" id="outputWrapper">
                 <div id="outputPreview" class="prose prose-slate max-w-none text-base leading-relaxed text-slate-900 space-y-5 transition-all duration-150 font-reader-inter">
                     <div class="text-center py-24 flex flex-col items-center justify-center gap-3">
@@ -114,6 +118,7 @@
 
         // Full Screen UI Elements
         const btnFullScreen = document.getElementById('btnFullScreen');
+        const btnSetBookmark = document.getElementById('btnSetBookmark');
         const mainHeader = document.getElementById('mainHeader');
         const mainContainer = document.getElementById('mainContainer');
         const viewportWrapper = document.getElementById('viewportWrapper');
@@ -148,7 +153,7 @@
                 const db = await openDB();
                 const transaction = db.transaction(storeName, "readwrite");
                 const store = transaction.objectStore(storeName);
-                
+
                 const data = {
                     id: "last_session",
                     name: file.name,
@@ -157,7 +162,7 @@
                     blob: file,
                     timestamp: Date.now()
                 };
-                
+
                 store.put(data);
                 localStorage.setItem('readerLastFileName', file.name);
             } catch (err) {
@@ -181,10 +186,10 @@
                         currentLoadedFileName = record.name;
                         docTitle.innerText = record.name;
                         docType.innerText = `Memulihkan sesi... (${(record.size / 1024 / 1024).toFixed(2)} MB)`;
-                        
+
                         const fileObject = new File([record.blob], record.name, { type: record.type });
                         const extension = record.name.split('.').pop().toLowerCase();
-                        
+
                         isRestoringScroll = true;
 
                         if (extension === 'txt') {
@@ -216,23 +221,88 @@
             }
         });
 
-        function triggerScrollRestore() {
-            if (currentLoadedFileName) {
-                const savedScroll = localStorage.getItem(`scroll_${currentLoadedFileName}`);
-                if (savedScroll) {
+        function getVisibleTopElement() {
+            const elements = outputPreview.querySelectorAll('p, h2, h1, h3, h4, div.epub-section');
+            const wrapperRect = outputWrapper.getBoundingClientRect();
+            let targetEl = null;
+            let minOffset = Infinity;
+
+            for (let el of elements) {
+                const rect = el.getBoundingClientRect();
+                const offset = Math.abs(rect.top - wrapperRect.top);
+                if (offset < minOffset) {
+                    minOffset = offset;
+                    targetEl = el;
+                }
+            }
+            return targetEl;
+        }
+
+        function restoreScrollToBookmark() {
+            if (!currentLoadedFileName) return;
+
+            const savedBmIndex = localStorage.getItem(`bookmark_index_${currentLoadedFileName}`);
+            if (savedBmIndex !== null) {
+                const elements = outputPreview.querySelectorAll('p, h2, h1, h3, h4, div.epub-section');
+                const targetEl = elements[parseInt(savedBmIndex)];
+                if (targetEl) {
+                    renderBookmarkIndicator(targetEl);
                     setTimeout(() => {
-                        outputWrapper.scrollTop = parseInt(savedScroll);
+                        targetEl.scrollIntoView({ block: 'start' });
                         isRestoringScroll = false;
                     }, 120);
                     return;
                 }
             }
+
+            const savedScroll = localStorage.getItem(`scroll_${currentLoadedFileName}`);
+            if (savedScroll) {
+                setTimeout(() => {
+                    outputWrapper.scrollTop = parseInt(savedScroll);
+                    isRestoringScroll = false;
+                }, 120);
+                return;
+            }
+
             isRestoringScroll = false;
+        }
+
+        function renderBookmarkIndicator(targetEl) {
+            const existingLine = document.getElementById('reading-bookmark-line');
+            if (existingLine) existingLine.remove();
+
+            if (!targetEl) return;
+
+            const bookmarkLine = document.createElement('div');
+            bookmarkLine.id = 'reading-bookmark-line';
+            bookmarkLine.className = 'w-full my-4 border-b-2 border-blue-500 relative flex items-center justify-end';
+            bookmarkLine.innerHTML = `<span class="bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-l-md shadow-xs -mt-3.5">📌 Pembatas Halaman</span>`;
+            
+            targetEl.parentNode.insertBefore(bookmarkLine, targetEl);
+        }
+
+        function setBookmarkAtCurrentPosition() {
+            if (!currentLoadedFileName) return;
+            const targetEl = getVisibleTopElement();
+            if (!targetEl) return;
+
+            const elements = Array.from(outputPreview.querySelectorAll('p, h2, h1, h3, h4, div.epub-section'));
+            const index = elements.indexOf(targetEl);
+            if (index !== -1) {
+                localStorage.setItem(`bookmark_index_${currentLoadedFileName}`, index);
+                renderBookmarkIndicator(targetEl);
+            }
+        }
+
+        btnSetBookmark.addEventListener('click', () => setBookmarkAtCurrentPosition());
+
+        function triggerScrollRestore() {
+            restoreScrollToBookmark();
         }
 
         // FONT SIZE CONTROLS INTERACTION
         function applyFontSize(scale) {
-            currentFontScale = Math.max(70, Math.min(240, scale)); 
+            currentFontScale = Math.max(70, Math.min(240, scale));
             fontSizeDisplay.innerText = `${currentFontScale}%`;
             outputPreview.style.fontSize = `${currentFontScale / 100}rem`;
             localStorage.setItem('readerFontScale', currentFontScale);
@@ -255,7 +325,7 @@
         function applyThemeClass(theme) {
             // Reset Class
             outputWrapper.className = "flex-1 rounded-2xl p-5 md:p-10 shadow-xl border overflow-y-auto custom-scrollbar transition-colors duration-200";
-            
+
             if (theme === 'theme-white') {
                 outputWrapper.classList.add('bg-white', 'border-slate-200/60');
                 adjustEmbeddedTextColor('#0f172a', '#1e293b'); // Dark State Slate Text
@@ -293,12 +363,10 @@
 
         // FULL SCREEN VIEWPORT & HARDWARE BACK INTERCEPTION LAYER
         function toggleFullScreenMode(forceState) {
-            // 1. Simpan rasio posisi scroll sebelum transisi layout dilakukan
-            const scrollHeightBefore = outputWrapper.scrollHeight - outputWrapper.clientHeight;
-            const scrollRatio = scrollHeightBefore > 0 ? outputWrapper.scrollTop / scrollHeightBefore : 0;
+            const anchorEl = getVisibleTopElement();
 
             isFullScreenMode = forceState !== undefined ? forceState : !isFullScreenMode;
-            
+
             // Kunci perekaman koordinat scroll agar data tidak rusak selama transisi kelas layout
             const prevRestoring = isRestoringScroll;
             isRestoringScroll = true;
@@ -331,12 +399,13 @@
                 fsText.innerText = "Full Screen";
             }
 
-            // 2. Kembalikan posisi scroll sesuai rasio semula setelah layout stabil
+            // Kembalikan posisi scroll ke elemen yang persis dilihat pengguna
             setTimeout(() => {
-                const scrollHeightAfter = outputWrapper.scrollHeight - outputWrapper.clientHeight;
-                outputWrapper.scrollTop = scrollRatio * scrollHeightAfter;
+                if (anchorEl) {
+                    anchorEl.scrollIntoView({ block: 'start' });
+                }
                 isRestoringScroll = prevRestoring;
-            }, 30);
+            }, 50);
         }
 
         btnFullScreen.addEventListener('click', () => toggleFullScreenMode());
@@ -401,19 +470,19 @@
         async function handleEpubFile(file) {
             const zip = await JSZip.loadAsync(file);
             docType.innerText = "Format: Digital Publication (.epub)";
-            
+
             const containerXml = await zip.file("META-INF/container.xml").async("text");
             const parser = new DOMParser();
             const containerDoc = parser.parseFromString(containerXml, "text/xml");
             const rootfilePath = containerDoc.querySelector("rootfile").getAttribute("full-path");
-            
+
             const opfFolder = rootfilePath.substring(0, rootfilePath.lastIndexOf('/')) || "";
             const opfXml = await zip.file(rootfilePath).async("text");
             const opfDoc = parser.parseFromString(opfXml, "text/xml");
-            
+
             const itemrefs = opfDoc.querySelectorAll("spine itemref");
             const items = opfDoc.querySelectorAll("manifest item");
-            
+
             let itemMap = {};
             items.forEach(item => {
                 itemMap[item.getAttribute("id")] = item.getAttribute("href");
@@ -432,7 +501,7 @@
                 if (fileEntry) {
                     const xhtmlContent = await fileEntry.async("text");
                     const htmlDoc = parser.parseFromString(xhtmlContent, "text/html");
-                    
+
                     const body = htmlDoc.querySelector("body");
                     if (body) {
                         fullHtmlContent += `<div class="epub-section mb-10 pb-6 border-b border-dashed border-slate-200/60">${body.innerHTML}</div>`;
@@ -455,16 +524,16 @@
             docType.innerText = "Format: Portable Document Format (.pdf)";
             const arrayBuffer = await file.arrayBuffer();
             const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-            
+
             let combinedText = "";
 
             for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
                 const page = await pdf.getPage(pageNum);
                 const textContent = await page.getTextContent();
-                
+
                 let lastY = null;
                 let pageText = `\n\n[--- HALAMAN ${pageNum} ---]\n\n`;
-                
+
                 for (let item of textContent.items) {
                     if (lastY !== null && Math.abs(item.transform[5] - lastY) > 5) {
                         pageText += "\n";
@@ -504,7 +573,7 @@
             for (let i = 0; i < lines.length; i++) {
                 let line = lines[i].trim();
                 if (/^\D{0,20}\d{1,4}\D{0,20}$/.test(line) || /^(halaman|page)\s*\d+$/i.test(line)) {
-                    continue; 
+                    continue;
                 }
                 line = line.replace(/[|¤º_~•†‡]/g, '').replace(/\s+/g, ' ').trim();
                 cleanedLines.push(line);
@@ -514,14 +583,14 @@
             for (let i = 0; i < cleanedLines.length; i++) {
                 let current = cleanedLines[i].trim();
                 if (!current) {
-                    flowLines.push(""); 
+                    flowLines.push("");
                     continue;
                 }
                 if (flowLines.length > 0) {
                     let prev = flowLines[flowLines.length - 1].trim();
                     let isCurrentChapter = getChapterScore(current) >= 50;
                     let isPrevChapter = getChapterScore(prev) >= 50;
-                    
+
                     if (prev && !/[.?!:]\s*$/.test(prev) && !isCurrentChapter && !isPrevChapter && !(current === current.toUpperCase() && current.length < 50) && !/^\d+[\.\)]/.test(current)) {
                         flowLines[flowLines.length - 1] = prev + " " + current;
                     } else {
@@ -534,7 +603,7 @@
 
             let processedText = flowLines.join('\n').replace(/\s+,\s*/g, ', ').replace(/\s+\.\s*/g, '. ').replace(/\s+:\s*/g, ': ');
             let rawParagraphs = processedText.split(/\n+/);
-            
+
             outputPreview.innerHTML = "";
             let currentContainer = document.createElement('div');
             currentContainer.className = "mb-10 pb-4";
@@ -555,7 +624,7 @@
                     currentContainer.appendChild(h2);
                 } else {
                     const p = document.createElement('p');
-                    p.className = "leading-relaxed text-justify mb-4 indent-6 font-normal tracking-normal";
+                    p.className = "leading-relaxed text-left mb-4 font-normal tracking-normal whitespace-normal break-words";
                     p.innerText = pText;
                     currentContainer.appendChild(p);
                 }
@@ -564,7 +633,7 @@
             if (currentContainer.children.length > 0) {
                 outputPreview.appendChild(currentContainer);
             }
-            
+
             triggerScrollRestore();
         }
 
@@ -573,7 +642,7 @@
                 h.className = "text-xl font-bold mt-6 mb-4 tracking-wide text-center uppercase";
             });
             outputPreview.querySelectorAll('p').forEach(p => {
-                p.className = "leading-relaxed text-justify mb-4 indent-6 font-normal";
+                p.className = "leading-relaxed text-left mb-4 font-normal whitespace-normal break-words";
             });
         }
     </script>
