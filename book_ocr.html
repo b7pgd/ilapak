@@ -9,7 +9,13 @@
     <style>
         /* UI Fresh White & Blue */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; color: #333; text-align: center; padding: 20px; margin: 0; }
-        .container { background: #ffffff; padding: 30px; border-radius: 16px; max-width: 500px; margin: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #e1e4e8; }
+        .container { background: #ffffff; padding: 30px; border-radius: 16px; max-width: 500px; margin: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #e1e4e8; transition: max-width 0.3s ease; }
+
+        /* Ketika mode edit aktif, container melebar penuh agar foto berukuran besar */
+        .container.editing-mode {
+            max-width: 95% !important;
+            padding: 15px !important;
+        }
 
         h2 { color: #1a73e8; margin-bottom: 5px; font-weight: 600; }
         .sub-text { font-size: 13px; color: #666; margin-bottom: 20px; }
@@ -24,15 +30,15 @@
             justify-content: flex-end;
             gap: 6px;
             margin-bottom: 8px;
+            flex-wrap: wrap;
         }
 
-        /* Cropper Container - Diperbesar agar nyaman untuk crop */
+        /* Container Tempat Foto */
         .crop-container {
             width: 100%;
-            max-height: 600px;
+            max-height: 450px;
             margin: 0 0 15px 0;
             display: none;
-            background-color: #f7f7f7;
             border-radius: 8px;
             overflow: hidden;
         }
@@ -41,18 +47,24 @@
             display: block;
         }
 
+        /* Ukuran Foto Dibuat Besar Saat Edit Crop Tanpa Memaksa Tinggi (Mencegah Background Transparan) */
+        .crop-container.editing-mode {
+            max-height: 80vh !important;
+            height: auto !important;
+        }
+
         /* Penyesuaian handle cropper agar lebih besar & gampang dipilih */
         .cropper-point {
-            width: 14px !important;
-            height: 14px !important;
+            width: 18px !important;
+            height: 18px !important;
             background-color: #1a73e8 !important;
-            opacity: 0.9 !important;
+            opacity: 0.95 !important;
         }
-        .cropper-point.point-e, .cropper-point.point-w { margin-top: -7px !important; }
-        .cropper-point.point-n, .cropper-point.point-s { margin-left: -7px !important; }
+        .cropper-point.point-e, .cropper-point.point-w { margin-top: -9px !important; }
+        .cropper-point.point-n, .cropper-point.point-s { margin-left: -9px !important; }
         .cropper-point.point-ne, .cropper-point.point-nw, .cropper-point.point-se, .cropper-point.point-sw {
-            width: 16px !important;
-            height: 16px !important;
+            width: 20px !important;
+            height: 20px !important;
         }
 
         /* Status & Loading */
@@ -123,10 +135,10 @@
         .action-btn {
             color: white;
             border: none;
-            padding: 4px 10px;
-            border-radius: 4px;
+            padding: 8px 14px;
+            border-radius: 6px;
             cursor: pointer;
-            font-size: 0.75rem;
+            font-size: 0.8rem;
             font-weight: bold;
             transition: background 0.2s;
         }
@@ -140,6 +152,9 @@
         .btn-edit { background-color: #f59e0b; }
         .btn-edit:hover { background-color: #d97706; }
 
+        .btn-rotate { background-color: #0284c7; }
+        .btn-rotate:hover { background-color: #0369a1; }
+
         .btn-save { background-color: #10b981; }
         .btn-save:hover { background-color: #059669; }
 
@@ -152,7 +167,7 @@
 </head>
 <body>
 
-<div class="container">
+<div class="container" id="mainContainer">
     <h2>📷 Photo to Text</h2>
     <div class="sub-text">Scan buku langsung via kamera</div>
 
@@ -160,10 +175,11 @@
     <input type="file" id="imageInput" accept="image/*" capture="environment">
     <button id="cameraBtn">📸 BUKA KAMERA</button>
 
-    <!-- Image Toolbar (Edit | Save | Cancel | Retake) -->
+    <!-- Image Toolbar (Edit | Rotate Up/Down | Save | Cancel | Retake) -->
     <div class="img-toolbar" id="imgToolbar">
         <button class="action-btn btn-retake" id="retakeBtn">Kamera</button>
         <button class="action-btn btn-edit" id="editBtn">Edit Crop</button>
+        <button class="action-btn btn-rotate" id="rotateBtn" style="display: none;">🔄 Flip 180°</button>
         <button class="action-btn btn-save" id="saveBtn" style="display: none;">Save Crop</button>
         <button class="action-btn btn-cancel" id="cancelBtn" style="display: none;">Cancel</button>
     </div>
@@ -200,8 +216,10 @@
     const imageToCrop = document.getElementById('imageToCrop');
     const cropContainer = document.getElementById('cropContainer');
     const imgToolbar = document.getElementById('imgToolbar');
+    const mainContainer = document.getElementById('mainContainer');
 
     const editBtn = document.getElementById('editBtn');
+    const rotateBtn = document.getElementById('rotateBtn');
     const saveBtn = document.getElementById('saveBtn');
     const cancelBtn = document.getElementById('cancelBtn');
     const retakeBtn = document.getElementById('retakeBtn');
@@ -219,28 +237,6 @@
         imageInput.click();
     };
 
-    // Auto Portrait Function: Memastikan gambar selalu dalam orientasi portrait di browser
-    function ensurePortraitImage(imgElement) {
-        const origW = imgElement.naturalWidth || imgElement.width;
-        const origH = imgElement.naturalHeight || imgElement.height;
-        const isLandscape = origW > origH;
-
-        if (!isLandscape) {
-            return imgElement.src;
-        }
-
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = origH;
-        tempCanvas.height = origW;
-        const tempCtx = tempCanvas.getContext('2d');
-
-        tempCtx.translate(origH / 2, origW / 2);
-        tempCtx.rotate(90 * Math.PI / 180);
-        tempCtx.drawImage(imgElement, -origW / 2, -origH / 2, origW, origH);
-
-        return tempCanvas.toDataURL('image/jpeg', 0.95);
-    }
-
     // Handler ketika foto selesai diambil via Kamera HP Native
     imageInput.onchange = (e) => {
         const file = e.target.files[0];
@@ -249,24 +245,19 @@
         const reader = new FileReader();
         reader.onload = (event) => {
             originalCapturedSrc = event.target.result;
+            imageToCrop.src = originalCapturedSrc;
 
-            const tempImg = new Image();
-            tempImg.onload = () => {
-                const portraitSrc = ensurePortraitImage(tempImg);
-                imageToCrop.src = portraitSrc;
+            cameraBtn.style.display = 'none';
+            cropContainer.style.display = 'block';
+            imgToolbar.style.display = 'flex';
 
-                cameraBtn.style.display = 'none';
-                cropContainer.style.display = 'block';
-                imgToolbar.style.display = 'flex';
+            editBtn.style.display = 'inline-block';
+            rotateBtn.style.display = 'none';
+            saveBtn.style.display = 'none';
+            cancelBtn.style.display = 'none';
 
-                editBtn.style.display = 'inline-block';
-                saveBtn.style.display = 'none';
-                cancelBtn.style.display = 'none';
-
-                status.textContent = "Foto berhasil diambil. Klik Scan untuk OCR.";
-                scanBtn.disabled = false;
-            };
-            tempImg.src = originalCapturedSrc;
+            status.textContent = "Foto berhasil diambil. Klik Scan untuk OCR.";
+            scanBtn.disabled = false;
         };
         reader.readAsDataURL(file);
     };
@@ -276,17 +267,19 @@
             cropper.destroy();
             cropper = null;
         }
+        mainContainer.classList.remove('editing-mode');
+        cropContainer.classList.remove('editing-mode');
         imageInput.value = '';
         imageInput.click();
     };
 
-    // Filter Enhancement vFlat-style & Force Portrait Fix
+    // Filter Enhancement vFlat-style & Rotasi Canvas saat OCR
     function applyEnhancementsAndDrawToCanvas(imgElement) {
         const origW = imgElement.naturalWidth || imgElement.width;
         const origH = imgElement.naturalHeight || imgElement.height;
         const isLandscape = origW > origH;
 
-        // Fiksasi orientasi ke Portrait (Jika Landscape, tukar ukuran W & H)
+        // Kunci Orientasi: Jika landscape, tukar W & H agar selalu potrait saat dikirim ke OCR
         const targetW = isLandscape ? origH : origW;
         const targetH = isLandscape ? origW : origH;
 
@@ -299,7 +292,6 @@
 
         ctx.save();
         if (isLandscape) {
-            // Rotasi 90 derajat agar tegak (portrait)
             ctx.translate(w / 2, h / 2);
             ctx.rotate(90 * Math.PI / 180);
             ctx.drawImage(imgElement, -h / 2, -w / 2, h, w);
@@ -314,7 +306,6 @@
         // Binarization & Auto High Contrast Filter
         for (let i = 0; i < d.length; i += 4) {
             let avg = (d[i] + d[i + 1] + d[i + 2]) / 3;
-            // Contrast stretching
             avg = (avg - 128) * 1.4 + 128;
             if (avg > 165) {
                 avg = 255; // Latar belakang menjadi putih bersih
@@ -361,21 +352,35 @@
         document.body.removeChild(textArea);
     }
 
+    // Aktifkan Mode Khusus Edit Crop (Hanya Fokus Pada Foto Asli Tanpa Background Transparan)
     editBtn.onclick = () => {
         if (cropper) return;
+
+        mainContainer.classList.add('editing-mode');
+        cropContainer.classList.add('editing-mode');
+
         cropper = new Cropper(imageToCrop, {
-            viewMode: 1,
-            autoCropArea: 0.95,
+            viewMode: 1, // Membatasi seleksi agar SELALU di dalam batas fisik foto
+            autoCropArea: 0.98,
             responsive: true,
             zoomable: true,
             rotatable: true,
-            scalable: false
+            scalable: false,
+            background: false // Menghapus kotak-kotak background buatan
         });
 
         editBtn.style.display = 'none';
+        rotateBtn.style.display = 'inline-block';
         saveBtn.style.display = 'inline-block';
         cancelBtn.style.display = 'inline-block';
-        status.textContent = "Atur area crop & ratakan kemiringan lalu klik Save.";
+        status.textContent = "Atur area crop. Klik Flip 180° jika foto terbalik.";
+    };
+
+    // Tombol Flip 180° (Putar Atas-Bawah)
+    rotateBtn.onclick = () => {
+        if (cropper) {
+            cropper.rotate(180);
+        }
     };
 
     saveBtn.onclick = () => {
@@ -383,16 +388,20 @@
         const croppedCanvas = cropper.getCroppedCanvas();
         if (!croppedCanvas) return;
 
-        const croppedDataUrl = croppedCanvas.toDataURL('image/jpeg', 0.95);
+        // Dapatkan gambar murni hasil crop tanpa padding
+        imageToCrop.src = croppedCanvas.toDataURL('image/jpeg', 0.95);
 
         cropper.destroy();
         cropper = null;
 
-        imageToCrop.src = croppedDataUrl;
+        // Kembalikan ukuran tampilan ke semula
+        mainContainer.classList.remove('editing-mode');
+        cropContainer.classList.remove('editing-mode');
 
         status.textContent = "Foto berhasil dicrop. Klik scan untuk OCR.";
 
         editBtn.style.display = 'inline-block';
+        rotateBtn.style.display = 'none';
         saveBtn.style.display = 'none';
         cancelBtn.style.display = 'none';
     };
@@ -403,24 +412,30 @@
             cropper = null;
         }
 
+        mainContainer.classList.remove('editing-mode');
+        cropContainer.classList.remove('editing-mode');
+
         editBtn.style.display = 'inline-block';
+        rotateBtn.style.display = 'none';
         saveBtn.style.display = 'none';
         cancelBtn.style.display = 'none';
         status.textContent = "Batal crop. Gambar siap diproses.";
     };
 
     scanBtn.onclick = async () => {
-        // Auto Save Crop jika user masih dalam mode edit crop saat menekan Scan
+        // Auto Save Crop jika user langsung menekan Scan saat mode edit aktif
         if (cropper) {
             const croppedCanvas = cropper.getCroppedCanvas();
             if (croppedCanvas) {
-                const croppedDataUrl = croppedCanvas.toDataURL('image/jpeg', 0.95);
+                imageToCrop.src = croppedCanvas.toDataURL('image/jpeg', 0.95);
                 cropper.destroy();
                 cropper = null;
 
-                imageToCrop.src = croppedDataUrl;
+                mainContainer.classList.remove('editing-mode');
+                cropContainer.classList.remove('editing-mode');
 
                 editBtn.style.display = 'inline-block';
+                rotateBtn.style.display = 'none';
                 saveBtn.style.display = 'none';
                 cancelBtn.style.display = 'none';
             }
