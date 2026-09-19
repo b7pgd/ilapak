@@ -1,529 +1,456 @@
-/**
- * engine4.js - RUNTIME & EXTENSION INFRASTRUCTURE
- * 
- * Extension infrastructure layer built on top of engine1, engine2, and engine3.
- * Provides safe command registration, command metadata, variable/session storage,
- * pipeline helpers, and output abstractions without altering legacy engines.
+/*
+ * PS Web - Final Router & Command Normalization Layer (Engine 4)
  */
+
+"use strict";
+
 (function () {
-    'use strict';
+  window.PSWeb = window.PSWeb || {};
 
-    // Defensive check: PSWeb baseline must exist (initialized by engine1)
-    if (!window.PSWeb) {
-        throw new Error("[Engine4] Critical Initialization Error: window.PSWeb is not defined. Load engine1.js first.");
+  // Flag Debugging Global
+  window.PSWeb.debug = window.PSWeb.debug || false;
+
+  const router = {
+    name: "engine4",
+
+    /**
+     * Normalisasi Path secara Deterministik
+     */
+    normalizePath(pathStr) {
+      if (!pathStr || typeof pathStr !== "string") return "";
+      let clean = pathStr.replace(/^["']|["']$/g, "").trim();
+      clean = clean.replace(/\\/g, "/");
+
+      if (clean.startsWith("./")) {
+        clean = clean.slice(2);
+      }
+      return clean;
+    },
+
+    /**
+     * Quoted-Aware Tokenizer
+     */
+    tokenize(command) {
+      const tokens = [];
+      let current = "";
+      let inDouble = false;
+      let inSingle = false;
+
+      for (let i = 0; i < command.length; i++) {
+        const char = command[i];
+
+        if (char === "\\" && i + 1 < command.length) {
+          const next = command[i + 1];
+
+          // Pertahankan escape sequence regex seperti \(,\), \., \[, \s, dll.
+          current += "\\" + next;
+          i++;
+          continue;
+        }
+
+        if (char === '"' && !inSingle) {
+          inDouble = !inDouble;
+          continue;
+        }
+
+        if (char === "'" && !inDouble) {
+          inSingle = !inSingle;
+          continue;
+        }
+
+        if (!inDouble && !inSingle && (char === ";" || char === "," || /\s/.test(char))) {
+          if (current.length > 0) {
+            tokens.push(current);
+            current = "";
+          }
+          continue;
+        }
+
+        current += char;
+      }
+
+      if (current.length > 0) {
+        tokens.push(current);
+      }
+
+      return tokens;
+    },
+
+    /**
+     * Parse & Validasi Sintaks Read (Get-Content, cat, Select-Object)
+     */
+    parseRead(tokens) {
+      const result = {
+        type: "read",
+        command: tokens[0].toLowerCase(),
+        path: "",
+        startLine: null,
+        endLine: null,
+        skip: null,
+        first: null,
+        mode: "full",
+        warnings: [],
+        errors: []
+      };
+
+      const cmd = result.command;
+      const positionals = [];
+
+      if (cmd === "select-object" || cmd === "selectobject") {
+        for (let i = 1; i < tokens.length; i++) {
+          const tok = tokens[i];
+          const lower = tok.toLowerCase();
+
+          if (lower === "-path" && i + 1 < tokens.length) {
+            result.path = this.normalizePath(tokens[++i]);
+          } else if (lower === "-skip" && i + 1 < tokens.length) {
+            result.skip = parseInt(tokens[++i], 10);
+          } else if (lower === "-first" && i + 1 < tokens.length) {
+            result.first = parseInt(tokens[++i], 10);
+          } else if (!tok.startsWith("-") && !result.path) {
+            result.path = this.normalizePath(tok);
+          }
+        }
+
+        if (!result.path) {
+          result.errors.push("Usage: Select-Object -Path FILE [-Skip N] [-First M]");
+          return result;
+        }
+      } else {
+        // Get-Content / cat
+        for (let i = 1; i < tokens.length; i++) {
+          const tok = tokens[i];
+          const lower = tok.toLowerCase();
+
+          if (lower === "-path" && i + 1 < tokens.length) {
+            result.path = this.normalizePath(tokens[++i]);
+          } else if (lower === "-skip" && i + 1 < tokens.length) {
+            result.skip = parseInt(tokens[++i], 10);
+          } else if (lower === "-first" && i + 1 < tokens.length) {
+            result.first = parseInt(tokens[++i], 10);
+          } else if (!tok.startsWith("-")) {
+            positionals.push(tok);
+          }
+        }
+
+        if (!result.path && positionals.length > 0) {
+          result.path = this.normalizePath(positionals.shift());
+        }
+
+        if (!result.path) {
+          result.errors.push("Usage: Get-Content [-Path] FILE [START END] [-Skip N] [-First M]");
+          return result;
+        }
+
+        if (positionals.length >= 2 && result.skip === null && result.first === null) {
+          result.startLine = parseInt(positionals[0], 10);
+          result.endLine = parseInt(positionals[1], 10);
+        }
+      }
+
+      // Validasi Line Range & Skip/First
+      if (result.startLine !== null || result.endLine !== null) {
+        if (
+          isNaN(result.startLine) ||
+          isNaN(result.endLine) ||
+          result.startLine < 1 ||
+          result.endLine < result.startLine
+        ) {
+          result.errors.push("Invalid line range. START must be >= 1 and END >= START.");
+          return result;
+        }
+        result.mode = "range";
+      } else if (result.skip !== null || result.first !== null) {
+        if (result.skip !== null && (isNaN(result.skip) || result.skip < 0)) {
+          result.errors.push("Invalid -Skip value. Must be >= 0.");
+          return result;
+        }
+        if (result.first !== null && (isNaN(result.first) || result.first < 1)) {
+          result.errors.push("Invalid -First value. Must be >= 1.");
+          return result;
+        }
+        result.mode = "skipfirst";
+        result.skip = result.skip !== null ? result.skip : 0;
+      }
+
+      return result;
+    },
+
+    /**
+     * Parse & Validasi Sintaks Search (grep, Select-String)
+     */
+    parseSearch(tokens) {
+      const result = {
+        type: "search",
+        command: tokens[0].toLowerCase(),
+        patterns: [],
+        paths: [],
+        caseInsensitive: false,
+        regex: false,
+        filesOnly: false,
+        combined: false,
+        recursive: true,
+        context: 0,
+        warnings: [],
+        errors: [],
+        unsupportedOptions: []
+      };
+
+      const knownOptions = new Set([
+        "-n", "--line-number",
+        "-r", "-R", "--recursive",
+        "-i", "--ignore-case",
+        "-E",
+        "-l", "-files", "--files-with-matches",
+        "-C", "--context",
+        "-e", "--regexp",
+        "-regex", "--regex",
+        "-c", "--combined",
+        "-b", "-batch", "--batch"
+      ]);
+
+      const cmd = result.command;
+
+      if (cmd === "select-string" || cmd === "selectstring") {
+        result.caseInsensitive = true; // Default PowerShell Select-String
+        for (let i = 1; i < tokens.length; i++) {
+          const tok = tokens[i];
+          const lower = tok.toLowerCase();
+
+          if (lower === "-pattern" && i + 1 < tokens.length) {
+            result.patterns.push(tokens[++i]);
+          } else if (lower === "-path" && i + 1 < tokens.length) {
+            result.paths.push(this.normalizePath(tokens[++i]));
+          } else if (lower === "-casesensitive") {
+            result.caseInsensitive = false;
+          } else if (lower === "-simplematch") {
+            result.regex = false;
+          } else if (lower === "-context" && i + 1 < tokens.length) {
+            const ctx = parseInt(tokens[++i], 10);
+            if (!isNaN(ctx) && ctx >= 0) result.context = ctx;
+          } else if (!tok.startsWith("-")) {
+            if (!result.patterns.length) {
+              result.patterns.push(tok);
+            } else {
+              result.paths.push(this.normalizePath(tok));
+            }
+          }
+        }
+
+        if (!result.patterns.length) {
+          result.errors.push('Usage: Select-String -Pattern "pattern" [-Path FILE]');
+        }
+        return result;
+      }
+
+      // Grep parser family
+      let startIdx = 1;
+
+      // Handling grep batch variants
+      if (tokens.length > 1) {
+        const second = tokens[1].toLowerCase();
+        if (second === "batch" || second === "-batch" || second === "--batch" || second === "-b") {
+          startIdx = 2;
+        }
+      }
+
+      for (let i = startIdx; i < tokens.length; i++) {
+        const tok = tokens[i];
+
+        if (tok === "-i" || tok === "--ignore-case") {
+          result.caseInsensitive = true;
+        } else if (tok === "-regex" || tok === "--regex") {
+          result.regex = true;
+        } else if (tok === "-E") {
+          result.regex = true;
+          if (i + 1 < tokens.length && !tokens[i + 1].startsWith("-")) {
+            result.patterns.push(tokens[++i]);
+          }
+        } else if (tok.startsWith("--regexp=")) {
+          result.regex = true;
+          result.patterns.push(tok.split("=")[1]);
+        } else if (tok === "-e" || tok === "--regexp") {
+          result.regex = true;
+          if (i + 1 < tokens.length) {
+            result.patterns.push(tokens[++i]);
+          }
+        } else if (tok === "-l" || tok === "-files" || tok === "--files-with-matches") {
+          result.filesOnly = true;
+        } else if (tok === "-c" || tok === "--combined") {
+          result.combined = true;
+        } else if (tok === "-r" || tok === "-R" || tok === "--recursive") {
+          result.recursive = true;
+        } else if (tok === "-C" || tok === "--context") {
+          if (i + 1 < tokens.length && !isNaN(parseInt(tokens[i + 1], 10))) {
+            result.context = parseInt(tokens[++i], 10);
+          }
+        } else if (tok === "-n" || tok === "--line-number") {
+          continue; // Default behavior
+        } else if (tok.startsWith("-") && tok.length > 1) {
+          if (!knownOptions.has(tok)) {
+            result.unsupportedOptions.push(tok);
+          }
+        } else {
+          // Path / Pattern Separation
+          if (
+            result.patterns.length > 0 &&
+            (tok.includes(".") || tok.includes("/") || tok === "*")
+          ) {
+            result.paths.push(this.normalizePath(tok));
+          } else {
+            if (tok.includes("|") && result.regex) {
+              result.patterns.push(...tok.split("|"));
+            } else {
+              result.patterns.push(tok);
+            }
+          }
+        }
+      }
+
+      if (result.unsupportedOptions.length > 0) {
+        result.errors.push(`Unsupported option: ${result.unsupportedOptions.join(", ")}`);
+        return result;
+      }
+
+      if (!result.patterns.length) {
+        result.errors.push('Usage: grep [-i] [-E] [-regex] "pattern" [FILE/PATH]');
+      }
+
+      return result;
+    }
+  };
+
+  /**
+   * API Normalisasi Command Utama
+   */
+  window.PSWeb.normalizeCommand = function (command) {
+    if (!command || typeof command !== "string" || !command.trim()) {
+      return {
+        type: "unknown",
+        command: "",
+        original: command || "",
+        normalized: null,
+        warnings: [],
+        errors: ["Command is empty."]
+      };
     }
 
-    // Defensive check: SearchAPI must exist (initialized by engine2)
-    if (!window.SearchAPI) {
-        throw new Error("[Engine4] Critical Initialization Error: window.SearchAPI is not defined. Load engine2.js first.");
+    const trimmed = command.trim();
+    const tokens = router.tokenize(trimmed);
+    const firstToken = tokens[0].toLowerCase();
+
+    let normalized = null;
+    let type = "unknown";
+
+    if (
+      firstToken === "get-content" ||
+      firstToken === "cat" ||
+      firstToken === "select-object" ||
+      firstToken === "selectobject"
+    ) {
+      type = "read";
+      normalized = router.parseRead(tokens);
+    } else if (
+      firstToken === "grep" ||
+      firstToken === "grep-batch" ||
+      firstToken === "grep--batch" ||
+      firstToken === "grep-b" ||
+      firstToken === "select-string" ||
+      firstToken === "selectstring"
+    ) {
+      type = "search";
+      normalized = router.parseSearch(tokens);
     }
 
-    // Namespace Initialization (Preserve existing PSWeb objects)
-    const PSWeb = window.PSWeb;
-    PSWeb.Runtime = PSWeb.Runtime || {};
-    PSWeb.Commands = PSWeb.Commands || {};
-    PSWeb.Pipeline = PSWeb.Pipeline || {};
-    PSWeb.Output = PSWeb.Output || {};
-
-    // Internal Registries & State Storage
-    const loadedEngines = new Map();
-    const commandRegistry = new Map();
-    const aliasRegistry = new Map();
-    const bridgeRegistry = new Map();
-    const variableStorage = new Map();
-
-    // Session State (Isolated from engine1's application state)
-    const sessionState = {
-        variables: variableStorage,
-        location: '/',
-        lastCommand: null,
-        lastResult: null
+    return {
+      type: type,
+      command: firstToken,
+      original: command,
+      normalized: normalized,
+      warnings: normalized ? normalized.warnings : [],
+      errors: normalized ? normalized.errors : []
     };
+  };
 
-    // Helper: Variable Name Normalization ($foo, foo, FOO -> foo)
-    function normalizeVariableName(name) {
-        if (typeof name !== 'string') return '';
-        let cleaned = name.trim();
-        if (cleaned.startsWith('$')) {
-            cleaned = cleaned.substring(1);
-        }
-        return cleaned.toLowerCase();
+  /**
+   * Router Dispatcher Utama Terminal PS Web
+   */
+  window.PSWeb.execute = async function (command, context = {}) {
+    const outputFn = context.output || window.PSWeb.output || console.log;
+    const normalizedReq = window.PSWeb.normalizeCommand(command);
+
+    if (window.PSWeb.debug) {
+      outputFn(`[DEBUG] ORIGINAL   : ${normalizedReq.original}`);
+      outputFn(`[DEBUG] TYPE       : ${normalizedReq.type}`);
+      outputFn(`[DEBUG] NORMALIZED : ${JSON.stringify(normalizedReq.normalized, null, 2)}`);
+      outputFn(`[DEBUG] ROUTER     : ${normalizedReq.type === "read" ? "engine2" : normalizedReq.type === "search" ? "engine3" : "engine1 (legacy)"}`);
     }
 
-    // Helper: Command Name Normalization
-    function normalizeCommandName(name) {
-        if (typeof name !== 'string') return '';
-        return name.trim().toLowerCase();
+    // 1. Tangani Error Parsing / Syntax / Unsupported
+    if (normalizedReq.errors && normalizedReq.errors.length > 0) {
+      const isUnsupported = normalizedReq.errors.some(e => e.includes("Unsupported option"));
+      const structuredResult = {
+        ok: false,
+        kind: isUnsupported ? "unsupported" : "syntax-error",
+        message: normalizedReq.errors.join("\n"),
+        data: null
+      };
+      outputFn(structuredResult.message, "error");
+      return structuredResult;
     }
 
-    // Helper: Alias List Normalization
-    function normalizeAliasList(aliases) {
-        if (!Array.isArray(aliases)) return [];
-        const normalized = [];
-        const seen = new Set();
-        aliases.forEach(alias => {
-            const value = normalizeCommandName(alias);
-            if (!value || seen.has(value)) return;
-            seen.add(value);
-            normalized.push(value);
-        });
-        return normalized;
+    // 2. Dispatch Ke Engine 2 (Read Layer)
+    if (normalizedReq.type === "read") {
+      if (!window.PSWeb.readLayer) {
+        const errResult = { ok: false, kind: "internal-error", message: "Engine2 (readLayer) is not registered.", data: null };
+        outputFn(errResult.message, "error");
+        return errResult;
+      }
+
+      // Resolusi Berkas di Level Engine 4 untuk Error Classification
+      if (normalizedReq.normalized.path) {
+        const fileObj = window.PSWeb.readLayer.resolveFile(normalizedReq.normalized.path);
+        if (!fileObj) {
+          const notFoundResult = {
+            ok: false,
+            kind: "file-not-found",
+            message: `File not found: ${normalizedReq.normalized.path}`,
+            data: null
+          };
+          outputFn(notFoundResult.message, "error");
+          return notFoundResult;
+        }
+      }
+
+      const handled = await window.PSWeb.readLayer.execute(command, context);
+      return { ok: handled, kind: handled ? "match" : "internal-error", message: "Read operation completed.", data: null };
     }
 
-    // Helper: Legacy Command Detection
-    function isLegacyHook(commandName) {
-        const normalized = normalizeCommandName(commandName);
-        return Boolean(
-            normalized &&
-            window.SearchAPI &&
-            window.SearchAPI.hooks &&
-            Object.prototype.hasOwnProperty.call(window.SearchAPI.hooks, normalized)
-        );
+    // 3. Dispatch Ke Engine 3 (Search Layer)
+    if (normalizedReq.type === "search") {
+      if (!window.PSWeb.searchLayer) {
+        const errResult = { ok: false, kind: "internal-error", message: "Engine3 (searchLayer) is not registered.", data: null };
+        outputFn(errResult.message, "error");
+        return errResult;
+      }
+
+      const handled = await window.PSWeb.searchLayer.execute(command, context);
+      return { ok: handled, kind: handled ? "match" : "no-match", message: "Search operation completed.", data: null };
     }
 
-    // =========================================================================
-    // 1. ENGINE REGISTRATION SYSTEM
-    // =========================================================================
-    PSWeb.Runtime.registerEngine = function (engineId, details) {
-        if (!engineId || typeof engineId !== 'string') {
-            return { success: false, error: "Invalid engine identifier." };
-        }
-        const id = engineId.trim().toLowerCase();
-        if (!id) {
-            return { success: false, error: "Invalid engine identifier." };
-        }
-        const info = Object.assign({
-            version: '1.0.0',
-            role: 'unknown',
-            registeredAt: new Date().toISOString()
-        }, details || {});
-
-        loadedEngines.set(id, info);
-        return { success: true, engine: id, info: Object.assign({}, info) };
-    };
-
-    PSWeb.Runtime.getEngines = function () {
-        const engines = {};
-        loadedEngines.forEach((value, key) => {
-            engines[key] = Object.assign({}, value);
-        });
-        return engines;
-    };
-
-    // Auto-register legacy engines and self upon initialization
-    PSWeb.Runtime.registerEngine('engine1', { role: 'core application/editor/filesystem' });
-    PSWeb.Runtime.registerEngine('engine2', { role: 'parser/executor/search' });
-    if (window.PowerShellCompat) {
-        PSWeb.Runtime.registerEngine('engine3', { role: 'powershell compatibility augmentation' });
+    // 4. Fallback Ke Engine 1 (Legacy Commands)
+    if (typeof window.PSWeb.legacyExecute === "function") {
+      const legacyResult = await window.PSWeb.legacyExecute(command, context);
+      return { ok: true, kind: "match", message: "Legacy command executed.", data: legacyResult };
     }
-    PSWeb.Runtime.registerEngine('engine4', { version: '1.0.0', role: 'runtime & extension infrastructure' });
 
-    // =========================================================================
-    // 2. RUNTIME & VARIABLE STORAGE API
-    // =========================================================================
-    PSWeb.Runtime.variables = {
-        setVariable: function (name, value) {
-            const normalized = normalizeVariableName(name);
-            if (!normalized) {
-                return { success: false, error: "Invalid variable name." };
-            }
-            variableStorage.set(normalized, value);
-            return { success: true, name: normalized, value: value };
-        },
-        getVariable: function (name) {
-            const normalized = normalizeVariableName(name);
-            if (!normalized) return undefined;
-            return variableStorage.get(normalized);
-        },
-        hasVariable: function (name) {
-            const normalized = normalizeVariableName(name);
-            if (!normalized) return false;
-            return variableStorage.has(normalized);
-        },
-        removeVariable: function (name) {
-            const normalized = normalizeVariableName(name);
-            if (!normalized) return false;
-            return variableStorage.delete(normalized);
-        },
-        clearVariables: function () {
-            variableStorage.clear();
-            return { success: true };
-        },
-        listVariables: function () {
-            const vars = {};
-            variableStorage.forEach((value, key) => {
-                vars[key] = value;
-            });
-            return vars;
-        }
-    };
-
-    PSWeb.Runtime.session = sessionState;
-
-    PSWeb.Runtime.inspect = function () {
-        return {
-            version: '1.0.0',
-            loadedEngines: PSWeb.Runtime.getEngines(),
-            registeredCommandsCount: commandRegistry.size,
-            aliasesCount: aliasRegistry.size,
-            bridgedCommandsCount: bridgeRegistry.size,
-            variablesCount: variableStorage.size,
-            sessionLocation: sessionState.location
-        };
-    };
-
-    // =========================================================================
-    // 3. COMMAND REGISTRY & ALIAS SYSTEM
-    // =========================================================================
-    PSWeb.Commands.register = function (commandDef) {
-        if (!commandDef || typeof commandDef !== 'object') {
-            return { success: false, error: "Command definition must be an object." };
-        }
-
-        const normalizedName = normalizeCommandName(commandDef.name);
-
-        if (!normalizedName) {
-            return { success: false, error: "Command definition missing valid 'name'." };
-        }
-
-        // Ownership Protection: Check engine4 registry collision
-        if (commandRegistry.has(normalizedName)) {
-            return {
-                success: false,
-                error: `Command '${normalizedName}' is already registered in PSWeb.Commands.`
-            };
-        }
-
-        // Ownership Protection: Check engine2 / engine3 SearchAPI.hooks collision
-        if (isLegacyHook(normalizedName)) {
-            return {
-                success: false,
-                error: `Command '${normalizedName}' is owned by a legacy/external engine (SearchAPI.hooks). Registration rejected to prevent breaking core logic.`,
-                isLegacy: true
-            };
-        }
-
-        if (typeof commandDef.handler !== 'function') {
-            return { success: false, error: `Command '${normalizedName}' requires a valid handler function.` };
-        }
-
-        const aliases = normalizeAliasList(commandDef.aliases);
-
-        // Validate aliases atomically BEFORE modifying registries
-        for (const alias of aliases) {
-            if (alias === normalizedName) {
-                return { success: false, error: `Alias '${alias}' cannot point to the command itself.` };
-            }
-            if (commandRegistry.has(alias)) {
-                return { success: false, error: `Alias '${alias}' conflicts with an existing PSWeb command.` };
-            }
-            if (isLegacyHook(alias)) {
-                return { success: false, error: `Alias '${alias}' conflicts with a legacy SearchAPI command.` };
-            }
-            if (aliasRegistry.has(alias)) {
-                return { success: false, error: `Alias '${alias}' is already registered.` };
-            }
-        }
-
-        const metadata = {
-            name: normalizedName,
-            aliases: aliases.slice(),
-            category: commandDef.category || 'general',
-            description: commandDef.description || '',
-            acceptsPipeline: Boolean(commandDef.acceptsPipeline),
-            producesPipeline: Boolean(commandDef.producesPipeline),
-            source: commandDef.source || 'engine5+',
-            handler: commandDef.handler
-        };
-
-        // Save command definition
-        commandRegistry.set(normalizedName, metadata);
-
-        // Safe Bridge to SearchAPI.registerSearchCommand if available
-        if (window.SearchAPI && typeof window.SearchAPI.registerSearchCommand === 'function') {
-            window.SearchAPI.registerSearchCommand(normalizedName, metadata.handler);
-            bridgeRegistry.set(normalizedName, { type: 'command', handler: metadata.handler });
-        }
-
-        // Register associated aliases
-        for (const alias of aliases) {
-            aliasRegistry.set(alias, normalizedName);
-            if (window.SearchAPI && typeof window.SearchAPI.registerSearchCommand === 'function') {
-                window.SearchAPI.registerSearchCommand(alias, metadata.handler);
-                bridgeRegistry.set(alias, { type: 'alias', target: normalizedName, handler: metadata.handler });
-            }
-        }
-
-        return {
-            success: true,
-            command: normalizedName,
-            metadata: Object.assign({}, metadata, { aliases: aliases.slice() })
-        };
-    };
-
-    PSWeb.Commands.has = function (name) {
-        const normalized = normalizeCommandName(name);
-        if (!normalized) return false;
-        const resolved = PSWeb.Commands.resolveAlias(normalized) || normalized;
-        return commandRegistry.has(resolved) || isLegacyHook(resolved);
-    };
-
-    PSWeb.Commands.get = function (name) {
-        const normalized = normalizeCommandName(name);
-        if (!normalized) return null;
-        const resolved = PSWeb.Commands.resolveAlias(normalized) || normalized;
-
-        if (commandRegistry.has(resolved)) {
-            return commandRegistry.get(resolved);
-        }
-
-        // Fallback info for legacy commands (engine2 / engine3)
-        if (isLegacyHook(resolved)) {
-            return {
-                name: resolved,
-                aliases: [],
-                category: 'legacy',
-                description: 'Legacy search/powershell command registered via SearchAPI.',
-                acceptsPipeline: true,
-                producesPipeline: true,
-                source: 'engine2/engine3',
-                handler: window.SearchAPI.hooks[resolved]
-            };
-        }
-
-        return null;
-    };
-
-    PSWeb.Commands.unregister = function (name) {
-        const normalized = normalizeCommandName(name);
-        if (!normalized) {
-            return { success: false, error: "Invalid command name." };
-        }
-
-        if (isLegacyHook(normalized) && !commandRegistry.has(normalized)) {
-            return { success: false, error: `Cannot unregister legacy command '${normalized}' owned by engine2/engine3.` };
-        }
-
-        if (!commandRegistry.has(normalized)) {
-            return { success: false, error: `Command '${normalized}' not found.` };
-        }
-
-        const meta = commandRegistry.get(normalized);
-
-        // Remove aliases belonging to this command
-        meta.aliases.forEach(alias => {
-            aliasRegistry.delete(alias);
-            if (bridgeRegistry.has(alias) && window.SearchAPI && window.SearchAPI.hooks) {
-                delete window.SearchAPI.hooks[alias];
-            }
-            bridgeRegistry.delete(alias);
-        });
-
-        // Remove primary SearchAPI hook if created by engine4
-        if (bridgeRegistry.has(normalized) && window.SearchAPI && window.SearchAPI.hooks) {
-            delete window.SearchAPI.hooks[normalized];
-        }
-
-        bridgeRegistry.delete(normalized);
-        commandRegistry.delete(normalized);
-
-        return { success: true, name: normalized };
-    };
-
-    PSWeb.Commands.registerAlias = function (alias, commandName) {
-        const normAlias = normalizeCommandName(alias);
-        const normCommand = normalizeCommandName(commandName);
-
-        if (!normAlias || !normCommand) {
-            return { success: false, error: "Invalid alias or command name." };
-        }
-
-        if (normAlias === normCommand) {
-            return { success: false, error: "Alias cannot point to itself." };
-        }
-
-        if (aliasRegistry.has(normAlias)) {
-            return { success: false, error: `Alias '${normAlias}' is already registered.` };
-        }
-
-        if (commandRegistry.has(normAlias)) {
-            return { success: false, error: `Alias '${normAlias}' conflicts with an existing PSWeb command.` };
-        }
-
-        if (isLegacyHook(normAlias)) {
-            return { success: false, error: `Cannot register alias '${normAlias}'; it conflicts with a legacy SearchAPI command.` };
-        }
-
-        const targetCmd = PSWeb.Commands.get(normCommand);
-        if (!targetCmd || typeof targetCmd.handler !== 'function') {
-            return { success: false, error: `Cannot register alias '${normAlias}'; target command '${normCommand}' does not exist.` };
-        }
-
-        aliasRegistry.set(normAlias, normCommand);
-
-        if (window.SearchAPI && typeof window.SearchAPI.registerSearchCommand === 'function') {
-            window.SearchAPI.registerSearchCommand(normAlias, targetCmd.handler);
-            bridgeRegistry.set(normAlias, { type: 'alias', target: normCommand, handler: targetCmd.handler });
-        }
-
-        return { success: true, alias: normAlias, target: normCommand };
-    };
-
-    PSWeb.Commands.resolveAlias = function (alias) {
-        const normAlias = normalizeCommandName(alias);
-        if (!normAlias) return null;
-        return aliasRegistry.get(normAlias) || null;
-    };
-
-    PSWeb.Commands.getAliases = function (commandName) {
-        const normalized = normalizeCommandName(commandName);
-        if (!normalized) return [];
-
-        const resolvedTarget = PSWeb.Commands.resolveAlias(normalized) || normalized;
-        const aliases = [];
-
-        aliasRegistry.forEach((target, alias) => {
-            if (target === resolvedTarget) {
-                aliases.push(alias);
-            }
-        });
-
-        return aliases;
-    };
-
-    PSWeb.Commands.resolve = function (name) {
-        const normalized = normalizeCommandName(name);
-        if (!normalized) return null;
-        const targetName = PSWeb.Commands.resolveAlias(normalized) || normalized;
-        return PSWeb.Commands.get(targetName);
-    };
-
-    PSWeb.Commands.list = function () {
-        const list = {};
-
-        // Include legacy commands from SearchAPI
-        if (window.SearchAPI && window.SearchAPI.hooks) {
-            Object.keys(window.SearchAPI.hooks).forEach(hookName => {
-                list[hookName] = {
-                    name: hookName,
-                    aliases: [],
-                    category: 'legacy',
-                    description: 'Legacy command registered via SearchAPI.',
-                    source: 'engine2/engine3',
-                    acceptsPipeline: true,
-                    producesPipeline: true
-                };
-            });
-        }
-
-        // Merge modern commands from engine4+
-        commandRegistry.forEach((meta, name) => {
-            list[name] = {
-                name: meta.name,
-                aliases: Array.from(meta.aliases),
-                category: meta.category,
-                description: meta.description,
-                source: meta.source,
-                acceptsPipeline: meta.acceptsPipeline,
-                producesPipeline: meta.producesPipeline
-            };
-        });
-
-        return list;
-    };
-
-    PSWeb.Commands.debug = function () {
-        return {
-            registeredCommands: Array.from(commandRegistry.keys()),
-            aliases: Object.fromEntries(aliasRegistry),
-            bridgedCommands: Object.fromEntries(bridgeRegistry),
-            legacyHooks: window.SearchAPI && window.SearchAPI.hooks ? Object.keys(window.SearchAPI.hooks) : []
-        };
-    };
-
-    // =========================================================================
-    // 4. PIPELINE HELPERS
-    // =========================================================================
-    PSWeb.Pipeline.isPipelineValue = function (value) {
-        return value !== null && value !== undefined;
-    };
-
-    PSWeb.Pipeline.toArray = function (value) {
-        if (value === null || value === undefined) {
-            return [];
-        }
-        if (Array.isArray(value)) {
-            return value;
-        }
-        return [value];
-    };
-
-    PSWeb.Pipeline.fromArray = function (array) {
-        if (!Array.isArray(array)) {
-            return array;
-        }
-        return array;
-    };
-
-    PSWeb.Pipeline.isError = function (value) {
-        if (!value || typeof value !== 'object') return false;
-        if (value instanceof Error) return true;
-        if (value.isError === true || value.type === 'error' || value.__searchError === true) return true;
-        return false;
-    };
-
-    // Safe property getter delegating to PowerShellCompat if present
-    PSWeb.Pipeline.getProperty = function (obj, propertyName) {
-        if (obj === null || obj === undefined || !propertyName) {
-            return undefined;
-        }
-
-        if (window.PowerShellCompat && typeof window.PowerShellCompat.getPropertyValue === 'function') {
-            return window.PowerShellCompat.getPropertyValue(obj, propertyName);
-        }
-
-        // Fallback implementation if PowerShellCompat is missing
-        if (typeof obj !== 'object') return undefined;
-
-        if (Object.prototype.hasOwnProperty.call(obj, propertyName)) {
-            return obj[propertyName];
-        }
-
-        const lowerProp = String(propertyName).toLowerCase();
-        const foundKey = Object.keys(obj).find(key => key.toLowerCase() === lowerProp);
-        if (foundKey) {
-            return obj[foundKey];
-        }
-
-        return undefined;
-    };
-
-    // =========================================================================
-    // 5. OUTPUT ABSTRACTION
-    // =========================================================================
-    const OUTPUT_SYMBOL = '__pswebOutput';
-
-    PSWeb.Output.create = function (value, streamType) {
-        return {
-            [OUTPUT_SYMBOL]: true,
-            stream: streamType || 'output',
-            value: value,
-            timestamp: Date.now()
-        };
-    };
-
-    PSWeb.Output.isOutput = function (value) {
-        return Boolean(value && typeof value === 'object' && value[OUTPUT_SYMBOL] === true);
-    };
-
-    PSWeb.Output.unwrap = function (value) {
-        if (PSWeb.Output.isOutput(value)) {
-            return value.value;
-        }
-        return value;
-    };
-
-    // Ready signal
-    PSWeb.Runtime.ready = true;
-
+    // Default Fallback Command
+    outputFn(`Command not recognized: ${command}`, "error");
+    return { ok: false, kind: "unsupported", message: `Command not recognized: ${command}`, data: null };
+  };
+
+  // Auto-Registration Layer ke System Loader
+  if (typeof window.PSWeb.registerLayer === "function") {
+    window.PSWeb.registerLayer("engine4", router);
+  }
 })();

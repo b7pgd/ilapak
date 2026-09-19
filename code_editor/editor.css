@@ -93,8 +93,9 @@ header h1 {
 main {
   flex: 1;
   display: flex;
+  flex-direction: column;
   overflow: hidden;
-  gap: 1px;
+  gap: 0;
   background-color: var(--border-color);
 }
 
@@ -106,17 +107,20 @@ main {
   height: 100%;
   min-height: 0;
   overflow: hidden;
+  width: 100%;
+  min-width: 0;
 }
 
 .left-panel {
-  flex: 5;
-  min-width: 300px;
+  flex: 1 1 50%;
+  min-height: 0;
 }
 
 .right-panel {
-  flex: 5;
-  min-width: 300px;
-  border-left: 1px solid var(--border-color);
+  flex: 1 1 50%;
+  min-height: 0;
+  border-left: none;
+  border-top: 2px solid var(--border-color);
 }
 
 /* 4. Sisi Kiri: File Explorer & Code Editor */
@@ -141,6 +145,7 @@ main {
 
 #file-tree {
   flex: 1;
+  overflow-x: auto;
   overflow-y: auto;
   padding: 4px 0;
   font-family: var(--font-sans);
@@ -173,6 +178,15 @@ main {
   -webkit-user-select: text;
 }
 
+#file-tree .file-tree-item {
+  display: block;
+  width: max-content;
+  min-width: 100%;
+  user-select: text;
+  -webkit-user-select: text;
+  white-space: nowrap;
+}
+
 #file-tree .tree-item:hover {
   background-color: var(--bg-alt);
 }
@@ -202,14 +216,28 @@ main {
   background-color: var(--bg-panel);
 }
 
+.editor-container.editor-minimized {
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  flex: none !important;
+}
+
+.editor-container.editor-minimized .editor-body {
+  display: none !important;
+}
+
 .editor-header {
-  height: 32px;
+  min-height: 36px;
   background-color: var(--bg-alt);
   border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
-  padding: 0 12px;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 12px;
   flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 #current-file {
@@ -220,6 +248,8 @@ main {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  flex: 0 1 auto;
+  max-width: 100%;
 }
 
 .editor-body {
@@ -277,11 +307,32 @@ main {
 /* Sisi kiri bawah: Operasi Save, Clear, Copy, Paste, Run */
 .editor-actions {
   display: flex;
-  gap: 6px;
-  padding: 8px 12px;
-  background-color: var(--bg-alt);
-  border-top: 1px solid var(--border-color);
-  flex-shrink: 0;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  margin-left: auto;
+  flex-wrap: wrap;
+  max-width: 100%;
+}
+
+.editor-secondary-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.editor-actions button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+#editor-minimize {
+  min-width: 28px;
+  height: 24px;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 6px;
 }
 
 /* 5. Sisi Kanan: Terminal & Log (VS Code Style) */
@@ -359,6 +410,7 @@ main {
   background-color: var(--bg-alt);
   border-top: 1px solid var(--border-color);
   flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 .preview-container {
@@ -527,12 +579,29 @@ button:disabled {
     overflow: hidden;
   }
 
-  .editor-body {
-    flex: 1 1 0;
-    height: auto;
-    min-height: 0;
-    position: relative;
-    overflow: hidden;
+  .editor-header {
+    padding: 6px 8px;
+    gap: 6px;
+  }
+
+  .editor-actions {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 4px;
+    margin-top: 2px;
+  }
+
+  .editor-actions button,
+  .editor-secondary-actions button {
+    flex: 1 1 auto;
+    padding: 5px 8px;
+    font-size: 11px;
+  }
+
+  .editor-secondary-actions {
+    width: 100%;
+    display: flex;
+    gap: 4px;
   }
 
   #line-numbers {
@@ -579,10 +648,13 @@ button:disabled {
   }
 
   .terminal-container,
-  .terminal-actions,
-  .editor-actions {
+  .terminal-actions {
     padding-left: 10px;
     padding-right: 10px;
+  }
+
+  .terminal-actions button {
+    flex: 1 1 auto;
   }
 
   #terminal-input {
