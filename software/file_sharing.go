@@ -1,405 +1,405 @@
 package main
 
 import (
-	"archive/zip"
-	"context"
-	"encoding/json"
-	"fmt"
-	"io"
-	"net"
-	"net/http"
-	"os"
-	"os/signal"
-	"path/filepath"
-	"strings"
-	"syscall"
-	"time"
+    "archive/zip"
+    "context"
+    "encoding/json"
+    "fmt"
+    "io"
+    "net"
+    "net/http"
+    "os"
+    "os/signal"
+    "path/filepath"
+    "strings"
+    "syscall"
+    "time"
 )
 
 const (
-	Host        = "0.0.0.0"
-	Port        = "2015"
-	RootDirName = "shared_files"
+    Host        = "0.0.0.0"
+    Port        = "2015"
+    RootDirName = "shared_files"
 )
 
 var absRootDir string
 
 func main() {
-	var err error
-	absRootDir, err = filepath.Abs(RootDirName)
-	if err != nil {
-		fmt.Printf("Error resolving root path: %v\n", err)
-		return
-	}
+    var err error
+    absRootDir, err = filepath.Abs(RootDirName)
+    if err != nil {
+        fmt.Printf("Error resolving root path: %v\n", err)
+        return
+    }
 
-	if err := os.MkdirAll(absRootDir, 0755); err != nil {
-		fmt.Printf("Error creating shared folder: %v\n", err)
-		return
-	}
+    if err := os.MkdirAll(absRootDir, 0755); err != nil {
+        fmt.Printf("Error creating shared folder: %v\n", err)
+        return
+    }
 
-	addr := Host + ":" + Port
+    addr := Host + ":" + Port
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", handleIndex)
-	mux.HandleFunc("/api/files", handleListFiles)
-	mux.HandleFunc("/api/download", handleDownload)
-	mux.HandleFunc("/api/upload", handleUpload)
-	mux.HandleFunc("/api/read", handleReadFile)
-	mux.HandleFunc("/api/save", handleSaveFile)
+    mux := http.NewServeMux()
+    mux.HandleFunc("/", handleIndex)
+    mux.HandleFunc("/api/files", handleListFiles)
+    mux.HandleFunc("/api/download", handleDownload)
+    mux.HandleFunc("/api/upload", handleUpload)
+    mux.HandleFunc("/api/read", handleReadFile)
+    mux.HandleFunc("/api/save", handleSaveFile)
 
-	server := &http.Server{
-		Addr:    addr,
-		Handler: mux,
-	}
+    server := &http.Server{
+        Addr:    addr,
+        Handler: mux,
+    }
 
-	// Menjalankan server di goroutine
-	go func() {
-		fmt.Printf("Starting Simple File Bridge on %s...\n", addr)
-		printLocalIPs()
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			fmt.Printf("[ERROR] Server listen error: %v\n", err)
-		}
-	}()
+    // Menjalankan server di goroutine
+    go func() {
+        fmt.Printf("Starting Simple File Bridge on %s...\n", addr)
+        printLocalIPs()
+        if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+            fmt.Printf("[ERROR] Server listen error: %v\n", err)
+        }
+    }()
 
-	// Menangkap SIGHUP, SIGINT, SIGTERM untuk Graceful Shutdown (Cocok untuk NSSM / Windows Service)
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
-	<-stop
+    // Menangkap SIGHUP, SIGINT, SIGTERM untuk Graceful Shutdown (Cocok untuk NSSM / Windows Service)
+    stop := make(chan os.Signal, 1)
+    signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+    <-stop
 
-	fmt.Println("\nShutting down server...")
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+    fmt.Println("\nShutting down server...")
+    ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+    defer cancel()
 
-	if err := server.Shutdown(ctx); err != nil {
-		fmt.Printf("Server forced shutdown: %v\n", err)
-	} else {
-		fmt.Println("Server stopped gracefully.")
-	}
+    if err := server.Shutdown(ctx); err != nil {
+        fmt.Printf("Server forced shutdown: %v\n", err)
+    } else {
+        fmt.Println("Server stopped gracefully.")
+    }
 }
 
 func printLocalIPs() {
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		fmt.Println("Cannot get network interfaces:", err)
-		return
-	}
+    addrs, err := net.InterfaceAddrs()
+    if err != nil {
+        fmt.Println("Cannot get network interfaces:", err)
+        return
+    }
 
-	fmt.Println("Access URLs:")
-	found := false
+    fmt.Println("Access URLs:")
+    found := false
 
-	for _, addr := range addrs {
-		ipNet, ok := addr.(*net.IPNet)
-		if !ok || ipNet.IP.IsLoopback() || ipNet.IP.To4() == nil {
-			continue
-		}
-		fmt.Printf(" -> http://%s:%s\n", ipNet.IP.String(), Port)
-		found = true
-	}
+    for _, addr := range addrs {
+        ipNet, ok := addr.(*net.IPNet)
+        if !ok || ipNet.IP.IsLoopback() || ipNet.IP.To4() == nil {
+            continue
+        }
+        fmt.Printf(" -> http://%s:%s\n", ipNet.IP.String(), Port)
+        found = true
+    }
 
-	fmt.Printf(" -> http://127.0.0.1:%s\n", Port)
+    fmt.Printf(" -> http://127.0.0.1:%s\n", Port)
 
-	if !found {
-		fmt.Println(" [WARNING] No LAN IPv4 address detected.")
-	}
+    if !found {
+        fmt.Println(" [WARNING] No LAN IPv4 address detected.")
+    }
 }
 
 func safePath(subPath string) (string, error) {
-	subPath = strings.ReplaceAll(subPath, "/", string(filepath.Separator))
-	subPath = strings.ReplaceAll(subPath, "\\", string(filepath.Separator))
+    subPath = strings.ReplaceAll(subPath, "/", string(filepath.Separator))
+    subPath = strings.ReplaceAll(subPath, "\\", string(filepath.Separator))
 
-	cleanSub := filepath.Clean(subPath)
+    cleanSub := filepath.Clean(subPath)
 
-	if cleanSub == "." {
-		cleanSub = ""
-	}
+    if cleanSub == "." {
+        cleanSub = ""
+    }
 
-	if filepath.IsAbs(cleanSub) {
-		return "", fmt.Errorf("absolute path denied")
-	}
+    if filepath.IsAbs(cleanSub) {
+        return "", fmt.Errorf("absolute path denied")
+    }
 
-	targetPath := filepath.Join(absRootDir, cleanSub)
+    targetPath := filepath.Join(absRootDir, cleanSub)
 
-	rel, err := filepath.Rel(absRootDir, targetPath)
-	if err != nil {
-		return "", fmt.Errorf("cannot resolve path")
-	}
+    rel, err := filepath.Rel(absRootDir, targetPath)
+    if err != nil {
+        return "", fmt.Errorf("cannot resolve path")
+    }
 
-	if rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
-		return "", fmt.Errorf("path traversal attempt denied")
-	}
+    if rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+        return "", fmt.Errorf("path traversal attempt denied")
+    }
 
-	return targetPath, nil
+    return targetPath, nil
 }
 
 // getUniquePath memeriksa apakah file/folder sudah ada.
 // Jika sudah ada, menambahkan suffix (1), (2), dst. agar file asli tidak ter-rewrite.
 func getUniquePath(targetPath string) string {
-	if _, err := os.Stat(targetPath); os.IsNotExist(err) {
-		return targetPath
-	}
+    if _, err := os.Stat(targetPath); os.IsNotExist(err) {
+        return targetPath
+    }
 
-	dir := filepath.Dir(targetPath)
-	ext := filepath.Ext(targetPath)
-	base := strings.TrimSuffix(filepath.Base(targetPath), ext)
+    dir := filepath.Dir(targetPath)
+    ext := filepath.Ext(targetPath)
+    base := strings.TrimSuffix(filepath.Base(targetPath), ext)
 
-	counter := 1
-	for {
-		newName := fmt.Sprintf("%s (%d)%s", base, counter, ext)
-		newPath := filepath.Join(dir, newName)
-		if _, err := os.Stat(newPath); os.IsNotExist(err) {
-			return newPath
-		}
-		counter++
-	}
+    counter := 1
+    for {
+        newName := fmt.Sprintf("%s (%d)%s", base, counter, ext)
+        newPath := filepath.Join(dir, newName)
+        if _, err := os.Stat(newPath); os.IsNotExist(err) {
+            return newPath
+        }
+        counter++
+    }
 }
 
 type FileItem struct {
-	Name    string    `json:"name"`
-	IsDir   bool      `json:"is_dir"`
-	Size    int64     `json:"size"`
-	ModTime time.Time `json:"mod_time"`
+    Name    string    `json:"name"`
+    IsDir   bool      `json:"is_dir"`
+    Size    int64     `json:"size"`
+    ModTime time.Time `json:"mod_time"`
 }
 
 func handleListFiles(w http.ResponseWriter, r *http.Request) {
-	sub := r.URL.Query().Get("path")
-	targetPath, err := safePath(sub)
-	if err != nil {
-		http.Error(w, "Access Denied", http.StatusForbidden)
-		return
-	}
+    sub := r.URL.Query().Get("path")
+    targetPath, err := safePath(sub)
+    if err != nil {
+        http.Error(w, "Access Denied", http.StatusForbidden)
+        return
+    }
 
-	entries, err := os.ReadDir(targetPath)
-	if err != nil {
-		http.Error(w, "Directory not found", http.StatusNotFound)
-		return
-	}
+    entries, err := os.ReadDir(targetPath)
+    if err != nil {
+        http.Error(w, "Directory not found", http.StatusNotFound)
+        return
+    }
 
-	var list []FileItem
-	for _, entry := range entries {
-		info, err := entry.Info()
-		if err != nil {
-			continue
-		}
-		list = append(list, FileItem{
-			Name:    entry.Name(),
-			IsDir:   entry.IsDir(),
-			Size:    info.Size(),
-			ModTime: info.ModTime(),
-		})
-	}
+    var list []FileItem
+    for _, entry := range entries {
+        info, err := entry.Info()
+        if err != nil {
+            continue
+        }
+        list = append(list, FileItem{
+            Name:    entry.Name(),
+            IsDir:   entry.IsDir(),
+            Size:    info.Size(),
+            ModTime: info.ModTime(),
+        })
+    }
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(list)
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(list)
 }
 
 func handleDownload(w http.ResponseWriter, r *http.Request) {
-	sub := r.URL.Query().Get("path")
-	targetPath, err := safePath(sub)
-	if err != nil {
-		http.Error(w, "Access Denied", http.StatusForbidden)
-		return
-	}
+    sub := r.URL.Query().Get("path")
+    targetPath, err := safePath(sub)
+    if err != nil {
+        http.Error(w, "Access Denied", http.StatusForbidden)
+        return
+    }
 
-	info, err := os.Stat(targetPath)
-	if err != nil {
-		http.Error(w, "File not found", http.StatusNotFound)
-		return
-	}
+    info, err := os.Stat(targetPath)
+    if err != nil {
+        http.Error(w, "File not found", http.StatusNotFound)
+        return
+    }
 
-	if info.IsDir() {
-		w.Header().Set("Content-Type", "application/zip")
-		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s.zip\"", filepath.Base(targetPath)))
+    if info.IsDir() {
+        w.Header().Set("Content-Type", "application/zip")
+        w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s.zip\"", filepath.Base(targetPath)))
 
-		zw := zip.NewWriter(w)
-		defer zw.Close()
+        zw := zip.NewWriter(w)
+        defer zw.Close()
 
-		err := filepath.Walk(targetPath, func(path string, walkInfo os.FileInfo, walkErr error) error {
-			if walkErr != nil {
-				return walkErr
-			}
-			relPath, err := filepath.Rel(targetPath, path)
-			if err != nil {
-				return err
-			}
-			if relPath == "." {
-				return nil
-			}
+        err := filepath.Walk(targetPath, func(path string, walkInfo os.FileInfo, walkErr error) error {
+            if walkErr != nil {
+                return walkErr
+            }
+            relPath, err := filepath.Rel(targetPath, path)
+            if err != nil {
+                return err
+            }
+            if relPath == "." {
+                return nil
+            }
 
-			if walkInfo.IsDir() {
-				_, err = zw.Create(filepath.ToSlash(relPath) + "/")
-				return err
-			}
+            if walkInfo.IsDir() {
+                _, err = zw.Create(filepath.ToSlash(relPath) + "/")
+                return err
+            }
 
-			zipFile, err := zw.Create(filepath.ToSlash(relPath))
-			if err != nil {
-				return err
-			}
+            zipFile, err := zw.Create(filepath.ToSlash(relPath))
+            if err != nil {
+                return err
+            }
 
-			fsFile, err := os.Open(path)
-			if err != nil {
-				return err
-			}
-			defer fsFile.Close()
+            fsFile, err := os.Open(path)
+            if err != nil {
+                return err
+            }
+            defer fsFile.Close()
 
-			_, err = io.Copy(zipFile, fsFile)
-			return err
-		})
+            _, err = io.Copy(zipFile, fsFile)
+            return err
+        })
 
-		if err != nil {
-			http.Error(w, "Error creating zip", http.StatusInternalServerError)
-		}
-		return
-	}
+        if err != nil {
+            http.Error(w, "Error creating zip", http.StatusInternalServerError)
+        }
+        return
+    }
 
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filepath.Base(targetPath)))
-	http.ServeFile(w, r, targetPath)
+    w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filepath.Base(targetPath)))
+    http.ServeFile(w, r, targetPath)
 }
 
 func handleUpload(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
+    if r.Method != http.MethodPost {
+        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+        return
+    }
 
-	sub := r.URL.Query().Get("path")
-	targetDir, err := safePath(sub)
-	if err != nil {
-		http.Error(w, "Access Denied", http.StatusForbidden)
-		return
-	}
+    sub := r.URL.Query().Get("path")
+    targetDir, err := safePath(sub)
+    if err != nil {
+        http.Error(w, "Access Denied", http.StatusForbidden)
+        return
+    }
 
-	err = r.ParseMultipartForm(1000 << 20) // Limit 1GB
-	if err != nil {
-		http.Error(w, "File upload error", http.StatusBadRequest)
-		return
-	}
+    err = r.ParseMultipartForm(1000 << 20) // Limit 1GB
+    if err != nil {
+        http.Error(w, "File upload error", http.StatusBadRequest)
+        return
+    }
 
-	files := r.MultipartForm.File["files"]
-	relPaths := r.MultipartForm.Value["paths"]
+    files := r.MultipartForm.File["files"]
+    relPaths := r.MultipartForm.Value["paths"]
 
-	for i, fileHeader := range files {
-		src, err := fileHeader.Open()
-		if err != nil {
-			continue
-		}
+    for i, fileHeader := range files {
+        src, err := fileHeader.Open()
+        if err != nil {
+            continue
+        }
 
-		var relPath string
-		if i < len(relPaths) && relPaths[i] != "" {
-			relPath = relPaths[i]
-		} else {
-			relPath = fileHeader.Filename
-		}
+        var relPath string
+        if i < len(relPaths) && relPaths[i] != "" {
+            relPath = relPaths[i]
+        } else {
+            relPath = fileHeader.Filename
+        }
 
-		// Sanitasi path upload
-		relPath = strings.ReplaceAll(relPath, "/", string(filepath.Separator))
-		relPath = strings.ReplaceAll(relPath, "\\", string(filepath.Separator))
-		relPath = filepath.Clean(relPath)
+        // Sanitasi path upload
+        relPath = strings.ReplaceAll(relPath, "/", string(filepath.Separator))
+        relPath = strings.ReplaceAll(relPath, "\\", string(filepath.Separator))
+        relPath = filepath.Clean(relPath)
 
-		if filepath.IsAbs(relPath) || relPath == ".." || strings.HasPrefix(relPath, ".."+string(filepath.Separator)) {
-			src.Close()
-			continue
-		}
+        if filepath.IsAbs(relPath) || relPath == ".." || strings.HasPrefix(relPath, ".."+string(filepath.Separator)) {
+            src.Close()
+            continue
+        }
 
-		dstPath := filepath.Join(targetDir, relPath)
+        dstPath := filepath.Join(targetDir, relPath)
 
-		// Verifikasi target path tidak keluar dari root dir
-		relCheck, err := filepath.Rel(absRootDir, dstPath)
-		if err != nil || relCheck == ".." || strings.HasPrefix(relCheck, ".."+string(filepath.Separator)) {
-			src.Close()
-			continue
-		}
+        // Verifikasi target path tidak keluar dari root dir
+        relCheck, err := filepath.Rel(absRootDir, dstPath)
+        if err != nil || relCheck == ".." || strings.HasPrefix(relCheck, ".."+string(filepath.Separator)) {
+            src.Close()
+            continue
+        }
 
-		if err := os.MkdirAll(filepath.Dir(dstPath), 0755); err != nil {
-			src.Close()
-			continue
-		}
+        if err := os.MkdirAll(filepath.Dir(dstPath), 0755); err != nil {
+            src.Close()
+            continue
+        }
 
-		// CEK UNTUK MENCEGAH REWRITE (AMBIL UNIQUE PATH JIKA SUDAH ADA)
-		dstPath = getUniquePath(dstPath)
+        // CEK UNTUK MENCEGAH REWRITE (AMBIL UNIQUE PATH JIKA SUDAH ADA)
+        dstPath = getUniquePath(dstPath)
 
-		dst, err := os.Create(dstPath)
-		if err != nil {
-			src.Close()
-			continue
-		}
+        dst, err := os.Create(dstPath)
+        if err != nil {
+            src.Close()
+            continue
+        }
 
-		io.Copy(dst, src)
-		src.Close()
-		dst.Close()
-	}
+        io.Copy(dst, src)
+        src.Close()
+        dst.Close()
+    }
 
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Upload success"))
+    w.WriteHeader(http.StatusOK)
+    w.Write([]byte("Upload success"))
 }
 
 // Endpoint baru untuk membaca isi file teks di server
 func handleReadFile(w http.ResponseWriter, r *http.Request) {
-	sub := r.URL.Query().Get("path")
-	targetPath, err := safePath(sub)
-	if err != nil {
-		http.Error(w, "Access Denied", http.StatusForbidden)
-		return
-	}
+    sub := r.URL.Query().Get("path")
+    targetPath, err := safePath(sub)
+    if err != nil {
+        http.Error(w, "Access Denied", http.StatusForbidden)
+        return
+    }
 
-	info, err := os.Stat(targetPath)
-	if err != nil || info.IsDir() {
-		http.Error(w, "File not found or is directory", http.StatusBadRequest)
-		return
-	}
+    info, err := os.Stat(targetPath)
+    if err != nil || info.IsDir() {
+        http.Error(w, "File not found or is directory", http.StatusBadRequest)
+        return
+    }
 
-	// Batasi pembacaan preview maks 5MB
-	if info.Size() > 5<<20 {
-		http.Error(w, "File is too large to preview", http.StatusBadRequest)
-		return
-	}
+    // Batasi pembacaan preview maks 5MB
+    if info.Size() > 5<<20 {
+        http.Error(w, "File is too large to preview", http.StatusBadRequest)
+        return
+    }
 
-	content, err := os.ReadFile(targetPath)
-	if err != nil {
-		http.Error(w, "Error reading file", http.StatusInternalServerError)
-		return
-	}
+    content, err := os.ReadFile(targetPath)
+    if err != nil {
+        http.Error(w, "Error reading file", http.StatusInternalServerError)
+        return
+    }
 
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	w.Write(content)
+    w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+    w.Write(content)
 }
 
 // Endpoint baru untuk menulis ulang (overwrite) file teks di server
 func handleSaveFile(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
+    if r.Method != http.MethodPost {
+        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+        return
+    }
 
-	sub := r.URL.Query().Get("path")
-	targetPath, err := safePath(sub)
-	if err != nil {
-		http.Error(w, "Access Denied", http.StatusForbidden)
-		return
-	}
+    sub := r.URL.Query().Get("path")
+    targetPath, err := safePath(sub)
+    if err != nil {
+        http.Error(w, "Access Denied", http.StatusForbidden)
+        return
+    }
 
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, "Failed to read body", http.StatusBadRequest)
-		return
-	}
+    body, err := io.ReadAll(r.Body)
+    if err != nil {
+        http.Error(w, "Failed to read body", http.StatusBadRequest)
+        return
+    }
 
-	err = os.WriteFile(targetPath, body, 0644)
-	if err != nil {
-		http.Error(w, "Failed to write file", http.StatusInternalServerError)
-		return
-	}
+    err = os.WriteFile(targetPath, body, 0644)
+    if err != nil {
+        http.Error(w, "Failed to write file", http.StatusInternalServerError)
+        return
+    }
 
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Saved successfully"))
+    w.WriteHeader(http.StatusOK)
+    w.Write([]byte("Saved successfully"))
 }
 
 func handleIndex(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
-		http.NotFound(w, r)
-		return
-	}
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Write([]byte(htmlUI))
+    if r.URL.Path != "/" {
+        http.NotFound(w, r)
+        return
+    }
+    w.Header().Set("Content-Type", "text/html; charset=utf-8")
+    w.Write([]byte(htmlUI))
 }
 
 const htmlUI = `<!DOCTYPE html>
@@ -458,7 +458,6 @@ const htmlUI = `<!DOCTYPE html>
         <div class="card">
             <div class="card-header">
                 <span>PC SERVER</span>
-                <button onclick="loadServerFiles('')" style="padding: 4px 8px; font-size: 0.75rem;">Refresh</button>
             </div>
             <div class="path-bar" id="serverPathDisplay">/</div>
             <div class="file-list" id="serverFileList"></div>
@@ -535,15 +534,15 @@ const htmlUI = `<!DOCTYPE html>
         }
 
         // --- SERVER SIDE LOGIC ---
-        async function loadServerFiles(subPath) {
-            currentServerPath = subPath;
-            document.getElementById('serverPathDisplay').innerText = "/" + subPath;
-            selectedServerItems.clear();
-            serverFilesData = [];
-            updateCopyUserButton();
+        async function loadServerFiles(subPath, isAutoRefresh = false) {
+            if (!isAutoRefresh) {
+                currentServerPath = subPath;
+                selectedServerItems.clear();
+            }
+            document.getElementById('serverPathDisplay').innerText = "/" + currentServerPath;
 
             try {
-                const res = await fetch('/api/files?path=' + encodeURIComponent(subPath));
+                const res = await fetch('/api/files?path=' + encodeURIComponent(currentServerPath));
                 if (!res.ok) throw new Error();
                 const files = await res.json();
                 serverFilesData = files || [];
@@ -551,12 +550,12 @@ const htmlUI = `<!DOCTYPE html>
                 const listEl = document.getElementById('serverFileList');
                 listEl.innerHTML = "";
 
-                if (subPath !== "") {
+                if (currentServerPath !== "") {
                     const upDiv = document.createElement('div');
                     upDiv.className = 'item';
                     upDiv.innerHTML = '<span class="item-icon">📁</span><div class="item-info"><span class="item-name">.. (Go Up)</span></div>';
                     upDiv.onclick = () => {
-                        const parts = subPath.split('/').filter(Boolean);
+                        const parts = currentServerPath.split('/').filter(Boolean);
                         parts.pop();
                         loadServerFiles(parts.join('/'));
                     };
@@ -565,6 +564,7 @@ const htmlUI = `<!DOCTYPE html>
 
                 if (!files || files.length === 0) {
                     listEl.innerHTML += '<div style="padding:15px; color:#888; text-align:center;">Folder is empty</div>';
+                    updateCopyUserButton();
                     return;
                 }
 
@@ -573,12 +573,17 @@ const htmlUI = `<!DOCTYPE html>
                 files.forEach(item => {
                     const div = document.createElement('div');
                     div.className = 'item';
+                    if (selectedServerItems.has(item.name)) {
+                        div.classList.add('selected');
+                    }
+
                     const icon = item.is_dir ? '📁' : '📄';
                     const sizeStr = item.is_dir ? '' : formatBytes(item.size);
                     const dateStr = formatDate(item.mod_time);
                     const metaText = item.is_dir ? dateStr : sizeStr + ' • ' + dateStr;
 
-                    const checkboxHtml = '<input type="checkbox" class="server-cb" data-name="' + escapeHtml(item.name) + '">';
+                    const isChecked = selectedServerItems.has(item.name) ? ' checked' : '';
+                    const checkboxHtml = '<input type="checkbox" class="server-cb" data-name="' + escapeHtml(item.name) + '"' + isChecked + '>';
 
                     div.innerHTML = checkboxHtml +
                         '<span class="item-icon">' + icon + '</span>' +
@@ -605,6 +610,8 @@ const htmlUI = `<!DOCTYPE html>
 
                     listEl.appendChild(div);
                 });
+
+                updateCopyUserButton();
             } catch (e) {
                 document.getElementById('serverFileList').innerHTML = '<div style="padding:15px; color:red;">Failed to load server files</div>';
             }
@@ -864,12 +871,28 @@ const htmlUI = `<!DOCTYPE html>
         }
 
         async function pasteModalText() {
+            const textarea = document.getElementById('modalTextarea');
+            textarea.focus();
+
+            if (navigator.clipboard && navigator.clipboard.readText) {
+                try {
+                    const text = await navigator.clipboard.readText();
+                    textarea.value += text;
+                    return;
+                } catch (err) {
+                    // Jika clipboard API diblokir browser, lanjut ke fallback
+                }
+            }
+
+            let success = false;
             try {
-                const text = await navigator.clipboard.readText();
-                const textarea = document.getElementById('modalTextarea');
-                textarea.value += text;
-            } catch (err) {
-                alert('Clipboard access denied or unsupported.');
+                success = document.execCommand('paste');
+            } catch (e) {
+                success = false;
+            }
+
+            if (!success) {
+                alert('Clipboard access denied by browser over HTTP. Please press Ctrl+V directly inside the text box.');
             }
         }
 
@@ -907,8 +930,11 @@ const htmlUI = `<!DOCTYPE html>
             return text.replace(/[&<>"']/g, function(m) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]; });
         }
 
-        // Init
+        // Init & Auto Refresh (1 Detik / 1000ms)
         loadServerFiles("");
+        setInterval(() => {
+            loadServerFiles(currentServerPath, true);
+        }, 1000);
     </script>
 </body>
-</html>`
+</html>
