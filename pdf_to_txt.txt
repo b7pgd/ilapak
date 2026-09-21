@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document Converter (PDF / DOCX to TXT)</title>
+  
+  <!-- CSS Styling -->
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --border: #cbd5e1;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --error: #ef4444;
+      --success: #10b981;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      padding: 24px;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    header {
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 12px;
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      color: var(--text);
+    }
+
+    header p {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+
+    .section-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+
+    /* Dropzone */
+    .dropzone {
+      border: 2px dashed var(--border);
+      border-radius: 6px;
+      padding: 32px;
+      text-align: center;
+      background: #f1f5f9;
+      cursor: pointer;
+      transition: border-color 0.2s, background-color 0.2s;
+    }
+
+    .dropzone.dragover {
+      border-color: var(--primary);
+      background: #eff6ff;
+    }
+
+    .dropzone input[type="file"] {
+      display: none;
+    }
+
+    .dropzone-label {
+      font-weight: 500;
+      color: var(--primary);
+      cursor: pointer;
+    }
+
+    /* Controls & Options */
+    .options-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      font-size: 0.875rem;
+      background: #f8fafc;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+    }
+
+    .options-group label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* Buttons */
+    .btn {
+      background-color: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .btn-secondary {
+      background-color: #e2e8f0;
+      color: var(--text);
+    }
+
+    .btn-secondary:hover {
+      background-color: #cbd5e1;
+    }
+
+    .btn:disabled {
+      background-color: #94a3b8;
+      cursor: not-allowed;
+    }
+
+    /* Meta Info & Progress */
+    .file-info {
+      font-size: 0.875rem;
+      color: var(--text);
+      background: #f1f5f9;
+      padding: 8px 12px;
+      border-radius: 4px;
+      border-left: 4px solid var(--primary);
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      height: 12px;
+      background-color: #e2e8f0;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background-color: var(--primary);
+      transition: width 0.2s ease;
+    }
+
+    .progress-status {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Textarea Controls */
+    .textarea-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 220px;
+      padding: 12px;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 0.875rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      resize: vertical;
+      background-color: #ffffff;
+      color: var(--text);
+    }
+
+    textarea:focus {
+      outline: 2px solid var(--primary);
+      outline-offset: -1px;
+    }
+
+    .error-box {
+      display: none;
+      background-color: #fef2f2;
+      border: 1px solid #fca5a5;
+      color: var(--error);
+      padding: 12px;
+      border-radius: 4px;
+      font-size: 0.875rem;
+    }
+
+    .notice-box {
+      background-color: #fffbeeb;
+      border: 1px solid #fcd34d;
+      color: #92400e;
+      padding: 10px 12px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      line-height: 1.4;
+    }
+  </style>
+
+  <!-- External Libraries (CDN) -->
+  <!-- PDF.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <!-- Mammoth.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+  <!-- Tesseract.js (OCR Fallback) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>Document Converter Utility</h1>
+      <p>Konversi dokumen PDF dan Word (DOCX) menjadi Structured JSON &amp; Clean Plain Text (TXT)</p>
+    </header>
+
+    <div class="notice-box">
+      <strong>Catatan Browser:</strong> Jika Anda membuka file ini langsung menggunakan protokol <code>file://</code>, beberapa browser mungkin membatasi pemuatan Worker CDN. Jika terjadi kendala pada parsing PDF/OCR, disarankan menjalankan HTTP Server lokal sederhana (misal: Live Server atau <code>npx serve</code>).
+    </div>
+
+    <!-- Mode A: PDF/DOCX Converter -->
+    <section class="section-card">
+      <div class="section-title">1. Source Document Upload</div>
+      
+      <div class="dropzone" id="dropzone">
+        <p>Tarik &amp; lepas file di sini, atau <label for="fileInput" class="dropzone-label">Pilih File</label></p>
+        <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Mendukung .pdf dan .docx</p>
+        <input type="file" id="fileInput" accept=".pdf,.docx">
+      </div>
+
+      <div class="options-group">
+        <label>
+          <input type="checkbox" id="removeHeadersFooters">
+          Remove repeated headers/footers (PDF)
+        </label>
+        <label>
+          <input type="checkbox" id="enableOcr">
+          Enable OCR for scanned PDF
+        </label>
+      </div>
+
+      <div class="file-info" id="fileInfo" style="display: none;"></div>
+
+      <div class="button-group">
+        <button class="btn" id="btnProcess" disabled>Proses Dokumen</button>
+        <button class="btn btn-secondary" id="btnClear">Clear / Reset</button>
+      </div>
+
+      <div id="progressContainer" style="display: none;">
+        <div class="progress-status" id="progressStatus">Memproses...</div>
+        <div class="progress-bar-container">
+          <div class="progress-bar" id="progressBar"></div>
+        </div>
+      </div>
+
+      <div class="error-box" id="errorBox"></div>
+    </section>
+
+    <!-- Output JSON Area -->
+    <section class="section-card">
+      <div class="section-title">2. Extracted JSON</div>
+      <div class="textarea-wrapper">
+        <textarea id="jsonOutput" placeholder="Structured JSON akan tampil di sini..." readonly></textarea>
+        <div class="button-group">
+          <button class="btn btn-secondary" id="btnCopyJson">Copy JSON</button>
+          <button class="btn btn-secondary" id="btnDownloadJson">Download JSON</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Output TXT Area -->
+    <section class="section-card">
+      <div class="section-title">3. Final Plain Text (TXT)</div>
+      <div class="textarea-wrapper">
+        <textarea id="txtOutput" placeholder="Teks bersih siap copy akan tampil di sini..."></textarea>
+        <div class="button-group">
+          <button class="btn" id="btnCopyTxt">Copy TXT</button>
+          <button class="btn btn-secondary" id="btnDownloadTxt">Download TXT</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Mode B: Manual JSON -> TXT Converter -->
+    <section class="section-card">
+      <div class="section-title">4. Manual Mode: JSON → TXT</div>
+      <div class="textarea-wrapper">
+        <textarea id="jsonManualInput" placeholder="Tempel (Paste) Structured JSON di sini untuk mengonversi langsung ke TXT..."></textarea>
+        <div class="button-group">
+          <button class="btn" id="btnConvertManualJson">JSON → TXT</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // Inisialisasi Worker PDF.js CDN
+    if (typeof pdfjsLib !== 'undefined') {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+    }
+
+    // State Aplikasi
+    let selectedFile = null;
+    let extractedJsonObject = null;
+    let finalTxtString = '';
+
+    // DOM Elements
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('fileInput');
+    const fileInfo = document.getElementById('fileInfo');
+    const btnProcess = document.getElementById('btnProcess');
+    const btnClear = document.getElementById('btnClear');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressBar = document.getElementById('progressBar');
+    const progressStatus = document.getElementById('progressStatus');
+    const errorBox = document.getElementById('errorBox');
+    const removeHeadersFootersCheckbox = document.getElementById('removeHeadersFooters');
+    const enableOcrCheckbox = document.getElementById('enableOcr');
+
+    const jsonOutput = document.getElementById('jsonOutput');
+    const btnCopyJson = document.getElementById('btnCopyJson');
+    const btnDownloadJson = document.getElementById('btnDownloadJson');
+
+    const txtOutput = document.getElementById('txtOutput');
+    const btnCopyTxt = document.getElementById('btnCopyTxt');
+    const btnDownloadTxt = document.getElementById('btnDownloadTxt');
+
+    const jsonManualInput = document.getElementById('jsonManualInput');
+    const btnConvertManualJson = document.getElementById('btnConvertManualJson');
+
+    // Utility Format Size
+    function formatBytes(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // Drag & Drop Handling
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropzone.classList.add('dragover');
+      });
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+      });
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        handleFileSelect(files[0]);
+      }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        handleFileSelect(e.target.files[0]);
+      }
+    });
+
+    function handleFileSelect(file) {
+      hideError();
+      const ext = file.name.split('.').pop().toLowerCase();
+      if (ext !== 'pdf' && ext !== 'docx') {
+        showError('Format file tidak didukung. Harap masukkan file .pdf atau .docx');
+        return;
+      }
+      selectedFile = file;
+      fileInfo.style.display = 'block';
+      fileInfo.innerHTML = `<strong>File:</strong> ${file.name} | <strong>Type:</strong> ${ext.toUpperCase()} | <strong>Size:</strong> ${formatBytes(file.size)}`;
+      btnProcess.disabled = false;
+    }
+
+    // Clear State
+    btnClear.addEventListener('click', () => {
+      selectedFile = null;
+      extractedJsonObject = null;
+      finalTxtString = '';
+      fileInput.value = '';
+      fileInfo.style.display = 'none';
+      fileInfo.innerHTML = '';
+      btnProcess.disabled = true;
+      hideError();
+      hideProgress();
+      jsonOutput.value = '';
+      txtOutput.value = '';
+      jsonManualInput.value = '';
+    });
+
+    function showError(msg) {
+      errorBox.style.display = 'block';
+      errorBox.innerText = msg;
+    }
+
+    function hideError() {
+      errorBox.style.display = 'none';
+      errorBox.innerText = '';
+    }
+
+    function updateProgress(percent, text) {
+      progressContainer.style.display = 'block';
+      progressBar.style.width = percent + '%';
+      progressStatus.innerText = text;
+    }
+
+    function hideProgress() {
+      progressContainer.style.display = 'none';
+      progressBar.style.width = '0%';
+    }
+
+    // Process File Dispatcher
+    btnProcess.addEventListener('click', async () => {
+      if (!selectedFile) return;
+      hideError();
+      jsonOutput.value = '';
+      txtOutput.value = '';
+      btnProcess.disabled = true;
+
+      const ext = selectedFile.name.split('.').pop().toLowerCase();
+      try {
+        if (ext === 'pdf') {
+          await processPDF(selectedFile);
+        } else if (ext === 'docx') {
+          await processDOCX(selectedFile);
+        }
+      } catch (err) {
+        console.error(err);
+        showError('Gagal memproses dokumen: ' + (err.message || 'Error tidak diketahui'));
+      } finally {
+        btnProcess.disabled = false;
+        hideProgress();
+      }
+    });
+
+    /* =========================================================
+       3. PDF PARSING & SPATIAL RECONSTRUCTION LOGIC
+       ========================================================= */
+    async function processPDF(file) {
+      if (typeof pdfjsLib === 'undefined') {
+        throw new Error('Library PDF.js gagal dimuat dari CDN.');
+      }
+
+      updateProgress(5, 'Membaca file PDF...');
+      const arrayBuffer = await file.arrayBuffer();
+      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+      const pdf = await loadingTask.promise;
+      
+      const numPages = pdf.numPages;
+      const pdfJsonData = {
+        source: {
+          filename: file.name,
+          type: 'pdf',
+          pages: numPages
+        },
+        pages: []
+      };
+
+      let shouldOcr = enableOcrCheckbox.checked;
+
+      for (let i = 1; i <= numPages; i++) {
+        updateProgress(Math.round((i / numPages) * 80), `Memproses halaman ${i} dari ${numPages}...`);
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        
+        let rawItems = textContent.items.map(item => ({
+          text: item.str,
+          x: item.transform[4],
+          y: item.transform[5],
+          width: item.width || 0,
+          height: item.height || Math.sqrt(item.transform[0]*item.transform[0] + item.transform[1]*item.transform[1]) || 10
+        }));
+
+        // Cek jika halaman adalah scanned PDF (text layer kosong)
+        const combinedRawText = rawItems.map(it => it.text).join('').trim();
+        if (combinedRawText.length < 10 && shouldOcr) {
+          updateProgress(Math.round((i / numPages) * 80), `Menjalankan OCR pada halaman ${i}...`);
+          rawItems = await runOcrOnPage(page);
+        }
+
+        const reconstructedText = reconstructPdfPageText(rawItems);
+
+        pdfJsonData.pages.push({
+          page: i,
+          text: reconstructedText,
+          items: rawItems
+        });
+      }
+
+      // Deteksi & Filter Header / Footer berulang jika diaktifkan
+      if (removeHeadersFootersCheckbox.checked && pdfJsonData.pages.length > 1) {
+        updateProgress(90, 'Membersihkan header/footer berulang...');
+        filterRepeatedHeadersFooters(pdfJsonData);
+      }
+
+      updateProgress(95, 'Menyusun hasil teks akhir...');
+      extractedJsonObject = pdfJsonData;
+      jsonOutput.value = JSON.stringify(extractedJsonObject, null, 2);
+
+      // JSON -> TXT Conversion
+      finalTxtString = convertPdfJsonToTxt(extractedJsonObject);
+      txtOutput.value = finalTxtString;
+      updateProgress(100, 'Selesai!');
+    }
+
+    // Rekonstruksi Teks PDF berdasarkan Koordinat X dan Y
+    function reconstructPdfPageText(items) {
+      if (!items || items.length === 0) return '';
+
+      // Clean empty strings
+      const validItems = items.filter(it => it.text && it.text.trim().length > 0);
+      if (validItems.length === 0) return '';
+
+      // Tentukan Layout Multi-kolom dengan memeriksa distribusi X
+      // Grouping sederhana berdasarkan X jika ada gap horizontal besar
+      // Pertama, kelompokkan baris vertikal (Y-tolerance)
+      const yTolerance = 4; // Beda Y <= 4px dianggap baris sama
+      
+      // Urutkan dari atas ke bawah (Y besar ke kecil di PDF.js)
+      const sortedByY = [...validItems].sort((a, b) => b.y - a.y);
+
+      const lines = [];
+      sortedByY.forEach(item => {
+        let matchedLine = lines.find(line => Math.abs(line.y - item.y) <= yTolerance);
+        if (matchedLine) {
+          matchedLine.items.push(item);
+        } else {
+          lines.push({
+            y: item.y,
+            items: [item]
+          });
+        }
+      });
+
+      // Urutkan line dari atas ke bawah
+      lines.sort((a, b) => b.y - a.y);
+
+      let reconstructedPage = '';
+      let prevLineY = null;
+      let avgLineHeight = 12;
+
+      lines.forEach((line, index) => {
+        // Urutkan item dalam satu baris dari kiri ke kanan (X kecil ke besar)
+        line.items.sort((a, b) => a.x - b.x);
+
+        let lineStr = '';
+        let prevItemRight = null;
+
+        line.items.forEach(item => {
+          if (prevItemRight !== null) {
+            const gap = item.x - prevItemRight;
+            // Jika gap horizontal melebihi 2px, tambahkan spasi
+            if (gap > 2) {
+              lineStr += ' ';
+            }
+          }
+          lineStr += item.text;
+          prevItemRight = item.x + (item.width || (item.text.length * 5));
+        });
+
+        // Deteksi Spasi Paragraf vs Line Break Biasa
+        if (prevLineY !== null) {
+          const verticalGap = prevLineY - line.y;
+          if (verticalGap > avgLineHeight * 1.6) {
+            reconstructedPage += '\n\n'; // Paragraph break
+          } else {
+            reconstructedPage += '\n'; // Line break
+          }
+        }
+
+        reconstructedPage += lineStr.trim();
+        prevLineY = line.y;
+      });
+
+      return reconstructedPage;
+    }
+
+    // Filter Repeated Headers and Footers
+    function filterRepeatedHeadersFooters(pdfJson) {
+      const pageCount = pdfJson.pages.length;
+      const headerCandidates = {};
+      const footerCandidates = {};
+
+      pdfJson.pages.forEach(p => {
+        const lines = p.text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        if (lines.length > 0) {
+          const top = lines[0];
+          const bottom = lines[lines.length - 1];
+          headerCandidates[top] = (headerCandidates[top] || 0) + 1;
+          footerCandidates[bottom] = (footerCandidates[bottom] || 0) + 1;
+        }
+      });
+
+      // Jika muncul lebih dari 60% jumlah halaman, bersihkan
+      const threshold = pageCount * 0.6;
+      
+      pdfJson.pages.forEach(p => {
+        let lines = p.text.split('\n');
+        if (lines.length > 0 && headerCandidates[lines[0].trim()] >= threshold) {
+          lines.shift();
+        }
+        if (lines.length > 0 && footerCandidates[lines[lines.length - 1].trim()] >= threshold) {
+          lines.pop();
+        }
+        p.text = lines.join('\n').trim();
+      });
+    }
+
+    // OCR Fallback via Tesseract.js
+    async function runOcrOnPage(pdfPage) {
+      if (typeof Tesseract === 'undefined') {
+        throw new Error('Tesseract.js tidak dimuat. Harap periksa koneksi internet/CDN.');
+      }
+
+      const viewport = pdfPage.getViewport({ scale: 1.5 });
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
+
+      await pdfPage.render({ canvasContext: context, viewport: viewport }).promise;
+
+      const worker = await Tesseract.createWorker('eng');
+      const ret = await worker.recognize(canvas);
+      await worker.terminate();
+
+      const ocrItems = [];
+      if (ret.data && ret.data.words) {
+        ret.data.words.forEach(w => {
+          ocrItems.push({
+            text: w.text,
+            x: w.bbox.x0,
+            y: viewport.height - w.bbox.y0, // Invert Y agar sesuai koordinat PDF.js
+            width: w.bbox.x1 - w.bbox.x0,
+            height: w.bbox.y1 - w.bbox.y0
+          });
+        });
+      }
+      return ocrItems;
+    }
+
+    /* =========================================================
+       4. DOCX PARSING LOGIC
+       ========================================================= */
+    async function processDOCX(file) {
+      if (typeof mammoth === 'undefined') {
+        throw new Error('Library Mammoth.js gagal dimuat dari CDN.');
+      }
+
+      updateProgress(20, 'Membaca file DOCX...');
+      const arrayBuffer = await file.arrayBuffer();
+
+      updateProgress(50, 'Mengekstrak struktur dokumen DOCX...');
+      
+      // Gunakan convertToHtml dari mammoth untuk mendapatkan tag struktur (p, h1, li)
+      const result = await mammoth.convertToHtml({ arrayBuffer: arrayBuffer });
+      const htmlString = result.value;
+
+      const docxJsonData = {
+        source: {
+          filename: file.name,
+          type: 'docx'
+        },
+        blocks: []
+      };
+
+      // Parse HTML string ke DOM Parser untuk ekstrak struktur JSON
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlString, 'text/html');
+      
+      doc.body.childNodes.forEach(node => {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          const tagName = node.tagName.toLowerCase();
+          const textContent = node.textContent.trim();
+
+          if (!textContent) return;
+
+          if (/^h[1-6]$/.test(tagName)) {
+            docxJsonData.blocks.push({
+              type: 'heading',
+              level: parseInt(tagName.charAt(1)),
+              text: textContent
+            });
+          } else if (tagName === 'ul' || tagName === 'ol') {
+            node.querySelectorAll('li').forEach(li => {
+              docxJsonData.blocks.push({
+                type: 'list',
+                text: li.textContent.trim()
+              });
+            });
+          } else {
+            docxJsonData.blocks.push({
+              type: 'paragraph',
+              text: textContent
+            });
+          }
+        }
+      });
+
+      updateProgress(80, 'Menyusun teks bersih...');
+      extractedJsonObject = docxJsonData;
+      jsonOutput.value = JSON.stringify(extractedJsonObject, null, 2);
+
+      finalTxtString = convertDocxJsonToTxt(docxJsonData);
+      txtOutput.value = finalTxtString;
+      updateProgress(100, 'Selesai!');
+    }
+
+    /* =========================================================
+       5. JSON -> TXT CONVERTER (CLEAN & NORMALIZED)
+       ========================================================= */
+    function convertPdfJsonToTxt(jsonObject) {
+      if (!jsonObject.pages || !Array.isArray(jsonObject.pages)) return '';
+      
+      return jsonObject.pages
+        .map(page => page.text)
+        .filter(text => text && text.trim().length > 0)
+        .join('\n\n')
+        .replace(/[ \t]+/g, ' ') // Normalisasi spasi berlebihan pada baris
+        .replace(/\n{3,}/g, '\n\n') // Maksimal 2 newline berturut-turut
+        .trim();
+    }
+
+    function convertDocxJsonToTxt(jsonObject) {
+      if (!jsonObject.blocks || !Array.isArray(jsonObject.blocks)) return '';
+
+      const lines = jsonObject.blocks.map(block => {
+        if (block.type === 'heading') {
+          return `${block.text.toUpperCase()}`;
+        } else if (block.type === 'list') {
+          return `• ${block.text}`;
+        } else {
+          return block.text;
+        }
+      });
+
+      return lines
+        .join('\n\n')
+        .replace(/[ \t]+/g, ' ')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+    }
+
+    // Generic JSON -> TXT Dispatcher
+    function convertJsonToTxt(jsonObject) {
+      if (jsonObject.source && jsonObject.source.type === 'pdf') {
+        return convertPdfJsonToTxt(jsonObject);
+      } else if (jsonObject.source && jsonObject.source.type === 'docx') {
+        return convertDocxJsonToTxt(jsonObject);
+      } else if (jsonObject.pages) {
+        return convertPdfJsonToTxt(jsonObject);
+      } else if (jsonObject.blocks) {
+        return convertDocxJsonToTxt(jsonObject);
+      } else {
+        throw new Error('Format JSON tidak dikenali. Harus memiliki properti "pages" atau "blocks".');
+      }
+    }
+
+    /* =========================================================
+       9. MANUAL MODE: JSON -> TXT
+       ========================================================= */
+    btnConvertManualJson.addEventListener('click', () => {
+      hideError();
+      const rawJson = jsonManualInput.value.trim();
+      if (!rawJson) {
+        showError('JSON Input manual masih kosong.');
+        return;
+      }
+
+      try {
+        const parsed = JSON.parse(rawJson);
+        const txt = convertJsonToTxt(parsed);
+        txtOutput.value = txt;
+        extractedJsonObject = parsed;
+        jsonOutput.value = JSON.stringify(parsed, null, 2);
+      } catch (err) {
+        showError('JSON tidak valid: ' + err.message);
+      }
+    });
+
+    /* =========================================================
+       13 & 14. COPY & DOWNLOAD HANDLERS
+       ========================================================= */
+    async function copyToClipboard(text, btnElement) {
+      const originalText = btnElement.innerText;
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(text);
+        } else {
+          // Fallback kompatibilitas
+          const tempArea = document.createElement('textarea');
+          tempArea.value = text;
+          document.body.appendChild(tempArea);
+          tempArea.select();
+          document.execCommand('copy');
+          document.body.removeChild(tempArea);
+        }
+        btnElement.innerText = 'Copied!';
+        setTimeout(() => {
+          btnElement.innerText = originalText;
+        }, 2000);
+      } catch (err) {
+        alert('Gagal menyalin teks ke clipboard.');
+      }
+    }
+
+    function downloadFile(content, fileName, contentType) {
+      const blob = new Blob([content], { type: contentType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function getBaseFileName() {
+      if (selectedFile) {
+        return selectedFile.name.substring(0, selectedFile.name.lastIndexOf('.'));
+      }
+      return 'converted-document';
+    }
+
+    btnCopyJson.addEventListener('click', () => {
+      if (!jsonOutput.value) return;
+      copyToClipboard(jsonOutput.value, btnCopyJson);
+    });
+
+    btnDownloadJson.addEventListener('click', () => {
+      if (!jsonOutput.value) return;
+      downloadFile(jsonOutput.value, `${getBaseFileName()}.json`, 'application/json');
+    });
+
+    btnCopyTxt.addEventListener('click', () => {
+      if (!txtOutput.value) return;
+      copyToClipboard(txtOutput.value, btnCopyTxt);
+    });
+
+    btnDownloadTxt.addEventListener('click', () => {
+      if (!txtOutput.value) return;
+      downloadFile(txtOutput.value, `${getBaseFileName()}.txt`, 'text/plain');
+    });
+  </script>
+</body>
+</html>
