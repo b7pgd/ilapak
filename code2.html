@@ -48,6 +48,18 @@ font-weight: 600;
 font-size: 0.9rem;
 color: #475569;
 }
+.template-checkbox-group {
+display: flex;
+align-items: center;
+gap: 6px;
+margin-bottom: 8px;
+font-size: 0.85rem;
+color: #475569;
+font-weight: 600;
+}
+.template-checkbox-group input {
+cursor: pointer;
+}
 /* Group tombol Copy, Paste, Clear di kanan */
 .btn-group {
 display: flex;
@@ -200,6 +212,10 @@ to {bottom: 0; opacity: 0;}
 <button class="action-btn btn-clear" onclick="clearSingle('extraBox')">Clear</button>
 </div>
 </div>
+<div class="template-checkbox-group">
+<input type="checkbox" id="useTemplateCheck">
+<label for="useTemplateCheck">Gunakan Template </label>
+</div>
 <textarea class="extra-textarea" id="extraBox" placeholder="Tulis konteks tambahan di sini..."></textarea>
 <!-- Field 2: Notes -->
 <div class="textarea-header">
@@ -221,7 +237,7 @@ to {bottom: 0; opacity: 0;}
 <button class="action-btn btn-clear" onclick="clearSingle('instructionBox')">Clear</button>
 </div>
 </div>
-<input type="text" class="instruction-input" id="instructionBox" value="Sesuaikan/perbaiki, jangan ubah logic yg tidak berhubungan, kirim lengkap 1 file dan jika dalam bentuk kode return file yang  copyable.">
+<input type="text" class="instruction-input" id="instructionBox" value="Sesuaikan/perbaiki, jangan ubah logic yg tidak berhubungan, kirim lengkap 1 file dan jika dalam bentuk kode return file yang copyable.">
 </div>
 <button class="copy-btn" id="copyBtn">Copy Combined Text</button>
 <button class="copy-btn compress-btn" id="copyCompressedBtn">Copy Compressed Text</button>
@@ -231,9 +247,19 @@ to {bottom: 0; opacity: 0;}
 const notesBox = document.getElementById('notesBox');
 const extraBox = document.getElementById('extraBox');
 const instructionBox = document.getElementById('instructionBox');
+const useTemplateCheck = document.getElementById('useTemplateCheck');
 const copyBtn = document.getElementById('copyBtn');
 const copyCompressedBtn = document.getElementById('copyCompressedBtn');
 const toastBox = document.getElementById('toastBox');
+
+// Helper untuk memproses isi Tambahan Konteks jika menggunakan template
+function getFormattedExtraText() {
+const rawText = extraBox.value;
+if (useTemplateCheck.checked) {
+return `Dari analisa\n"\n${rawText}\n"\nPerbaiki`;
+}
+return rawText;
+}
 
 // Fungsi Global Aksi Clear per Field
 function clearSingle(targetId) {
@@ -244,19 +270,28 @@ target.focus();
 
 // Fungsi Global Aksi Copy per Field
 function copySingle(targetId) {
+let textToCopy = '';
+if (targetId === 'extraBox') {
+textToCopy = getFormattedExtraText();
+} else {
 const target = document.getElementById(targetId);
-const textToCopy = target.value;
+textToCopy = target.value;
+}
 if (!textToCopy.trim()) return;
 executeCopy(textToCopy, "Copied text!");
 }
 
-// Fungsi Global Aksi Paste per Field (Support HTTPS & Modern Device Browser)
+// Fungsi Global Aksi Paste per Field (Append mode)
 function pasteSingle(targetId) {
 const target = document.getElementById(targetId);
 if (navigator.clipboard && window.isSecureContext) {
 navigator.clipboard.readText()
 .then(text => {
+if (target.value && target.value.trim() !== '') {
+target.value = target.value + '\n\n' + text;
+} else {
 target.value = text;
+}
 target.focus();
 })
 .catch(err => {
@@ -733,7 +768,7 @@ return clean;
 
 // Fitur Gabung & Copy Otomatis (Berurutan dari atas ke bawah)
 copyBtn.addEventListener('click', () => {
-const extraText = extraBox.value;
+const extraText = getFormattedExtraText();
 const notesText = notesBox.value;
 const instructionText = instructionBox.value;
 let parts = [];
@@ -754,7 +789,7 @@ executeCopy(combinedText, "Copied Combined Text!");
 
 // Fitur Gabung, Kompres, & Copy Otomatis
 copyCompressedBtn.addEventListener('click', () => {
-const extraText = extraBox.value.trim();
+const extraText = getFormattedExtraText().trim();
 const notesText = notesBox.value.trim();
 const instructionText = instructionBox.value.trim();
 let parts = [];
