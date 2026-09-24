@@ -1,0 +1,5 @@
+# installer.py
+pip install pyinstaller; pyinstaller --noconfirm --onefile --clean --name "installer" installer.py; Move-Item -Path "dist\installer.exe" -Destination ".\installer.exe" -Force; Remove-Item -Path build, dist -Recurse -Force; Remove-Item -Path "installer.spec" -Force
+
+# installer_inspeksi.py
+pip install pyinstaller; pyinstaller --noconfirm --onefile --clean --name "installer_inspeksi" installer_inspeksi.py; Move-Item -Path "dist\installer_inspeksi.exe" -Destination ".\installer_inspeksi.exe" -Force; Remove-Item -Path build, dist -Recurse -Force; Remove-Item -Path "installer_inspeksi.spec" -Force
