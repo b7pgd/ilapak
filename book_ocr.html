@@ -175,10 +175,12 @@
     <input type="file" id="imageInput" accept="image/*" capture="environment">
     <button id="cameraBtn">📸 BUKA KAMERA</button>
 
-    <!-- Image Toolbar (Edit | Rotate Up/Down | Save | Cancel | Retake) -->
+    <!-- Image Toolbar (Edit | Rotate Left/Right | Rotate Up/Down | Save | Cancel | Retake) -->
     <div class="img-toolbar" id="imgToolbar">
         <button class="action-btn btn-retake" id="retakeBtn">Kamera</button>
         <button class="action-btn btn-edit" id="editBtn">Edit Crop</button>
+        <button class="action-btn btn-rotate" id="rotateLeftBtn" style="display: none;">↺ Kiri 90°</button>
+        <button class="action-btn btn-rotate" id="rotateRightBtn" style="display: none;">↻ Kanan 90°</button>
         <button class="action-btn btn-rotate" id="rotateBtn" style="display: none;">🔄 Flip 180°</button>
         <button class="action-btn btn-save" id="saveBtn" style="display: none;">Save Crop</button>
         <button class="action-btn btn-cancel" id="cancelBtn" style="display: none;">Cancel</button>
@@ -219,6 +221,8 @@
     const mainContainer = document.getElementById('mainContainer');
 
     const editBtn = document.getElementById('editBtn');
+    const rotateLeftBtn = document.getElementById('rotateLeftBtn');
+    const rotateRightBtn = document.getElementById('rotateRightBtn');
     const rotateBtn = document.getElementById('rotateBtn');
     const saveBtn = document.getElementById('saveBtn');
     const cancelBtn = document.getElementById('cancelBtn');
@@ -252,6 +256,8 @@
             imgToolbar.style.display = 'flex';
 
             editBtn.style.display = 'inline-block';
+            rotateLeftBtn.style.display = 'none';
+            rotateRightBtn.style.display = 'none';
             rotateBtn.style.display = 'none';
             saveBtn.style.display = 'none';
             cancelBtn.style.display = 'none';
@@ -370,10 +376,26 @@
         });
 
         editBtn.style.display = 'none';
+        rotateLeftBtn.style.display = 'inline-block';
+        rotateRightBtn.style.display = 'inline-block';
         rotateBtn.style.display = 'inline-block';
         saveBtn.style.display = 'inline-block';
         cancelBtn.style.display = 'inline-block';
-        status.textContent = "Atur area crop. Klik Flip 180° jika foto terbalik.";
+        status.textContent = "Atur area crop. Gunakan tombol rotasi jika posisi foto belum pas.";
+    };
+
+    // Tombol Rotasi Kiri 90°
+    rotateLeftBtn.onclick = () => {
+        if (cropper) {
+            cropper.rotate(-90);
+        }
+    };
+
+    // Tombol Rotasi Kanan 90°
+    rotateRightBtn.onclick = () => {
+        if (cropper) {
+            cropper.rotate(90);
+        }
     };
 
     // Tombol Flip 180° (Putar Atas-Bawah)
@@ -401,6 +423,8 @@
         status.textContent = "Foto berhasil dicrop. Klik scan untuk OCR.";
 
         editBtn.style.display = 'inline-block';
+        rotateLeftBtn.style.display = 'none';
+        rotateRightBtn.style.display = 'none';
         rotateBtn.style.display = 'none';
         saveBtn.style.display = 'none';
         cancelBtn.style.display = 'none';
@@ -416,6 +440,8 @@
         cropContainer.classList.remove('editing-mode');
 
         editBtn.style.display = 'inline-block';
+        rotateLeftBtn.style.display = 'none';
+        rotateRightBtn.style.display = 'none';
         rotateBtn.style.display = 'none';
         saveBtn.style.display = 'none';
         cancelBtn.style.display = 'none';
@@ -435,6 +461,8 @@
                 cropContainer.classList.remove('editing-mode');
 
                 editBtn.style.display = 'inline-block';
+                rotateLeftBtn.style.display = 'none';
+                rotateRightBtn.style.display = 'none';
                 rotateBtn.style.display = 'none';
                 saveBtn.style.display = 'none';
                 cancelBtn.style.display = 'none';
