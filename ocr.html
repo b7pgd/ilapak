@@ -8,41 +8,41 @@
         /* UI Fresh White & Blue */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; color: #333; text-align: center; padding: 20px; margin: 0; }
         .container { background: #ffffff; padding: 30px; border-radius: 16px; max-width: 450px; margin: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #e1e4e8; }
-        
+
         h2 { color: #1a73e8; margin-bottom: 5px; font-weight: 600; }
         .sub-text { font-size: 13px; color: #666; margin-bottom: 20px; }
-        
+
         /* Input & Hidden Canvas */
         input[type="file"] { margin: 15px 0; width: 100%; font-size: 13px; }
         #canvas { display: none; } /* Preview disembunyikan total */
-        
+
         /* Status & Loading */
         #status { margin: 15px 0; font-size: 14px; font-weight: bold; color: #1a73e8; min-height: 20px; }
-        
+
         /* Output: Teks Hitam */
-        #output { 
-            white-space: pre-wrap; 
-            background: #f8f9fa; 
-            color: #1a1a1a; 
-            padding: 15px; 
-            border-radius: 10px; 
-            text-align: left; 
-            font-size: 14px; 
-            min-height: 120px; 
+        #output {
+            white-space: pre-wrap;
+            background: #f8f9fa;
+            color: #1a1a1a;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: left;
+            font-size: 14px;
+            min-height: 120px;
             border: 1px solid #ced4da;
             line-height: 1.5;
         }
 
         /* Button Biru */
-        button { 
-            background: #1a73e8; 
-            color: white; 
-            border: none; 
-            padding: 15px; 
-            border-radius: 10px; 
-            width: 100%; 
-            font-weight: bold; 
-            cursor: pointer; 
+        button {
+            background: #1a73e8;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            width: 100%;
+            font-weight: bold;
+            cursor: pointer;
             font-size: 16px;
             transition: background 0.2s;
             box-shadow: 0 4px 6px rgba(26, 115, 232, 0.2);
@@ -104,13 +104,13 @@
 <div class="container">
     <h2>📷 Photo to Text</h2>
     <div class="sub-text">Scan gambar langsung dari galeri atau kamera</div>
-    
-    <input type="file" id="fileInput" accept="image/*">
+
+    <input type="file" id="fileInput">
     <canvas id="canvas"></canvas>
-    
+
     <div id="status">Pilih foto untuk memulai</div>
     <button id="scanBtn" disabled>MULAI SCAN</button>
-    
+
     <!-- Action Toolbar di atas Textbox -->
     <div class="textarea-header">
         <label>Hasil Scan:</label>
@@ -184,7 +184,7 @@
                 canvas.width = img.width * scale;
                 canvas.height = img.height * scale;
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                
+
                 status.textContent = "Gambar siap. Klik scan untuk memproses.";
                 scanBtn.disabled = false;
             };
@@ -196,10 +196,10 @@
     scanBtn.onclick = async () => {
         scanBtn.disabled = true;
         output.textContent = "Menganalisa gambar...";
-        
+
         const callOCR = async (engine, timeoutMs = null) => {
             status.innerHTML = `🚀 Memproses... <div class="engine-badge">Engine ${engine}</div>`;
-            
+
             const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
             const formData = new FormData();
             formData.append('base64Image', dataUrl);
@@ -211,7 +211,7 @@
             // Kontrol Timeout
             const controller = new AbortController();
             let timeoutId = null;
-            
+
             if (timeoutMs) {
                 timeoutId = setTimeout(() => controller.abort(), timeoutMs);
             }
@@ -236,7 +236,7 @@
             // Step 1: Coba Engine 2 dengan Timeout 2 Detik (2000ms)
             let result;
             try {
-                result = await callOCR('2', 2000); 
+                result = await callOCR('2', 2000);
             } catch (e) {
                 // Jika timeout 2 detik kena, buat result seolah-olah error agar masuk ke fallback
                 console.warn(e.message);
