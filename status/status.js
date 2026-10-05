@@ -1,6 +1,12 @@
 // Konfigurasi ID Spreadsheet dan Nama Sheet target (SUDAH DIPERBAIKI)
 const SPREADSHEET_ID = "1diDoncpjBk1qbDt4XVJZbOMEraHHIweHTjYAuKo_4gw";
 const SHEET_NAME = "Ruah 2025"; 
+const STORAGE_SHEETS = [
+    { month: "September", gid: "342043881" },
+    { month: "October", gid: "1101355929" },
+    { month: "November", gid: "407360103" },
+    { month: "December", gid: "2125903335" }
+];
 
 /**
  * SOLUSI TERBAIK & INSTAN (MENGGUNAKAN JALUR CSV EKSPOR):
@@ -11,6 +17,7 @@ const GOOGLE_SHEETS_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_
 
 // Global State Data Storage (Hanya menyimpan 15 data yang ditampilkan di dashboard)
 let productsData = [];
+let storageData = new Map();
 let isFirstLoad = true; // Penanda untuk menghindari animasi kedip saat auto-refresh
 
 // Registrasi DOM Elements
@@ -58,6 +65,7 @@ async function fetchData() {
         const csvText = await response.text();
         if (!csvText || csvText.trim() === "") throw new Error("Spreadsheet kosong atau tidak mengembalikan data.");
         
+        storageData = await fetchStorageData();
         processCSVData(csvText);
         isFirstLoad = false; // Setel ke false setelah berhasil memuat pertama kali
     } catch (error) {
@@ -68,6 +76,61 @@ async function fetchData() {
     } finally {
         showLoading(false);
     }
+}
+
+async function fetchStorageData() {
+    const sheetResults = await Promise.all(STORAGE_SHEETS.map(async ({ month, gid }) => {
+        const url = `https://docs.google.com/spreadsheets/d/10bKsfF0ozFcJSTWX5AhUJLAofJgB1o9QEL0KPRR1XIM/export?format=csv&gid=${gid}`;
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+            const rows = parseCSVRows(await response.text());
+            const records = [];
+            for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+                const machineRow = rows[rowIndex];
+                if ((machineRow[1] || "").trim().toLowerCase() !== "mesin") continue;
+
+                const productRow = rows[rowIndex + 1] || [];
+                const batchRow = rows[rowIndex + 2] || [];
+                const storageRow = rows[rowIndex + 7] || [];
+                for (let column = 2; column < batchRow.length; column++) {
+                    const product = (productRow[column] || "").trim();
+                    const batch = (batchRow[column] || "").trim();
+                    const machine = (machineRow[column] || "").trim();
+                    const bin = (storageRow[column] || "").trim();
+                    if (!product || !batch || !machine || !bin) continue;
+
+                    records.push({
+                        key: createStorageKey(product, batch),
+                        label: `${machine.toLowerCase().replace(/\b\w/g, character => character.toUpperCase())} Storage/bin ${bin}`
+                    });
+                }
+            }
+            return records;
+        } catch (error) {
+            console.warn(`Gagal mengambil data storage bulan ${month}:`, error);
+            return [];
+        }
+    }));
+
+    const data = new Map();
+    sheetResults.flat().forEach(record => data.set(record.key, record.label));
+    return data;
+}
+
+function createStorageKey(product, batch) {
+    return `${product}${batch}`.toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
+function escapeHTML(value) {
+    return String(value).replace(/[&<>"']/g, character => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[character]);
 }
 
 // Menampilkan pesan status/alert langsung di tengah body grid dashboard
@@ -90,25 +153,45 @@ function showBodyStatus(type, message) {
     }
 }
 
-// Fungsi Parser CSV Sederhana (Aman dari jebakan tanda koma di dalam teks)
-function parseCSVRow(text) {
-    let p = '', r = [];
-    let q = false;
-    for (let i = 0; i < text.length; i++) {
-        let c = text[i];
-        if (c === '"') { q = !q; }
-        else if (c === ',' && !q) { r.push(p); p = ''; }
-        else if (c === '\r') { }
-        else { p += c; }
+function parseCSVRows(text) {
+    const rows = [];
+    let row = [];
+    let value = "";
+    let inQuotes = false;
+
+    for (let index = 0; index < text.length; index++) {
+        const character = text[index];
+        if (character === '"') {
+            if (inQuotes && text[index + 1] === '"') {
+                value += '"';
+                index++;
+            } else {
+                inQuotes = !inQuotes;
+            }
+        } else if (character === "," && !inQuotes) {
+            row.push(value);
+            value = "";
+        } else if (character === "\n" && !inQuotes) {
+            row.push(value.replace(/\r$/, ""));
+            rows.push(row);
+            row = [];
+            value = "";
+        } else {
+            value += character;
+        }
     }
-    r.push(p);
-    return r;
+
+    if (value || row.length) {
+        row.push(value.replace(/\r$/, ""));
+        rows.push(row);
+    }
+    return rows;
 }
 
 // Transformasi & Pemetaan Struktur Kolom Spreadsheet berbasis CSV
 function processCSVData(csvText) {
-    const lines = csvText.split('\n');
-    if (lines.length <= 1) {
+    const rows = parseCSVRows(csvText);
+    if (rows.length <= 1) {
         productsData = [];
         renderLatestData();
         return;
@@ -117,10 +200,9 @@ function processCSVData(csvText) {
     let parsedRows = [];
 
     // Loop mulai dari index 1 (melewati header baris ke-0)
-    for (let i = 1; i < lines.length; i++) {
-        if (lines[i].trim() === "") continue;
-        
-        const cells = parseCSVRow(lines[i]);
+    for (let i = 1; i < rows.length; i++) {
+        const cells = rows[i];
+        if (cells.every(cell => cell.trim() === "")) continue;
         
         // Pemetaan Sesuai Petunjuk Teknis:
         // Kolom B (Index 1) = Kode Produk, Kolom D (Index 3) = Nama Produk
@@ -138,6 +220,8 @@ function processCSVData(csvText) {
             kodeProduk = kodeProdukRaw.substring(0, 5) + " " + kodeProdukRaw.substring(5);
         }
 
+        const storageLabel = storageData.get(createStorageKey(kodeProdukRaw.substring(0, 5), kodeProdukRaw.substring(5))) || "";
+
         const isApproved = rawApproved !== "";
         const isReleased = rawRelease !== "";
 
@@ -145,6 +229,7 @@ function processCSVData(csvText) {
             rowNumber: i + 1, 
             kodeProduk: kodeProduk,
             namaProduk: namaProduk,
+            storageLabel: storageLabel,
             isApproved: isApproved,
             isReleased: isReleased,
             approvedTime: rawApproved, // Menyimpan teks tanggal/jam asli dari kolom J
@@ -200,6 +285,9 @@ function renderLatestData() {
             titleText.title = item.namaProduk;
         }
 
+        const storageText = card.querySelector(".storage-status-text");
+        if (storageText) storageText.textContent = item.storageLabel || "Tidak ditemukan";
+
         // Update Badge & Teks Status Approved secara real-time di tempat
         const appvContainer = card.querySelector(".approved-status-container");
         if (appvContainer) {
@@ -251,6 +339,10 @@ function createCardElement(item) {
         </div>
         
         <div class="space-y-2.5 pt-3 border-t border-slate-100">
+            <div class="flex justify-between items-center gap-4 text-sm">
+                <span class="text-slate-400 text-xs font-medium shrink-0">Storage :</span>
+                <span class="storage-status-text text-slate-700 text-xs font-semibold text-right">${escapeHTML(item.storageLabel || "Tidak ditemukan")}</span>
+            </div>
             <div class="flex justify-between items-center gap-4 text-sm">
                 <span class="text-slate-400 text-xs font-medium shrink-0">Approved Supv QC :</span>
                 <span class="approved-status-container px-2.5 py-1 rounded-full border ${appvBadgeClass} flex items-center gap-1.5 font-bold text-xs text-right break-all">
@@ -349,7 +441,11 @@ function showSearchResultCard(item) {
             <h3 class="text-lg font-bold text-slate-900">${item.namaProduk || "-"}</h3>
         </div>
         
-        <div class="flex flex-col sm:flex-row gap-3 min-w-[280px]">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 min-w-[280px]">
+            <div class="flex-1 bg-white p-3 rounded-xl border border-slate-100 shadow-xs flex flex-col justify-center items-start gap-1">
+                <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Storage</span>
+                <div class="text-xs font-semibold text-slate-700 mt-1">${escapeHTML(item.storageLabel || "Tidak ditemukan")}</div>
+            </div>
             <div class="flex-1 bg-white p-3 rounded-xl border border-slate-100 shadow-xs flex flex-col justify-center items-start gap-1">
                 <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Approved Supv</span>
                 <div class="px-2.5 py-1 rounded-lg border ${appvBadgeClass} flex items-center gap-1.5 font-bold text-xs mt-1 break-all">
