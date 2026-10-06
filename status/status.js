@@ -7,6 +7,49 @@ const STORAGE_SHEETS = [
     { month: "November", gid: "407360103" },
     { month: "December", gid: "2125903335" }
 ];
+const STORAGE_ASSETS = {
+    SILVERSON: {
+        1: "2BTNK02004", 2: "2BTNK02005", 3: "2BTNK02006", 4: "2BTNK02007",
+        5: "2BTNK02008", 6: "2BTNK02009", 7: "2BTNK02010", 8: "2BTNK02011",
+        9: "2BTNK02012", 10: "2BTNK02013", 11: "2BTNK02014", 12: "2BTNK02015",
+        13: "2BTNK02016", 14: "2BTNK02017", 15: "2BTNK02018"
+    },
+    "TETRA 1": {
+        1: "2BTNK02004", 2: "2BTNK02005", 3: "2BTNK02006", 4: "2BTNK02007",
+        5: "2BTNK02008", 6: "2BTNK02009", 7: "2BTNK02010", 8: "2BTNK02011",
+        9: "2BTNK02012", 10: "2BTNK02013", 11: "2BTNK02014", 12: "2BTNK02015",
+        13: "2BTNK02016", 14: "2BTNK02017", 15: "2BTNK02018"
+    },
+    "TETRA 2": {
+        3: "2BTNK02021", 4: "2BTNK02022", 5: "2BTNK02023", 6: "2BTNK02024",
+        7: "2BTNK02025", 8: "2BTNK02026", 9: "2BTNK02027", 10: "2BTNK02028",
+        11: "2BTNK02029", 12: "2BTNK02030", 13: "2BTNK02031", 14: "2BTNK02032",
+        15: "2BTNK02033", 16: "2BTNK02034", 17: "2BTNK02035"
+    },
+    "TETRA 3": {
+        3: "2BTNK02021", 4: "2BTNK02022", 5: "2BTNK02023", 6: "2BTNK02024",
+        7: "2BTNK02025", 8: "2BTNK02026", 9: "2BTNK02027", 10: "2BTNK02028",
+        11: "2BTNK02029", 12: "2BTNK02030", 13: "2BTNK02031", 14: "2BTNK02032",
+        15: "2BTNK02033", 16: "2BTNK02034", 17: "2BTNK02035"
+    }
+};
+const TETRA_REAL_STORAGE_LABELS = {
+    3: "3",
+    4: "4",
+    5: "5",
+    6: "6",
+    7: "7",
+    8: "8",
+    9: "9",
+    10: "10",
+    11: "11",
+    12: "1/12",
+    13: "2/13",
+    14: "3/14",
+    15: "4/15",
+    16: "5/16",
+    17: "6/17"
+};
 
 /**
  * SOLUSI TERBAIK & INSTAN (MENGGUNAKAN JALUR CSV EKSPOR):
@@ -98,12 +141,27 @@ async function fetchStorageData() {
                     const product = (productRow[column] || "").trim();
                     const batch = (batchRow[column] || "").trim();
                     const machine = (machineRow[column] || "").trim();
-                    const bin = (storageRow[column] || "").trim();
+                    const rawBin = (storageRow[column] || "").trim();
+                    const bin = rawBin.split("/")[0].trim();
                     if (!product || !batch || !machine || !bin) continue;
+
+                    const machineKey = machine.toUpperCase().replace(/\s+/g, " ");
+                    const machineLabel = machineKey.toLowerCase().replace(/\b\w/g, character => character.toUpperCase());
+                    const storageNumber = STORAGE_ASSETS[machineKey]?.[bin] || "";
+                    let locationLabel;
+                    if (machineKey === "TETRA 2" || machineKey === "TETRA 3") {
+                        const realStorage = TETRA_REAL_STORAGE_LABELS[bin] || bin;
+                        locationLabel = `${machineLabel} Storage ${realStorage}`;
+                    } else if (machineKey === "SILVERSON" || machineKey === "TETRA 1") {
+                        locationLabel = `${machineLabel} Storage ${bin}`;
+                    } else {
+                        locationLabel = `${machineLabel} bin ${bin}`;
+                    }
 
                     records.push({
                         key: createStorageKey(product, batch),
-                        label: `${machine.toLowerCase().replace(/\b\w/g, character => character.toUpperCase())} Storage/bin ${bin}`
+                        label: locationLabel,
+                        storageNumber
                     });
                 }
             }
@@ -115,7 +173,7 @@ async function fetchStorageData() {
     }));
 
     const data = new Map();
-    sheetResults.flat().forEach(record => data.set(record.key, record.label));
+    sheetResults.flat().forEach(record => data.set(record.key, record));
     return data;
 }
 
@@ -220,7 +278,8 @@ function processCSVData(csvText) {
             kodeProduk = kodeProdukRaw.substring(0, 5) + " " + kodeProdukRaw.substring(5);
         }
 
-        const storageLabel = storageData.get(createStorageKey(kodeProdukRaw.substring(0, 5), kodeProdukRaw.substring(5))) || "";
+        const storage = storageData.get(createStorageKey(kodeProdukRaw.substring(0, 5), kodeProdukRaw.substring(5)));
+        const storageLabel = storage?.label || "";
 
         const isApproved = rawApproved !== "";
         const isReleased = rawRelease !== "";
@@ -230,6 +289,7 @@ function processCSVData(csvText) {
             kodeProduk: kodeProduk,
             namaProduk: namaProduk,
             storageLabel: storageLabel,
+            storageNumber: storage?.storageNumber || "",
             isApproved: isApproved,
             isReleased: isReleased,
             approvedTime: rawApproved, // Menyimpan teks tanggal/jam asli dari kolom J
@@ -287,6 +347,8 @@ function renderLatestData() {
 
         const storageText = card.querySelector(".storage-status-text");
         if (storageText) storageText.textContent = item.storageLabel || "Tidak ditemukan";
+        const storageNumberText = card.querySelector(".storage-number-text");
+        if (storageNumberText) storageNumberText.textContent = item.storageNumber || "Tidak ditemukan";
 
         // Update Badge & Teks Status Approved secara real-time di tempat
         const appvContainer = card.querySelector(".approved-status-container");
@@ -342,6 +404,10 @@ function createCardElement(item) {
             <div class="flex justify-between items-center gap-4 text-sm">
                 <span class="text-slate-400 text-xs font-medium shrink-0">Storage :</span>
                 <span class="storage-status-text text-slate-700 text-xs font-semibold text-right">${escapeHTML(item.storageLabel || "Tidak ditemukan")}</span>
+            </div>
+            <div class="flex justify-between items-center gap-4 text-sm">
+                <span class="text-slate-400 text-xs font-medium shrink-0">No Storage :</span>
+                <span class="storage-number-text text-slate-700 text-xs font-semibold text-right">${escapeHTML(item.storageNumber || "Tidak ditemukan")}</span>
             </div>
             <div class="flex justify-between items-center gap-4 text-sm">
                 <span class="text-slate-400 text-xs font-medium shrink-0">Approved Supv QC :</span>
@@ -441,10 +507,14 @@ function showSearchResultCard(item) {
             <h3 class="text-lg font-bold text-slate-900">${item.namaProduk || "-"}</h3>
         </div>
         
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 min-w-[280px]">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 min-w-[280px]">
             <div class="flex-1 bg-white p-3 rounded-xl border border-slate-100 shadow-xs flex flex-col justify-center items-start gap-1">
                 <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Storage</span>
                 <div class="text-xs font-semibold text-slate-700 mt-1">${escapeHTML(item.storageLabel || "Tidak ditemukan")}</div>
+            </div>
+            <div class="flex-1 bg-white p-3 rounded-xl border border-slate-100 shadow-xs flex flex-col justify-center items-start gap-1">
+                <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">No Storage</span>
+                <div class="text-xs font-semibold text-slate-700 mt-1">${escapeHTML(item.storageNumber || "Tidak ditemukan")}</div>
             </div>
             <div class="flex-1 bg-white p-3 rounded-xl border border-slate-100 shadow-xs flex flex-col justify-center items-start gap-1">
                 <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Approved Supv</span>
