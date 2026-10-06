@@ -1,0 +1,229 @@
+Saya sedang mengerjakan tugas kuliah dan membutuhkan bantuan untuk memahami materi dari sebuah artikel/sumber.
+
+PENTING: Saya TIDAK meminta Anda membuat jawaban tugas saya. Jangan menulis jawaban siap dikumpulkan. Tugas Anda hanya membedah sumber yang saya berikan menjadi kerangka pengetahuan dan poin-poin inti yang bisa saya pahami dan gunakan untuk menyusun jawaban saya sendiri.
+
+KONTEKS PERTANYAAN TUGAS
+
+[PASTE POIN/PERTANYAAN YANG SEDANG SAYA CARI]
+
+Contoh:
+"Jelaskan langkah pembersihan data sebelum masuk ke warehouse, pembuatan standar aturan data, dan pembentukan tata kelola data."
+
+SUMBER / ARTIKEL
+
+Saya akan menempelkan isi artikel/web secara penuh di bawah ini.
+
+Isi yang saya berikan mungkin merupakan hasil copy-paste satu halaman web dan dapat mengandung:
+
+- iklan
+- menu navigasi
+- tombol
+- footer
+- copyright
+- rekomendasi artikel
+- komentar
+- link
+- teks promosi
+- kalimat yang terpotong
+- informasi yang tidak berhubungan dengan topik
+- elemen website lainnya
+
+ABAikan seluruh noise tersebut. Jangan memasukkannya ke hasil analisis kecuali memang mengandung informasi substantif yang relevan dengan pertanyaan.
+
+---
+
+TUGAS ANDA
+
+1. FILTER RELEVANSI
+
+Baca seluruh teks dan tentukan bagian mana yang benar-benar berhubungan dengan pertanyaan saya.
+
+Buang informasi yang:
+
+- tidak berkaitan dengan pertanyaan,
+- hanya berupa navigasi website,
+- iklan/promosi,
+- pengulangan,
+- basa-basi,
+- informasi administratif website,
+- atau informasi lain yang tidak membantu menjawab topik.
+
+Jangan mengambil kesimpulan dari informasi yang tidak ada dalam artikel.
+
+2. EKSTRAK POIN ATOMIC
+
+Pecah isi artikel menjadi poin-poin pengetahuan terkecil yang masih memiliki makna.
+
+Jangan langsung membuat paragraf jawaban.
+
+Contoh:
+
+Jika artikel menjelaskan pembersihan data, jangan hanya menghasilkan:
+
+«"Data perlu dibersihkan."»
+
+Pecah menjadi:
+
+- identifikasi data yang tidak lengkap
+- penanganan missing value
+- penghapusan data duplikat
+- pemeriksaan format data
+- standarisasi nilai
+- validasi data
+- pengecekan konsistensi
+
+Gunakan hanya poin yang benar-benar didukung oleh artikel.
+
+3. KELOMPOKKAN POIN
+
+Kelompokkan hasil ekstraksi berdasarkan fungsi atau konsepnya.
+
+Gunakan struktur seperti:
+
+A. Konsep utama
+→ ...
+
+B. Tujuan
+→ ...
+
+C. Langkah/proses
+→ ...
+
+D. Metode/teknik
+→ ...
+
+E. Masalah yang ditangani
+→ ...
+
+F. Hasil/manfaat
+→ ...
+
+G. Hal penting lainnya
+→ ...
+
+Tidak semua kategori harus digunakan. Hanya gunakan kategori yang memang ada di artikel.
+
+4. PERTAHANKAN ISTILAH TEKNIS
+
+Jangan mengganti istilah teknis dengan sinonim yang berpotensi mengubah makna.
+
+Misalnya:
+
+- Data Cleansing
+- Data Quality
+- Data Governance
+- ETL
+- Data Warehouse
+- Metadata
+- Data Lineage
+- Missing Value
+- Duplicate Data
+
+Boleh memberikan arti sederhananya setelah istilah tersebut, tetapi jangan menghilangkan istilah teknisnya.
+
+5. BEDAKAN FAKTA ARTIKEL DAN INTERPRETASI
+
+Jika artikel secara eksplisit mengatakan sesuatu, tandai sebagai:
+
+[DARI ARTIKEL]
+
+Jika Anda harus menjelaskan hubungan atau menyederhanakan maknanya, tandai sebagai:
+
+[PENJELASAN]
+
+Jangan mencampurkan informasi dari pengetahuan umum Anda seolah-olah informasi tersebut berasal dari artikel.
+
+6. JANGAN MEMBUAT JAWABAN TUGAS
+
+Ini sangat penting.
+
+Jangan mengubah hasil ekstraksi menjadi paragraf jawaban untuk tugas.
+
+Saya hanya membutuhkan:
+
+PETA ISI ARTIKEL → POIN ATOMIC → HUBUNGAN ANTARPOIN
+
+Tujuannya agar setelah membaca hasil Anda, saya dapat menyusun jawaban menggunakan pemahaman dan bahasa saya sendiri.
+
+7. TUNJUKKAN HUBUNGAN LOGIS
+
+Jika artikel menjelaskan hubungan:
+
+«masalah → tindakan → hasil»
+
+tampilkan hubungan tersebut secara eksplisit.
+
+Contoh:
+
+«Data tidak konsisten
+↓
+dilakukan standardisasi
+↓
+format data menjadi seragam
+↓
+data lebih mudah digunakan untuk analisis»
+
+Jangan membuat hubungan yang tidak didukung oleh artikel.
+
+8. JIKA ARTIKEL TIDAK MENJAWAB POIN YANG DICARI
+
+Katakan dengan jelas:
+
+«"Artikel ini tidak memberikan informasi yang cukup untuk menjawab bagian X."»
+
+Jangan mengarang atau mengisi kekosongan menggunakan pengetahuan Anda sendiri.
+
+9. HASIL AKHIR
+
+Gunakan format berikut:
+
+TOPIK YANG SAYA CARI
+→ ...
+
+INTI ARTIKEL
+→ ...
+
+POIN ATOMIC
+
+1. ...
+2. ...
+3. ...
+4. ...
+
+PENGELOMPOKAN
+
+A. ...
+
+→ ...
+
+B. ...
+
+→ ...
+
+C. ...
+
+→ ...
+
+HUBUNGAN ANTARPOIN
+→ ... → ... → ...
+
+ISTILAH TEKNIS YANG PERLU DIPERTAHANKAN
+
+- ...
+- ...
+- ...
+
+POIN YANG BISA MENJAWAB PERTANYAAN SAYA
+
+- ...
+- ...
+- ...
+
+INFORMASI YANG TIDAK DITEMUKAN DALAM ARTIKEL
+
+- ...
+
+Sekali lagi: jangan membuat jawaban tugas saya. Saya hanya membutuhkan hasil bedah materi agar saya dapat menyusun jawaban sendiri.
+
+Berikut artikel yang harus dianalisis:
+
