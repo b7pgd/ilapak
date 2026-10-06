@@ -1,229 +1,246 @@
-Saya sedang mengerjakan tugas kuliah dan membutuhkan bantuan untuk memahami materi dari sebuah artikel/sumber.
+Saya akan memberikan sebuah teks sumber yang harus saya pahami dan jelaskan kembali dengan bahasa saya sendiri.
 
-PENTING: Saya TIDAK meminta Anda membuat jawaban tugas saya. Jangan menulis jawaban siap dikumpulkan. Tugas Anda hanya membedah sumber yang saya berikan menjadi kerangka pengetahuan dan poin-poin inti yang bisa saya pahami dan gunakan untuk menyusun jawaban saya sendiri.
+Tugas Anda BUKAN membuat jawaban akhir.
 
-KONTEKS PERTANYAAN TUGAS
+Tugas Anda adalah membedah teks tersebut sehingga saya dapat membangun ulang penjelasannya sendiri tanpa kehilangan informasi penting.
 
-[PASTE POIN/PERTANYAAN YANG SEDANG SAYA CARI]
+Saya sedang kesulitan membedakan:
 
-Contoh:
-"Jelaskan langkah pembersihan data sebelum masuk ke warehouse, pembuatan standar aturan data, dan pembentukan tata kelola data."
+1. informasi apa yang wajib dipertahankan,
+2. informasi apa yang hanya merupakan penjelasan tambahan,
+3. istilah teknis apa yang tidak boleh diubah,
+4. dan bagaimana semua informasi tersebut dapat disusun kembali menjadi jawaban.
 
-SUMBER / ARTIKEL
-
-Saya akan menempelkan isi artikel/web secara penuh di bawah ini.
-
-Isi yang saya berikan mungkin merupakan hasil copy-paste satu halaman web dan dapat mengandung:
-
-- iklan
-- menu navigasi
-- tombol
-- footer
-- copyright
-- rekomendasi artikel
-- komentar
-- link
-- teks promosi
-- kalimat yang terpotong
-- informasi yang tidak berhubungan dengan topik
-- elemen website lainnya
-
-ABAikan seluruh noise tersebut. Jangan memasukkannya ke hasil analisis kecuali memang mengandung informasi substantif yang relevan dengan pertanyaan.
+Karena itu, lakukan analisis berikut.
 
 ---
 
-TUGAS ANDA
+TAHAP 1 — EKSTRAK SEMUA INFORMASI PENTING
 
-1. FILTER RELEVANSI
+Baca teks secara keseluruhan dan pecah menjadi fakta/informasi individual.
 
-Baca seluruh teks dan tentukan bagian mana yang benar-benar berhubungan dengan pertanyaan saya.
+Jangan langsung membuat paragraf.
 
-Buang informasi yang:
+Misalnya jika sumber mengatakan:
 
-- tidak berkaitan dengan pertanyaan,
-- hanya berupa navigasi website,
-- iklan/promosi,
-- pengulangan,
-- basa-basi,
-- informasi administratif website,
-- atau informasi lain yang tidak membantu menjawab topik.
+"Java adalah bahasa pemrograman yang digunakan untuk membuat aplikasi web dan mobile."
 
-Jangan mengambil kesimpulan dari informasi yang tidak ada dalam artikel.
+Jangan hanya menulis:
+→ Java digunakan untuk aplikasi.
 
-2. EKSTRAK POIN ATOMIC
+Tetapi pecah menjadi:
 
-Pecah isi artikel menjadi poin-poin pengetahuan terkecil yang masih memiliki makna.
+- Java = bahasa pemrograman
+- digunakan untuk pengembangan aplikasi
+- salah satu penggunaannya = aplikasi web
+- salah satu penggunaannya = aplikasi mobile
 
-Jangan langsung membuat paragraf jawaban.
+Pertahankan informasi teknis yang memang terdapat dalam sumber.
+
+---
+
+TAHAP 2 — KELOMPOKKAN INFORMASI
+
+Setelah semua fakta ditemukan, kelompokkan berdasarkan fungsi informasinya.
+
+Gunakan kategori yang sesuai dengan teks, misalnya:
+
+A. Identitas / Definisi
+
+→ Apa objek yang sedang dibahas?
+
+B. Fungsi / Kegunaan
+
+→ Digunakan untuk apa?
+
+C. Karakteristik / Sifat
+
+→ Memiliki sifat atau ciri apa?
+
+D. Kemampuan / Konsekuensi
+
+→ Apa yang dapat dilakukan karena karakteristik tersebut?
+
+E. Cakupan / Penerapan
+
+→ Digunakan dalam bidang apa?
+
+F. Fakta Pendukung
+
+→ Apakah ada angka, statistik, atau fakta khusus?
+
+G. Contoh
+
+→ Contoh penggunaan, produk, sistem, atau kasus apa yang disebutkan?
+
+Jangan memaksakan semua kategori. Gunakan hanya kategori yang memang terdapat dalam teks.
+
+---
+
+TAHAP 3 — TENTUKAN POIN WAJIB
+
+Buat bagian:
+
+POIN YANG WAJIB DIPERTAHANKAN
+
+Masukkan semua informasi yang jika dihilangkan akan membuat penjelasan menjadi tidak lengkap atau mengubah makna utama.
+
+POIN PENDUKUNG
+
+Masukkan informasi yang memperkuat penjelasan tetapi bukan inti definisinya.
+
+Jangan menghapus poin hanya karena menurut Anda "tidak terlalu penting". Jelaskan statusnya agar saya sendiri yang dapat menentukan.
+
+---
+
+TAHAP 4 — PERTAHANKAN ISTILAH TEKNIS
+
+Identifikasi istilah teknis yang sebaiknya tetap dipertahankan.
 
 Contoh:
 
-Jika artikel menjelaskan pembersihan data, jangan hanya menghasilkan:
+- Java
+- multiplatform
+- object-oriented
+- network-centric
+- back-end
+- big data
+- server-side
 
-«"Data perlu dibersihkan."»
+Jangan mengganti istilah teknis dengan sinonim jika penggantian tersebut dapat mengubah makna.
 
-Pecah menjadi:
+Jika istilah memiliki arti yang dapat dijelaskan dengan bahasa sederhana, tambahkan arti sederhananya setelah tanda panah.
 
-- identifikasi data yang tidak lengkap
-- penanganan missing value
-- penghapusan data duplikat
-- pemeriksaan format data
-- standarisasi nilai
-- validasi data
-- pengecekan konsistensi
+Contoh:
 
-Gunakan hanya poin yang benar-benar didukung oleh artikel.
+- Multiplatform → dapat digunakan pada berbagai sistem operasi
+- Object-oriented → menggunakan pendekatan pemrograman berorientasi objek
 
-3. KELOMPOKKAN POIN
+---
 
-Kelompokkan hasil ekstraksi berdasarkan fungsi atau konsepnya.
+TAHAP 5 — BANGUN LOGIKA INFORMASI
 
-Gunakan struktur seperti:
+Tunjukkan hubungan antar-informasi.
 
-A. Konsep utama
-→ ...
+Contoh:
 
-B. Tujuan
-→ ...
+Karakteristik:
+→ multiplatform
 
-C. Langkah/proses
-→ ...
+menyebabkan/berhubungan dengan:
 
-D. Metode/teknik
-→ ...
+→ dapat dijalankan di berbagai sistem operasi
 
-E. Masalah yang ditangani
-→ ...
+yang kemudian didukung oleh contoh:
 
-F. Hasil/manfaat
-→ ...
+→ Android, Linux, Windows
 
-G. Hal penting lainnya
-→ ...
+Gunakan format panah jika hubungan tersebut membantu.
 
-Tidak semua kategori harus digunakan. Hanya gunakan kategori yang memang ada di artikel.
+Jangan menciptakan hubungan sebab-akibat yang tidak dinyatakan atau didukung oleh teks.
 
-4. PERTAHANKAN ISTILAH TEKNIS
+---
 
-Jangan mengganti istilah teknis dengan sinonim yang berpotensi mengubah makna.
+TAHAP 6 — BUAT KERANGKA REKONSTRUKSI
 
-Misalnya:
+Sekarang buat kerangka yang dapat saya gunakan untuk menulis ulang teks dengan bahasa saya sendiri.
 
-- Data Cleansing
-- Data Quality
-- Data Governance
-- ETL
-- Data Warehouse
-- Metadata
-- Data Lineage
-- Missing Value
-- Duplicate Data
+JANGAN isi dengan kalimat jadi.
 
-Boleh memberikan arti sederhananya setelah istilah tersebut, tetapi jangan menghilangkan istilah teknisnya.
+Gunakan bentuk:
 
-5. BEDAKAN FAKTA ARTIKEL DAN INTERPRETASI
+Paragraf 1 — Pengenalan
 
-Jika artikel secara eksplisit mengatakan sesuatu, tandai sebagai:
+→ [Apa objeknya]
+→ [Definisi]
+→ [kegunaan utama]
 
-[DARI ARTIKEL]
+Paragraf 2 — Karakteristik
 
-Jika Anda harus menjelaskan hubungan atau menyederhanakan maknanya, tandai sebagai:
+→ [sifat 1]
+→ [sifat 2]
+→ [sifat 3]
 
-[PENJELASAN]
+Paragraf 3 — Kemampuan / Dampak
 
-Jangan mencampurkan informasi dari pengetahuan umum Anda seolah-olah informasi tersebut berasal dari artikel.
+→ [apa yang dapat dilakukan]
+→ [hubungan dengan karakteristik]
+→ [contoh]
 
-6. JANGAN MEMBUAT JAWABAN TUGAS
+Paragraf 4 — Penerapan
+
+→ [bidang penggunaan]
+→ [contoh penggunaan]
+→ [fakta pendukung]
+
+Sesuaikan jumlah paragraf dengan struktur teks yang sebenarnya.
+
+---
+
+TAHAP 7 — BUAT "KALIMAT KOSONG"
 
 Ini sangat penting.
 
-Jangan mengubah hasil ekstraksi menjadi paragraf jawaban untuk tugas.
-
-Saya hanya membutuhkan:
-
-PETA ISI ARTIKEL → POIN ATOMIC → HUBUNGAN ANTARPOIN
-
-Tujuannya agar setelah membaca hasil Anda, saya dapat menyusun jawaban menggunakan pemahaman dan bahasa saya sendiri.
-
-7. TUNJUKKAN HUBUNGAN LOGIS
-
-Jika artikel menjelaskan hubungan:
-
-«masalah → tindakan → hasil»
-
-tampilkan hubungan tersebut secara eksplisit.
+Buat template kalimat yang menunjukkan bagaimana poin-poin tersebut dapat dirangkai, tetapi JANGAN menuliskan jawaban final.
 
 Contoh:
 
-«Data tidak konsisten
+«"[Objek] merupakan [definisi]. Objek tersebut digunakan untuk [fungsi/penggunaan]."»
+
+«"Salah satu karakteristik [objek] adalah [karakteristik], sehingga [kemampuan/konsekuensi]."»
+
+«"Selain itu, [objek] juga digunakan dalam [bidang], seperti [contoh]."»
+
+Tujuannya agar saya tinggal mengisi dan menyusun kalimat dengan gaya bahasa saya sendiri.
+
+---
+
+TAHAP 8 — CEK KELENGKAPAN
+
+Buat tabel:
+
+Informasi sumber| Status
+...| Wajib dipertahankan
+...| Pendukung
+...| Contoh
+...| Istilah teknis
+
+Pastikan tidak ada informasi penting yang hilang.
+
+---
+
+TAHAP 9 — JANGAN MEMBUAT JAWABAN FINAL
+
+Sekali lagi:
+
+JANGAN membuat paragraf jawaban yang siap dikumpulkan.
+
+JANGAN melakukan parafrase penuh.
+
+JANGAN mengganti semua kata dengan sinonim.
+
+JANGAN menambahkan informasi dari pengetahuan umum Anda.
+
+Yang saya butuhkan adalah:
+
+SUMBER
 ↓
-dilakukan standardisasi
+FAKTA ATOMIC
 ↓
-format data menjadi seragam
-↓
-data lebih mudah digunakan untuk analisis»
-
-Jangan membuat hubungan yang tidak didukung oleh artikel.
-
-8. JIKA ARTIKEL TIDAK MENJAWAB POIN YANG DICARI
-
-Katakan dengan jelas:
-
-«"Artikel ini tidak memberikan informasi yang cukup untuk menjawab bagian X."»
-
-Jangan mengarang atau mengisi kekosongan menggunakan pengetahuan Anda sendiri.
-
-9. HASIL AKHIR
-
-Gunakan format berikut:
-
-TOPIK YANG SAYA CARI
-→ ...
-
-INTI ARTIKEL
-→ ...
-
-POIN ATOMIC
-
-1. ...
-2. ...
-3. ...
-4. ...
-
 PENGELOMPOKAN
-
-A. ...
-
-→ ...
-
-B. ...
-
-→ ...
-
-C. ...
-
-→ ...
-
+↓
+POIN WAJIB
+↓
+ISTILAH TEKNIS
+↓
 HUBUNGAN ANTARPOIN
-→ ... → ... → ...
+↓
+KERANGKA PARAGRAF
+↓
+TEMPLATE KALIMAT KOSONG
 
-ISTILAH TEKNIS YANG PERLU DIPERTAHANKAN
+Dengan hasil ini, saya sendiri yang akan menyusun jawaban akhirnya.
 
-- ...
-- ...
-- ...
+Berikut teks sumber:
 
-POIN YANG BISA MENJAWAB PERTANYAAN SAYA
-
-- ...
-- ...
-- ...
-
-INFORMASI YANG TIDAK DITEMUKAN DALAM ARTIKEL
-
-- ...
-
-Sekali lagi: jangan membuat jawaban tugas saya. Saya hanya membutuhkan hasil bedah materi agar saya dapat menyusun jawaban sendiri.
-
-Berikut artikel yang harus dianalisis:
-
+[PASTE TEKS DI SINI]
