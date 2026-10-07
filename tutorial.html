@@ -43,6 +43,22 @@
             margin-bottom: 8px;
         }
 
+        .save-status {
+            font-size: 0.8rem;
+            color: #6b7280;
+            text-align: center;
+            margin-top: 8px;
+            min-height: 1.2em;
+        }
+
+        .save-status.saved {
+            color: #059669;
+        }
+
+        .save-status.error {
+            color: #dc2626;
+        }
+
         .title-box-container {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
@@ -180,6 +196,18 @@
 
         .btn-code-add:hover {
             background-color: #c7d2fe;
+        }
+
+        .btn-clear-workspace {
+            background-color: #991b1b;
+            width: 100%;
+            justify-content: center;
+            padding: 12px 18px;
+            font-size: 0.95rem;
+        }
+
+        .btn-clear-workspace:hover {
+            background-color: #7f1d1d;
         }
 
         #items-container {
@@ -322,6 +350,12 @@
             margin-top: 24px;
         }
 
+        .workspace-footer {
+            margin-top: 28px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
         /* Modal Preview Window */
         .modal {
             display: none;
@@ -385,6 +419,7 @@
 
     <header>
         <h1>Tutorial Builder & Composer</h1>
+        <div id="save-status" class="save-status"></div>
     </header>
 
     <div id="alert-box" class="alert"></div>
@@ -414,6 +449,10 @@
         <button class="btn btn-warning" onclick="document.getElementById('zip-file-input').click()">📁 Load ZIP</button>
     </div>
 
+    <div class="workspace-footer">
+        <button class="btn btn-clear-workspace" onclick="clearWorkspace()">🗑️ Clear Workspace</button>
+    </div>
+
     <div id="preview-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -424,12 +463,202 @@
         </div>
     </div>
 
+    <div id="camera-modal" class="modal">
+        <div class="modal-content" style="text-align:center;">
+            <div class="modal-header">
+                <h2>Ambil Foto</h2>
+                <button class="close-modal" onclick="closeCameraModal()">&times;</button>
+            </div>
+            <video id="camera-video" playsinline autoplay muted style="width:100%;max-height:60vh;border-radius:8px;background:#000;"></video>
+            <div style="margin-top:14px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+                <button class="btn" onclick="capturePhoto()">📸 Ambil Foto</button>
+                <button class="btn btn-secondary" onclick="closeCameraModal()">Batal</button>
+            </div>
+            <div style="font-size:0.8rem;color:#6b7280;margin-top:10px;">Foto otomatis terunduh dengan nama urut (1.jpg, 2.jpg, ...)</div>
+        </div>
+    </div>
+
     <script>
         let items = []; // State: { id, type: 'text'|'image'|'code', content: string|File, filename?: string }
+
+        // ===== AUTOSAVE TEKS (localStorage) =====
+        // Hanya teks/kode yang disimpan otomatis. Foto tidak disimpan
+        // (asumsi user: foto aman di galeri, yang penting teks jangan hilang).
+        const AUTOSAVE_KEY = 'tutorialBuilder_autosave_v1';
+        const PHOTO_COUNTER_KEY = 'tutorialBuilder_photoCounter';
+        let saveTimer = null;
+        let saveStatusEl = null;
+
+        function updateSaveStatus(msg, isSaved) {
+            if (!saveStatusEl) saveStatusEl = document.getElementById('save-status');
+            if (!saveStatusEl) return;
+            saveStatusEl.textContent = msg || '';
+            saveStatusEl.className = 'save-status' + (isSaved ? ' saved' : (msg && msg.indexOf('⚠️') === 0 ? ' error' : ''));
+        }
+
+        function scheduleSave() {
+            updateSaveStatus('Menyimpan...', false);
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(saveWorkspace, 800);
+        }
+
+        function saveWorkspace() {
+            try {
+                // Hanya judul + teks/kode yang disimpan. Item gambar disimpan
+                // sebagai slot kosong (foto diambil ulang dari galeri/kamera).
+                const serialized = items.map(it => {
+                    if (it.type === 'image') {
+                        return { id: it.id, type: 'image' };
+                    }
+                    return { id: it.id, type: it.type, content: it.content };
+                });
+                const data = {
+                    title: document.getElementById('main-tutorial-title').value,
+                    items: serialized,
+                    savedAt: Date.now()
+                };
+                localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(data));
+                const time = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                updateSaveStatus('✓ Teks tersimpan otomatis • ' + time, true);
+            } catch (e) {
+                console.warn('Autosave gagal:', e);
+                updateSaveStatus('⚠️ Gagal menyimpan otomatis.', false);
+            }
+        }
+
+        function loadWorkspace() {
+            try {
+                const json = localStorage.getItem(AUTOSAVE_KEY);
+                if (!json) return false;
+                const data = JSON.parse(json);
+                if (!data || !Array.isArray(data.items) || data.items.length === 0) return false;
+
+                document.getElementById('main-tutorial-title').value = data.title || 'Tutorial Guide';
+
+                items = data.items.map(it => {
+                    if (it.type === 'image') {
+                        return { id: it.id, type: 'image', content: null };
+                    }
+                    return { id: it.id, type: it.type, content: it.content || '' };
+                });
+                let timeStr = '';
+                if (data.savedAt) {
+                    timeStr = ' • ' + new Date(data.savedAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                }
+                updateSaveStatus('✓ Teks dipulihkan dari penyimpanan otomatis' + timeStr, true);
+                return true;
+            } catch (e) {
+                console.warn('Gagal memuat autosave:', e);
+                return false;
+            }
+        }
+
+        function clearWorkspace() {
+            const hasContent = items.length > 0 || (document.getElementById('main-tutorial-title').value || '').trim() !== '';
+            if (!hasContent) {
+                showAlert('Workspace sudah kosong.');
+                return;
+            }
+            if (confirm('⚠️ HAPUS SEMUA ISI WORKSPACE?\n\nJudul, teks, gambar, dan kode yang sedang dibuat akan dihapus permanen dan tidak bisa dikembalikan.\n\nLanjutkan?')) {
+                items = [];
+                document.getElementById('main-tutorial-title').value = '';
+                try { localStorage.removeItem(AUTOSAVE_KEY); } catch (e) {}
+                clearTimeout(saveTimer);
+                updateSaveStatus('', false);
+                renderItems();
+            }
+        }
+        // ===== END AUTOSAVE =====
+
+        // ===== KAMERA LANGSUNG (in-browser) =====
+        // Foto yang diambil otomatis terunduh dengan nama urut (1.jpg, 2.jpg, ...)
+        // ke folder Download. Duplikat nama ditangani otomatis oleh browser
+        // menjadi "1 (1).jpg", "1 (2).jpg", dst sehingga tidak me-replace file lama.
+        // CATATAN: browser tidak diizinkan menulis langsung ke folder DCIM/Camera
+        // (batasan keamanan/sandbox), jadi hasil unduhan masuk ke folder Download.
+        let cameraStream = null;
+        let cameraTargetId = null;
+
+        async function openCameraModal(id) {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                showAlert('Kamera browser tidak tersedia di sini (butuh HTTPS/localhost). Gunakan tombol galeri — di HP biasanya ada opsi kamera.');
+                return;
+            }
+            cameraTargetId = id;
+            const modal = document.getElementById('camera-modal');
+            const video = document.getElementById('camera-video');
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' },
+                    audio: false
+                });
+                video.srcObject = cameraStream;
+                modal.style.display = 'block';
+            } catch (err) {
+                console.error(err);
+                showAlert('Gagal mengakses kamera: ' + (err.message || err.name) + '. Pastikan izin kamera diberikan.');
+                cameraTargetId = null;
+            }
+        }
+
+        function closeCameraModal() {
+            const video = document.getElementById('camera-video');
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(t => t.stop());
+                cameraStream = null;
+            }
+            if (video) video.srcObject = null;
+            document.getElementById('camera-modal').style.display = 'none';
+            cameraTargetId = null;
+        }
+
+        function capturePhoto() {
+            const video = document.getElementById('camera-video');
+            if (!video || !video.videoWidth) {
+                showAlert('Kamera belum siap, tunggu sebentar lalu coba lagi.');
+                return;
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            canvas.toBlob((blob) => {
+                if (!blob) {
+                    showAlert('Gagal mengambil foto.');
+                    return;
+                }
+                // nomor urut persisten
+                let n = 1;
+                try { n = parseInt(localStorage.getItem(PHOTO_COUNTER_KEY) || '1', 10) || 1; } catch (e) {}
+                const filename = n + '.jpg';
+                try { localStorage.setItem(PHOTO_COUNTER_KEY, String(n + 1)); } catch (e) {}
+
+                // auto-download tanpa tombol save
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(() => URL.revokeObjectURL(url), 5000);
+
+                // masukkan ke item tutorial
+                const file = new File([blob], filename, { type: 'image/jpeg' });
+                const item = items.find(i => i.id === cameraTargetId);
+                if (item) {
+                    item.content = file;
+                    renderItems();
+                }
+                closeCameraModal();
+            }, 'image/jpeg', 0.92);
+        }
+        // ===== END KAMERA =====
 
         function clearMainTitle() {
             document.getElementById('main-tutorial-title').value = '';
             document.getElementById('main-tutorial-title').focus();
+            scheduleSave();
         }
 
         function showAlert(message) {
@@ -546,7 +775,10 @@
 
         function updateTextContent(id, value) {
             const item = items.find(i => i.id === id);
-            if (item) item.content = value;
+            if (item) {
+                item.content = value;
+                scheduleSave();
+            }
         }
 
         function handleFileSelect(id, file) {
@@ -570,6 +802,7 @@
                 container.innerHTML = '';
                 container.appendChild(emptyState);
                 emptyState.style.display = 'block';
+                scheduleSave();
                 return;
             }
 
@@ -625,6 +858,11 @@
                     actions.appendChild(btnHapus);
                     actions.appendChild(btnAddCodeHere);
                 } else {
+                    const btnCamera = document.createElement('button');
+                    btnCamera.className = 'btn btn-action';
+                    btnCamera.innerText = '📷 Kamera';
+                    btnCamera.onclick = () => openCameraModal(item.id);
+
                     const btnClear = document.createElement('button');
                     btnClear.className = 'btn btn-action';
                     btnClear.innerText = 'Clear';
@@ -640,6 +878,7 @@
                     btnAdd.innerText = '+ Image';
                     btnAdd.onclick = () => addImageAfter(item.id);
 
+                    actions.appendChild(btnCamera);
                     actions.appendChild(btnClear);
                     actions.appendChild(btnHapus);
                     actions.appendChild(btnAdd);
@@ -712,6 +951,8 @@
 
                 container.appendChild(card);
             });
+
+            scheduleSave();
         }
 
         function convertToJpegBlob(file) {
@@ -1061,7 +1302,7 @@
 
             htmlContent += `
     <div class="footer">
-        &copy; Tutorial System
+        &copy; 2026
     </div>
 </div>
 
@@ -1284,7 +1525,20 @@
         };
 
         window.addEventListener('DOMContentLoaded', () => {
-            addPairItem();
+            saveStatusEl = document.getElementById('save-status');
+            document.getElementById('main-tutorial-title').addEventListener('input', scheduleSave);
+            const restored = loadWorkspace();
+            if (restored) {
+                renderItems();
+            } else {
+                addPairItem();
+            }
+        });
+
+        // Simpan saat tab mau ditutup (saveWorkspace sinkron, aman dipanggil di sini)
+        window.addEventListener('beforeunload', () => {
+            clearTimeout(saveTimer);
+            saveWorkspace();
         });
     </script>
 </body>
