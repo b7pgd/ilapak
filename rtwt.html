@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Akses RTWT Digital</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        body {
+            background-color: #f0f4f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 16px;
+        }
+        .card {
+            background-color: #ffffff;
+            width: 100%;
+            max-width: 400px;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0, 102, 204, 0.08);
+            overflow: hidden;
+            border: 1px solid #e1e9f5;
+        }
+        .header {
+            background-color: #0066cc;
+            color: #ffffff;
+            padding: 24px 20px;
+            text-align: center;
+        }
+        .header h2 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+        .content {
+            padding: 24px 20px;
+        }
+        .info-group {
+            margin-bottom: 16px;
+            background-color: #f8fafc;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border-left: 4px solid #0066cc;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .info-data {
+            flex: 1;
+            margin-right: 8px;
+        }
+        .label {
+            font-size: 12px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .value {
+            font-size: 16px;
+            color: #1e293b;
+            font-weight: 600;
+            word-break: break-all;
+        }
+        .btn-copy {
+            background-color: #e2e8f0;
+            color: #334155;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+            white-space: nowrap;
+        }
+        .btn-copy:active {
+            background-color: #cbd5e1;
+        }
+        .btn-copy.copied {
+            background-color: #22c55e;
+            color: #ffffff;
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            background-color: #0066cc;
+            color: #ffffff;
+            text-align: center;
+            text-decoration: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            margin-top: 24px;
+            transition: background-color 0.2s;
+        }
+        .btn:active {
+            background-color: #004e9e;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <div class="header">
+            <h2>RTWT Digital</h2>
+        </div>
+        <div class="content">
+            <div class="info-group">
+                <div class="info-data">
+                    <div class="label">User</div>
+                    <div class="value" id="val-user">trial</div>
+                </div>
+                <button class="btn-copy" onclick="copyToClipboard('val-user', this)">Copy</button>
+            </div>
+
+            <div class="info-group">
+                <div class="info-data">
+                    <div class="label">Pass</div>
+                    <div class="value" id="val-pass">Kalbe2026!</div>
+                </div>
+                <button class="btn-copy" onclick="copyToClipboard('val-pass', this)">Copy</button>
+            </div>
+
+            <a href="http://10.167.170.56/rw-tag" class="btn" target="_blank">Buka Form AM Digital</a>
+        </div>
+    </div>
+
+    <script>
+        function copyToClipboard(elementId, btnElement) {
+            const textToCopy = document.getElementById(elementId).innerText;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const originalText = btnElement.innerText;
+                btnElement.innerText = 'Copied!';
+                btnElement.classList.add('copied');
+                setTimeout(() => {
+                    btnElement.innerText = originalText;
+                    btnElement.classList.remove('copied');
+                }, 1500);
+            }).catch(err => {
+                console.error('Gagal menyalin teks: ', err);
+            });
+        }
+    </script>
+
+</body>
+</html>
