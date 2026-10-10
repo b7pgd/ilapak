@@ -82,6 +82,22 @@ background-color: #ef4444;
 .btn-clear:hover {
 background-color: #dc2626;
 }
+.btn-undo {
+background-color: #64748b;
+}
+.btn-undo:hover {
+background-color: #475569;
+}
+.btn-redo {
+background-color: #64748b;
+}
+.btn-redo:hover {
+background-color: #475569;
+}
+.action-btn:disabled {
+background-color: #cbd5e1;
+cursor: not-allowed;
+}
 /* Textbox Utama Gede dan Lebar */
 .notes-textarea {
 width: 100%;
@@ -181,6 +197,8 @@ to {bottom: 0; opacity: 0;}
 <div class="textarea-header">
 <label for="notesBox">Notes</label>
 <div class="btn-group">
+<button class="action-btn btn-undo" id="undoBtn" onclick="undoNotes()" disabled>Undo</button>
+<button class="action-btn btn-redo" id="redoBtn" onclick="redoNotes()" disabled>Redo</button>
 <button class="action-btn btn-copy" onclick="copySingle('notesBox')">Copy</button>
 <button class="action-btn btn-paste" onclick="pasteSingle('notesBox')">Paste</button>
 </div>
@@ -208,6 +226,8 @@ const downloadTxtBtn = document.getElementById('downloadTxtBtn');
 const copyTxtBtn = document.getElementById('copyTxtBtn');
 const copyPromptBtn = document.getElementById('copyPromptBtn');
 const toastBox = document.getElementById('toastBox');
+const undoBtn = document.getElementById('undoBtn');
+const redoBtn = document.getElementById('redoBtn');
 
 const PROMPT_TEXT = `Anda adalah seorang ahli penyunting teks OCR dan editor bahasa. Tugas Anda adalah merapikan dan memperbaiki teks hasil OCR dari buku dengan standar tinggi.
 
@@ -225,6 +245,49 @@ ATURAN OUTPUT (STRICT):
 - JANGAN berikan penjelasan atas perubahan yang Anda buat.
 - Output HARUS dimulai langsung dari kata pertama teks yang sudah diperbaiki dan berakhir di kata terakhir teks tersebut.`;
 
+// UNDO / REDO HISTORY ENGINE
+let undoStack = [];
+let redoStack = [];
+let isHistoryAction = false;
+
+function pushToHistory(text) {
+if (undoStack.length > 0 && undoStack[undoStack.length - 1] === text) return;
+undoStack.push(text);
+if (undoStack.length > 50) {
+undoStack.shift(); // Batasi maksimal 50 history agar tidak boros memori
+}
+redoStack = [];
+updateUndoRedoButtons();
+}
+
+function updateUndoRedoButtons() {
+undoBtn.disabled = undoStack.length <= 1;
+redoBtn.disabled = redoStack.length === 0;
+}
+
+function undoNotes() {
+if (undoStack.length <= 1) return;
+isHistoryAction = true;
+const currentState = undoStack.pop();
+redoStack.push(currentState);
+const previousState = undoStack[undoStack.length - 1];
+notesBox.value = previousState;
+saveToLocalStorage(STORAGE_KEYS.notesBox, previousState);
+updateUndoRedoButtons();
+isHistoryAction = false;
+}
+
+function redoNotes() {
+if (redoStack.length === 0) return;
+isHistoryAction = true;
+const nextState = redoStack.pop();
+undoStack.push(nextState);
+notesBox.value = nextState;
+saveToLocalStorage(STORAGE_KEYS.notesBox, nextState);
+updateUndoRedoButtons();
+isHistoryAction = false;
+}
+
 // AUTO SAVE & PERSISTENCE ENGINE (LOCALSTORAGE)
 // Mengunci isi field agar tidak hilang jika tab tidak sengaja tertutup
 const STORAGE_KEYS = {
@@ -239,14 +302,21 @@ notesBox.value = localStorage.getItem(STORAGE_KEYS.notesBox);
 if (localStorage.getItem(STORAGE_KEYS.fileNameBox) !== null) {
 fileNameBox.value = localStorage.getItem(STORAGE_KEYS.fileNameBox);
 }
+undoStack = [notesBox.value];
+updateUndoRedoButtons();
 }
 
 function saveToLocalStorage(key, value) {
 localStorage.setItem(key, value);
 }
 
-// Bind real-time input event listeners for instant local persistence
-notesBox.addEventListener('input', (e) => saveToLocalStorage(STORAGE_KEYS.notesBox, e.target.value));
+// Bind real-time input event listeners for instant local persistence and history tracking
+notesBox.addEventListener('input', (e) => {
+saveToLocalStorage(STORAGE_KEYS.notesBox, e.target.value);
+if (!isHistoryAction) {
+pushToHistory(e.target.value);
+}
+});
 fileNameBox.addEventListener('input', (e) => saveToLocalStorage(STORAGE_KEYS.fileNameBox, e.target.value));
 
 // Inisialisasi pemuatan data tersimpan saat browser dibuka
@@ -258,6 +328,9 @@ const target = document.getElementById(targetId);
 target.value = '';
 if (STORAGE_KEYS[targetId]) {
 localStorage.removeItem(STORAGE_KEYS[targetId]);
+}
+if (targetId === 'notesBox') {
+pushToHistory('');
 }
 target.focus();
 }
@@ -283,6 +356,9 @@ target.value = text;
 }
 if (STORAGE_KEYS[targetId]) {
 saveToLocalStorage(STORAGE_KEYS[targetId], target.value);
+}
+if (targetId === 'notesBox') {
+pushToHistory(target.value);
 }
 target.focus();
 })
