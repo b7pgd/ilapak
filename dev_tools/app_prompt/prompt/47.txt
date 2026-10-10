@@ -1,0 +1,82 @@
+Saya akan memberikan soal akademik dan teks jawaban hasil copas dari berbagai sumber yang susunannya masih acak.
+
+Tugas Anda adalah menyusun ulang teks agar alurnya runtut sesuai tuntutan soal, memisahkan teks yang benar-benar tidak relevan, dan menganalisis kekurangan jawaban.
+
+Prinsip utama: atur urutan teks, bukan menulis ulang isinya.
+
+ATURAN WAJIB
+
+1. Pertahankan teks asli. Jangan memparafrasekan, menyunting, meringkas, memperbaiki typo, atau mengganti kata, tanda baca, istilah, dan referensi. Anda hanya boleh memindahkan posisi teks secara utuh.
+
+2. Pahami struktur soal. Bedakan konteks pengantar dengan perintah yang benar-benar diminta. Susun jawaban berdasarkan urutan tuntutan soal, bukan urutan teks hasil copas.
+
+3. Utamakan relevansi, bukan kesempurnaan. Teks tidak harus menjawab soal secara langsung untuk tetap dipertahankan. Jika masih memiliki relevansi sebagian, misalnya sebagai pengantar, konteks, penjelasan pendukung, contoh, atau pelengkap, masukkan ke jawaban utama pada posisi yang sesuai. Jangan mengeluarkan teks hanya karena pembahasannya umum, tidak spesifik, atau tidak menjawab soal secara langsung.
+
+4. Keluarkan hanya teks yang benar-benar tidak relevan. Misalnya, pembahasan topik berbeda yang tidak membantu menjawab soal sama sekali. Jika ragu antara mempertahankan atau mengeluarkan teks, utamakan mempertahankannya dan tandai keterbatasannya dalam analisis.
+
+5. Kenali struktur daftar yang hilang. Teks hasil copas mungkin kehilangan penomoran, bullet, atau pemisah karena format halaman web. Analisis susunan kalimat untuk mengenali daftar, tahapan, kategori, faktor, manfaat, tujuan, atau jenis-jenis yang disebutkan. Jika jelas merupakan daftar, susun menjadi:
+   
+   1. A
+   2. B
+   3. C
+   
+   Penomoran atau bullet boleh ditambahkan sebagai pemformatan struktural tanpa mengubah kata-kata asli. Jangan membuat daftar jika teks aslinya tidak menunjukkan adanya unsur daftar.
+
+6. Jangan menghilangkan teks. Semua teks asli harus masuk ke jawaban utama atau bagian teks yang dikeluarkan. Pertahankan referensi, URL, kutipan, judul, dan isi setiap potongan secara utuh.
+
+7. Rapikan tampilan. Gunakan judul, subjudul, penomoran, bullet, jarak antarparagraf, dan penanda yang jelas agar hasil mudah dibaca. Jangan membuat format terlalu ramai.
+
+FORMAT OUTPUT
+
+OUTPUT 1 — JAWABAN DENGAN ALUR YANG DIPERBAIKI
+
+Tampilkan teks asli yang telah disusun ulang berdasarkan alur logis soal.
+
+- Pertahankan teks yang relevan langsung maupun sebagian.
+- Letakkan pengantar dan penjelasan pendukung pada posisi yang sesuai.
+- Rapikan penomoran dan daftar yang kehilangan format aslinya.
+- Pertahankan semua sumber referensi dan URL.
+- Jangan menambahkan kalimat baru atau mengubah isi teks asli.
+
+OUTPUT 2 — TEKS YANG DIKELUARKAN
+
+Tampilkan hanya teks yang benar-benar tidak relevan dengan soal, secara utuh 100%.
+
+Gunakan format berikut untuk setiap bagian:
+
+[BAGIAN 1 — ALASAN DIKELUARKAN]
+
+<box>
+Teks asli disalin utuh di sini, tanpa perubahan kata, kalimat, atau tanda baca.
+</box>Jika tidak ada teks yang benar-benar tidak relevan, nyatakan bahwa tidak ada. Jangan memaksakan pengeluaran teks hanya demi membuat jawaban lebih ringkas.
+
+OUTPUT 3 — ANALISIS JAWABAN
+
+Analisis secara singkat dan spesifik:
+
+1. Kesesuaian: bagian soal yang sudah dan belum terjawab.
+2. Kekurangan: informasi yang perlu ditambahkan atau diperjelas.
+3. Relevansi: bagian yang hanya berfungsi sebagai pendukung, terlalu melebar, atau berulang.
+4. Alur: apakah urutan jawaban sudah sesuai dengan tuntutan soal.
+5. Referensi: sumber atau klaim yang perlu diverifikasi, jika ada.
+
+Jangan menulis ulang jawaban atau memasukkan tambahan materi ke Output 1. Cukup jelaskan apa yang kurang agar saya bisa melengkapinya sendiri.
+
+PEMERIKSAAN AKHIR
+
+Sebelum menjawab, pastikan:
+
+- Urutan jawaban mengikuti tuntutan soal.
+- Teks yang masih relevan sebagian tidak dibuang secara berlebihan.
+- Semua teks yang dikeluarkan disertakan secara utuh.
+- Tidak ada kata atau referensi asli yang berubah.
+- Penomoran dan struktur daftar sudah dirapikan jika memang diperlukan.
+- Tidak ada teks yang hilang tanpa alasan.
+- Ketiga output memiliki batas yang jelas dan mudah dibaca.
+
+INPUT
+
+SOAL:
+
+
+TEKS JAWABAN HASIL COPAS:
