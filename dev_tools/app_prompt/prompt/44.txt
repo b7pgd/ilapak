@@ -1,0 +1,12 @@
+Cari artikel atau sumber web berbahasa Indonesia yang membahas teks atau deskripsi yang saya berikan.
+
+Ketentuan:
+- Cari halaman artikel yang langsung membahas topik tersebut, bukan halaman utama website.
+- Prioritaskan artikel Indonesia, jurnal ilmiah, PDF, buku digital, atau video berbahasa Indonesia.
+- Berikan URL yang langsung mengarah ke artikel atau dokumen yang relevan, bukan halaman yang mengharuskan saya mencari kata kunci lagi.
+- Pilih sumber yang isi pembahasannya paling mendekati teks yang diberikan.
+- Pastikan link relevan dan dapat diakses jika memungkinkan.
+- Berikan maksimal 5 link, urutkan dari yang paling relevan.
+- **ONLY ANSWER WITH LINKS.** Jangan berikan penjelasan, rangkuman, kesimpulan, atau komentar tambahan.
+
+Teks/deskripsi yang dicari:
