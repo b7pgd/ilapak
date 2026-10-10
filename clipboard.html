@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF Converter</title>
+    <title>PDF & Text Converter</title>
     <!-- pdfmake via CDN Premium -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
@@ -64,7 +64,8 @@
         .toolbar {
             display: flex;
             gap: 10px;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
         }
 
         .btn {
@@ -72,7 +73,7 @@
             border: none;
             padding: 12px;
             border-radius: 8px;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: bold;
             cursor: pointer;
             transition: background 0.2s;
@@ -80,20 +81,26 @@
             justify-content: center;
             align-items: center;
             gap: 8px;
+            min-width: 140px;
         }
 
         .btn-paste {
             background-color: #1a73e8;
             color: white;
         }
-
         .btn-paste:hover { background-color: #1557b0; }
+
+        .btn-copy-text {
+            background-color: #d97706;
+            color: white;
+        }
+        .btn-copy-text:hover { background-color: #b45309; }
+        .btn-copy-text:disabled { background-color: #cbd5e1; cursor: not-allowed; }
 
         .btn-pdf {
             background-color: #0b8457;
             color: white;
         }
-
         .btn-pdf:hover { background-color: #096b46; }
         .btn-pdf:disabled { background-color: #cbd5e1; cursor: not-allowed; }
 
@@ -101,7 +108,6 @@
             background-color: #8b5cf6;
             color: white;
         }
-
         .btn-pdf-mobile:hover { background-color: #7c3aed; }
         .btn-pdf-mobile:disabled { background-color: #cbd5e1; cursor: not-allowed; }
 
@@ -109,8 +115,8 @@
             background-color: #ef4444;
             color: white;
             flex: 0 0 80px;
+            min-width: unset;
         }
-
         .btn-clear:hover { background-color: #dc2626; }
 
         /* Area Preview Hasil Paste */
@@ -134,9 +140,8 @@
             text-align: left;
             font-size: 15px;
             line-height: 1.6;
-            overflow: visible !important;
-            height: auto !important;
-            max-height: none !important;
+            white-space: pre-wrap; /* Mempertahankan spasi dan inden asli */
+            word-break: break-word;
         }
 
         /* STYLING STRUKTUR DOKUMEN BIAR RAPI */
@@ -179,7 +184,7 @@
             background-color: #f8fafc !important;
         }
 
-        #pdf-content pre, #pdf-content code {
+        #pdf-content code {
             background-color: #f1f5f9 !important;
             padding: 2px 6px !important;
             border-radius: 4px !important;
@@ -218,42 +223,45 @@
 <body>
 
 <div class="container">
-    <h2>📄 Clioboard to PDF</h2>
-    <div class="sub-text instruction">Ubah salinan chat langsung jadi dokumen cetak PDF</div>
+    <h2>📄 Clipboard to PDF & Text</h2>
+    <div class="sub-text instruction">Ubah salinan chat langsung jadi dokumen rapi atau copy teks bersih</div>
 
     <div class="instruction-box">
         <strong>Cara Pakai:</strong><br>
         1. Klik icon <strong>Copy</strong> bawaan atau blok teks jawaban.<br>
-        2. Klik tombol <strong>"1. Ambil & Paste"</strong>.<br>
-        3. Web akan otomatis mendeteksi format (HTML/Markdown) dan menyusun tabel secara rapi. Klik <strong>"2. Cetak ke PDF"</strong> atau <strong>"3. Cetak PDF Versi Mobile"</strong>!
+        2. Klik tombol <strong>"1. Paste dari Clipboard"</strong>.<br>
+        3. Klik <strong>"2. Copy Teks Preview"</strong> untuk menempel teks rapi langsung ke text editor, atau cetak ke PDF!
     </div>
 
     <div class="toolbar">
         <button class="btn btn-paste" id="pasteBtn">1. Paste dari Clipboard</button>
-        <button class="btn btn-pdf" id="pdfBtn" disabled>2. Cetak ke PDF</button>
-        <button class="btn btn-pdf-mobile" id="pdfMobileBtn" disabled>3. Cetak PDF Versi Mobile</button>
+        <button class="btn btn-copy-text" id="copyTextBtn" disabled>2. Copy Teks Preview</button>
+        <button class="btn btn-pdf" id="pdfBtn" disabled>3. Cetak ke PDF</button>
+        <button class="btn btn-pdf-mobile" id="pdfMobileBtn" disabled>4. Cetak PDF Mobile</button>
         <button class="btn btn-clear" id="clearBtn">Clear</button>
     </div>
 
     <div class="preview-title">Preview Dokumen:</div>
     <div id="pdf-content">
-        <p style="color: #94a3b8; text-align: center; margin-top: 100px;">Hasil copy text akan dirender di sini beserta struktur tabelnya...</p>
+        <p style="color: #94a3b8; text-align: center; margin-top: 100px;">Hasil copy text akan dirender di sini...</p>
     </div>
 </div>
 
 <script>
     const pasteBtn = document.getElementById('pasteBtn');
+    const copyTextBtn = document.getElementById('copyTextBtn');
     const pdfBtn = document.getElementById('pdfBtn');
     const pdfMobileBtn = document.getElementById('pdfMobileBtn');
     const clearBtn = document.getElementById('clearBtn');
     const pdfContent = document.getElementById('pdf-content');
 
-    // Variabel global untuk menyimpan data teks mentah guna memudahkan mapping AST ke pdfmake
     let rawClipboardContent = "";
 
-    // Fungsi normalisasi karakter Unicode yang tidak didukung oleh font bawaan pdfmake
-    function normalizeUnicode(text) {
+    // Fungsi normalisasi karakter khusus, radio button, dan simbol panah/garis
+    function sanitizeText(text) {
         return text
+            // Mengubah radio button / simbol pilihan (◉, ◎, 🔘, ⭕, ⦿, ◯, ⊙, ⊚) menjadi bintang (*)
+            .replace(/[◉◎🔘⭕⦿◯⊙⊚]/g, '*')
             .replace(/→/g, "->")
             .replace(/←/g, "<-")
             .replace(/↓/g, "v")
@@ -283,14 +291,33 @@
         let htmlOutput = '';
         let inTable = false;
         let tableRows = [];
+        let inOl = false;
+        let inUl = false;
 
         for (let i = 0; i < lines.length; i++) {
-            let line = lines[i].trim();
+            let line = lines[i];
+            let trimmed = line.trim();
 
-            if (line.startsWith('#')) {
-                if (inTable) { htmlOutput += buildHTMLTable(tableRows); tableRows = []; inTable = false; }
+            // Handle Tables
+            if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
+                if (inOl) { htmlOutput += '</ol>'; inOl = false; }
+                if (inUl) { htmlOutput += '</ul>'; inUl = false; }
+                if (trimmed.match(/^\|[\s:-|-]*\|$/)) continue;
+                inTable = true;
+                const cells = trimmed.split('|').map(c => c.trim()).filter((c, idx, arr) => idx > 0 && idx < arr.length - 1);
+                tableRows.push(cells);
+                continue;
+            } else if (inTable) {
+                htmlOutput += buildHTMLTable(tableRows);
+                tableRows = [];
+                inTable = false;
+            }
 
-                const match = line.match(/^(#{1,6})\s+(.*)$/);
+            // Handle Headers
+            if (trimmed.startsWith('#')) {
+                if (inOl) { htmlOutput += '</ol>'; inOl = false; }
+                if (inUl) { htmlOutput += '</ul>'; inUl = false; }
+                const match = trimmed.match(/^(#{1,6})\s+(.*)$/);
                 if (match) {
                     const level = match[1].length;
                     const text = processInlineMarkdown(match[2]);
@@ -299,36 +326,48 @@
                 }
             }
 
-            if (line.startsWith('|') && line.endsWith('|')) {
-                if (line.match(/^\|[\s:-|-]*\|$/)) {
-                    continue;
+            // Handle Ordered List (Memperbaiki penomoran agar tidak ter-reset/hilang saat disalin ke text editor)
+            const olMatch = trimmed.match(/^(\d+)\.\s+(.*)$/);
+            if (olMatch) {
+                if (inUl) { htmlOutput += '</ul>'; inUl = false; }
+                if (!inOl) {
+                    htmlOutput += '<ol>';
+                    inOl = true;
                 }
-                inTable = true;
-                const cells = line.split('|').map(c => c.trim()).filter((c, idx, arr) => idx > 0 && idx < arr.length - 1);
-                tableRows.push(cells);
+                htmlOutput += `<li value="${olMatch[1]}">${processInlineMarkdown(olMatch[2])}</li>`;
+                continue;
+            } else if (inOl) {
+                htmlOutput += '</ol>';
+                inOl = false;
+            }
+
+            // Handle Unordered List
+            const ulMatch = trimmed.match(/^[\*\-\+]\s+(.*)$/);
+            if (ulMatch) {
+                if (inOl) { htmlOutput += '</ol>'; inOl = false; }
+                if (!inUl) {
+                    htmlOutput += '<ul>';
+                    inUl = true;
+                }
+                htmlOutput += `<li>${processInlineMarkdown(ulMatch[1])}</li>`;
+                continue;
+            } else if (inUl) {
+                htmlOutput += '</ul>';
+                inUl = false;
+            }
+
+            // Paragraf biasa dengan mempertahankan spasi awal (inden)
+            if (trimmed !== '') {
+                const leadingSpaces = line.match(/^(\s*)/)[0].replace(/ /g, '&nbsp;');
+                htmlOutput += `<p>${leadingSpaces}${processInlineMarkdown(trimmed)}</p>`;
             } else {
-                if (inTable) {
-                    htmlOutput += buildHTMLTable(tableRows);
-                    tableRows = [];
-                    inTable = false;
-                }
-                if (line !== '') {
-                    if (line.match(/^[\*\-\+]\s+/)) {
-                        const listText = line.replace(/^[\*\-\+]\s+/, '');
-                        htmlOutput += `<ul><li>${processInlineMarkdown(listText)}</li></ul>`;
-                    } else if (line.match(/^\d+\.\s+/)) {
-                        const listText = line.replace(/^\d+\.\s+/, '');
-                        htmlOutput += `<ol><li>${processInlineMarkdown(listText)}</li></ol>`;
-                    } else {
-                        htmlOutput += `<p>${processInlineMarkdown(line)}</p>`;
-                    }
-                }
+                htmlOutput += `<br>`;
             }
         }
 
-        if (inTable && tableRows.length > 0) {
-            htmlOutput += buildHTMLTable(tableRows);
-        }
+        if (inTable && tableRows.length > 0) htmlOutput += buildHTMLTable(tableRows);
+        if (inOl) htmlOutput += '</ol>';
+        if (inUl) htmlOutput += '</ul>';
 
         return htmlOutput;
     }
@@ -359,7 +398,6 @@
         return tableHtml;
     }
 
-    // Fungsi pembantu untuk memproses teks inline (bold, italic, code) ke format array object pdfmake
     function parseInlineToPdfMake(text) {
         const tokenRegex = /(\*\*.*?\*\*|\*.*?\*|`.*?`)/g;
         const tokens = text.split(tokenRegex);
@@ -381,10 +419,8 @@
         return result.length > 0 ? result : [{ text: text }];
     }
 
-    // Engine Konverter dari teks terstruktur Clipboard/Markdown langsung menjadi skema Document Definition pdfmake
     function generatePdfMakeDefinition(markdownText, isMobile = false) {
-        // Melakukan normalisasi karakter sebelum di-parse ke PDF definisi objek
-        const cleanMarkdown = normalizeUnicode(markdownText);
+        const cleanMarkdown = sanitizeText(markdownText);
         const lines = cleanMarkdown.split('\n');
         const docContent = [];
         let inTable = false;
@@ -393,15 +429,16 @@
         const baseFontSize = isMobile ? 12 : 10.5;
 
         for (let i = 0; i < lines.length; i++) {
-            let line = lines[i].trim();
+            let line = lines[i];
+            let trimmed = line.trim();
 
-            if (line.startsWith('#')) {
+            if (trimmed.startsWith('#')) {
                 if (inTable) {
                     docContent.push(buildPdfMakeTable(tableRows, isMobile));
                     tableRows = [];
                     inTable = false;
                 }
-                const match = line.match(/^(#{1,6})\s+(.*)$/);
+                const match = trimmed.match(/^(#{1,6})\s+(.*)$/);
                 if (match) {
                     const level = match[1].length;
                     const textContent = match[2];
@@ -420,12 +457,10 @@
                 }
             }
 
-            if (line.startsWith('|') && line.endsWith('|')) {
-                if (line.match(/^\|[\s:-|-]*\|$/)) {
-                    continue;
-                }
+            if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
+                if (trimmed.match(/^\|[\s:-|-]*\|$/)) continue;
                 inTable = true;
-                const cells = line.split('|').map(c => c.trim()).filter((c, idx, arr) => idx > 0 && idx < arr.length - 1);
+                const cells = trimmed.split('|').map(c => c.trim()).filter((c, idx, arr) => idx > 0 && idx < arr.length - 1);
                 tableRows.push(cells);
             } else {
                 if (inTable) {
@@ -433,26 +468,30 @@
                     tableRows = [];
                     inTable = false;
                 }
-                if (line !== '') {
-                    if (line.match(/^[\*\-\+]\s+/)) {
-                        const listText = line.replace(/^[\*\-\+]\s+/, '');
+                if (trimmed !== '') {
+                    const indentMatch = line.match(/^(\s*)/);
+                    const indentSpaces = indentMatch ? indentMatch[1].length : 0;
+                    const indentText = indentSpaces > 0 ? ' '.repeat(indentSpaces) : '';
+
+                    if (trimmed.match(/^[\*\-\+]\s+/)) {
+                        const listText = trimmed.replace(/^[\*\-\+]\s+/, '');
                         docContent.push({
-                            ul: [parseInlineToPdfMake(listText)],
+                            ul: [parseInlineToPdfMake(indentText + listText)],
                             fontSize: baseFontSize,
                             lineHeight: isMobile ? 1.3 : 1.4,
                             margin: isMobile ? [0, 0, 0, 4] : [0, 0, 0, 6]
                         });
-                    } else if (line.match(/^\d+\.\s+/)) {
-                        const listText = line.replace(/^\d+\.\s+/, '');
+                    } else if (trimmed.match(/^\d+\.\s+/)) {
+                        const listText = trimmed.replace(/^\d+\.\s+/, '');
                         docContent.push({
-                            ol: [parseInlineToPdfMake(listText)],
+                            ol: [parseInlineToPdfMake(indentText + listText)],
                             fontSize: baseFontSize,
                             lineHeight: isMobile ? 1.3 : 1.4,
                             margin: isMobile ? [0, 0, 0, 4] : [0, 0, 0, 6]
                         });
                     } else {
                         docContent.push({
-                            text: parseInlineToPdfMake(line),
+                            text: parseInlineToPdfMake(indentText + trimmed),
                             fontSize: baseFontSize,
                             lineHeight: isMobile ? 1.3 : 1.4,
                             margin: isMobile ? [0, 0, 0, 6] : [0, 0, 0, 8]
@@ -468,7 +507,7 @@
 
         return {
             content: docContent,
-            pageSize: isMobile ? { width: 226.77, height: 453.54 } : 'A4', // 80mm x 160mm untuk tampilan HP
+            pageSize: isMobile ? { width: 226.77, height: 453.54 } : 'A4',
             pageMargins: isMobile ? [12, 12, 12, 12] : [40, 40, 40, 40],
             styles: {
                 tableHeader: {
@@ -483,18 +522,15 @@
 
     function buildPdfMakeTable(rows, isMobile = false) {
         if (rows.length === 0) return {};
-
         const tableBody = [];
         const cellMargin = isMobile ? [3, 3, 3, 3] : [6, 6, 6, 6];
         const bodyFontSize = isMobile ? 9 : 9.5;
 
-        // Buat baris header
         const headerRow = rows[0].map(cell => {
             return { text: parseInlineToPdfMake(cell), style: 'tableHeader', margin: cellMargin };
         });
         tableBody.push(headerRow);
 
-        // Buat baris data body
         for (let r = 1; r < rows.length; r++) {
             const dataRow = rows[r].map(cell => {
                 return { text: parseInlineToPdfMake(cell), fontSize: bodyFontSize, margin: cellMargin };
@@ -502,7 +538,6 @@
             tableBody.push(dataRow);
         }
 
-        // Tentukan jumlah kolom secara dinamis dengan lebar merata (auto stretch)
         const colCount = rows[0].length;
         const colWidths = Array(colCount).fill('*');
 
@@ -530,14 +565,12 @@
             }
 
             const plainText = await navigator.clipboard.readText();
-            rawClipboardContent = plainText; // Simpan cache string mentah untuk diolah engine pdfmake
+            const sanitized = sanitizeText(plainText);
+            rawClipboardContent = sanitized;
 
-            if (plainText.trim()) {
-                if (plainText.includes('|') || plainText.includes('#') || plainText.includes('*')) {
-                    pdfContent.innerHTML = parseMarkdownToHTML(plainText);
-                } else {
-                    pdfContent.innerHTML = plainText.split('\n').map(line => line.trim() ? `<p>${processInlineMarkdown(line)}</p>` : '').join('');
-                }
+            if (sanitized.trim()) {
+                pdfContent.innerHTML = parseMarkdownToHTML(sanitized);
+                copyTextBtn.disabled = false;
                 pdfBtn.disabled = false;
                 pdfMobileBtn.disabled = false;
             } else {
@@ -550,12 +583,58 @@
         }
     });
 
+    // Memperbaiki copy teks agar mempertahankan spacing, baris kosong, dan struktur asli preview
+    copyTextBtn.addEventListener('click', async () => {
+        try {
+            let textToCopy = "";
+            const childNodes = pdfContent.childNodes;
+
+            childNodes.forEach(node => {
+                if (node.nodeName === 'OL') {
+                    const items = node.querySelectorAll('li');
+                    items.forEach(li => {
+                        const val = li.getAttribute('value') || '1';
+                        // Mengganti &nbsp; kembali menjadi spasi asli
+                        const liText = li.innerHTML.replace(/&nbsp;/g, ' ');
+                        // Buat elemen temporary untuk mengambil innerText bersih dari HTML tag di dalam li
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = liText;
+                        textToCopy += `${val}. ${tempDiv.innerText}\n`;
+                    });
+                    textToCopy += "\n";
+                } else if (node.nodeName === 'UL') {
+                    const items = node.querySelectorAll('li');
+                    items.forEach(li => {
+                        const liText = li.innerHTML.replace(/&nbsp;/g, ' ');
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = liText;
+                        textToCopy += `- ${tempDiv.innerText}\n`;
+                    });
+                    textToCopy += "\n";
+                } else if (node.nodeName === 'TABLE') {
+                    textToCopy += node.innerText + "\n\n";
+                } else if (node.nodeName === 'BR') {
+                    textToCopy += "\n";
+                } else {
+                    // Untuk tag p, h1, h2, h3, h4, dll.
+                    const nodeHTML = node.innerHTML ? node.innerHTML.replace(/&nbsp;/g, ' ') : '';
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = nodeHTML;
+                    textToCopy += tempDiv.innerText + "\n\n";
+                }
+            });
+
+            await navigator.clipboard.writeText(textToCopy.trim());
+            alert('Teks bersih dari preview berhasil disalin ke clipboard dengan spacing yang utuh!');
+        } catch (err) {
+            console.error(err);
+            alert('Gagal menyalin teks.');
+        }
+    });
+
     pdfBtn.addEventListener('click', () => {
         try {
-            // Bangun definisi dokumen pdfmake dari cache text plain
             const docDefinition = generatePdfMakeDefinition(rawClipboardContent, false);
-
-            // Eksekusi pembuatan dan download file PDF menggunakan pdfMake
             pdfMake.createPdf(docDefinition).download('pdf_files.pdf');
         } catch (error) {
             console.error(error);
@@ -565,10 +644,7 @@
 
     pdfMobileBtn.addEventListener('click', () => {
         try {
-            // Bangun definisi dokumen pdfmake khusus tampilan mobile
             const docDefinition = generatePdfMakeDefinition(rawClipboardContent, true);
-
-            // Eksekusi pembuatan dan download file PDF menggunakan pdfMake
             pdfMake.createPdf(docDefinition).download('pdf_files_mobile.pdf');
         } catch (error) {
             console.error(error);
@@ -577,8 +653,9 @@
     });
 
     clearBtn.addEventListener('click', () => {
-        pdfContent.innerHTML = '<p style="color: #94a3b8; text-align: center; margin-top: 100px;">Hasil copy text akan dirender di sini beserta struktur tabelnya...</p>';
+        pdfContent.innerHTML = '<p style="color: #94a3b8; text-align: center; margin-top: 100px;">Hasil copy text akan dirender di sini...</p>';
         rawClipboardContent = "";
+        copyTextBtn.disabled = true;
         pdfBtn.disabled = true;
         pdfMobileBtn.disabled = true;
     });
