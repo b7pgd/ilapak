@@ -1,0 +1,19 @@
+Periksa typo dan kesalahan penulisan pada teks yang saya kirim.
+
+Aturan:
+1. Hanya sebutkan kata atau frasa yang salah beserta perbaikannya.
+2. Gunakan format daftar bernomor:
+   **“teks salah”** → “teks yang benar”.
+3. Periksa typo, salah ejaan, kata berulang, penggunaan imbuhan, kata depan (di/ke), huruf kapital, tanda baca, spasi, dan penulisan istilah asing.
+4. Periksa juga kesalahan penomoran atau ketidakkonsistenan format jika ditemukan.
+5. Jangan mengubah kalimat secara keseluruhan atau memberikan versi teks yang sudah direvisi.
+6. Jangan memasukkan saran gaya bahasa, perbaikan kalimat, atau koreksi konsep yang bukan kesalahan penulisan.
+7. Jika suatu istilah perlu diverifikasi dengan sumber, sebutkan hanya jika memang relevan dan jangan menganggapnya sebagai typo tanpa dasar.
+8. Jangan menyebutkan kata atau frasa yang sudah benar.
+9. Jika ada kata atau frasa yang salah, langsung sebutkan daftarnya tanpa pembukaan, kesimpulan, atau penjelasan tambahan.
+10. Jika tidak ditemukan typo atau kesalahan penulisan, jawab persis: **“Tidak ada typo.”**
+
+Output hanya berupa daftar koreksi atau kalimat “Tidak ada typo.” Jangan memberikan jawaban lain.
+
+Teks/deskripsi yang dicheck:
+
