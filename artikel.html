@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pencari Artikel Modern</title>
+<style>
+  :root{
+    --bg:#f8fafc; --card:#ffffff; --primary:#2563eb; --primary-hover:#1d4ed8;
+    --text:#1e293b; --muted:#64748b; --border:#e2e8f0; --green:#059669;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
+  body{background:var(--bg);color:var(--text);padding:24px;max-width:860px;margin:0 auto;min-height:100vh}
+  header{text-align:center;margin-bottom:24px}
+  header h1{font-size:1.8rem;color:#0f172a;margin-bottom:8px;font-weight:700}
+  header p{color:var(--muted);font-size:.95rem}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:22px;margin-bottom:20px;box-shadow:var(--shadow)}
+  label{display:block;font-weight:600;font-size:.85rem;color:var(--primary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+  .search-row{display:flex;gap:12px}
+  #keyword{flex:1;padding:14px 16px;border:1px solid var(--border);border-radius:10px;font-size:1rem;color:var(--text);background:#fff}
+  #keyword:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.15)}
+  .btn{background:var(--primary);color:#fff;border:none;padding:14px 24px;font-size:1rem;font-weight:600;border-radius:10px;cursor:pointer;white-space:nowrap;transition:background .2s}
+  .btn:hover{background:var(--primary-hover)}
+  .btn:disabled{background:#94a3b8;cursor:wait}
+  .btn-secondary{background:#f1f5f9;color:#334155;border:1px solid var(--border);padding:8px 16px;font-size:.85rem;border-radius:8px;font-weight:500}
+  .btn-secondary:hover{background:#e2e8f0}
+  #status{text-align:center;color:var(--muted);font-size:.95rem;padding:32px 10px}
+  #status .spin{display:inline-block;width:20px;height:20px;border:3px solid #cbd5e1;border-top-color:var(--primary);border-radius:50%;animation:sp 0.8s linear infinite;vertical-align:-4px;margin-right:10px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  #status.error{color:#dc2626}
+  .result-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px}
+  .result-head h2{font-size:1.15rem;color:#0f172a;font-weight:600}
+  .badge{display:inline-block;font-size:.75rem;font-weight:600;padding:4px 12px;border-radius:20px;background:#eff6ff;color:var(--primary);margin-left:8px;vertical-align:2px}
+  .badge.id{background:#ecfdf5;color:#047857}
+  .result{padding:16px 8px;border-bottom:1px solid var(--border)}
+  .result:last-child{border-bottom:none}
+  .result .num{font-weight:700;color:var(--primary);margin-right:8px}
+  .result a.title{font-size:1.05rem;font-weight:600;color:var(--primary);text-decoration:none}
+  .result a.title:hover{text-decoration:underline}
+  .result .url{font-size:.82rem;color:var(--green);margin:6px 0;word-break:break-all}
+  .result .snippet{font-size:.9rem;color:var(--muted);line-height:1.6}
+  footer{text-align:center;color:var(--muted);font-size:.8rem;margin-top:32px;padding-top:16px;border-top:1px solid var(--border)}
+  @media(max-width:560px){.search-row{flex-direction:column}.btn{width:100%}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📚 Pencari Artikel & Referensi</h1>
+  <p>Masukkan topik atau pertanyaan untuk menemukan artikel dan referensi relevan</p>
+</header>
+
+<div class="card">
+  <label for="keyword">Topik / Pertanyaan</label>
+  <div class="search-row">
+    <input type="text" id="keyword" placeholder="cth: Keunggulan arsitektur data warehouse terdistribusi" autocomplete="off">
+    <button class="btn" id="btnCari" onclick="doSearch()">Cari Artikel</button>
+  </div>
+</div>
+
+<div class="card" id="resultCard" style="display:none">
+  <div class="result-head">
+    <h2>Hasil Pencarian <span class="badge" id="srcBadge"></span></h2>
+    <button class="btn btn-secondary" onclick="copyAll()">📋 Salin Semua Link</button>
+  </div>
+  <div id="results"></div>
+</div>
+
+<div id="status" class="empty">Belum ada pencarian. Ketik topik di atas lalu tekan <b>Cari Artikel</b>.</div>
+
+<footer>Pencarian dioptimalkan untuk referensi dan artikel berkualitas • Maksimal 25 link per pencarian</footer>
+
+<script>
+"use strict";
+const MAX_RESULTS = 25;
+let lastResults = [];
+
+function $(id){ return document.getElementById(id); }
+function esc(s){
+  return String(s==null?"":s)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+}
+function setStatus(html, isError){
+  const st = $("status");
+  st.innerHTML = html;
+  st.className = isError ? "error" : "";
+  st.style.display = "block";
+}
+function hideStatus(){ $("status").style.display = "none"; }
+function fetchTimeout(url, ms, opts){
+  const c = new AbortController();
+  const t = setTimeout(()=>c.abort(), ms||20000);
+  return fetch(url, Object.assign({signal:c.signal}, opts||{}))
+    .finally(()=>clearTimeout(t));
+}
+function domainOf(u){
+  try{ return new URL(u).hostname.replace(/^www\./,""); }catch(e){ return ""; }
+}
+
+const PROXIES = [
+  u => "https://api.allorigins.win/raw?url=" + encodeURIComponent(u),
+  u => "https://corsproxy.io/?url=" + encodeURIComponent(u),
+  u => "https://api.codetabs.com/v1/proxy?quest=" + encodeURIComponent(u)
+];
+
+// Melonggarkan query pencarian agar mengambil artikel sejenis / turunan keyword
+function expandQuery(q) {
+  q = q.trim();
+  // Jika berupa kalimat panjang atau pertanyaan, ambil kata kunci penting dan tambahkan sinonim/kata terkait
+  const stopwords = ['apa', 'saja', 'bagaimana', 'mengapa', 'untuk', 'dan', 'yang', 'di', 'ke', 'dari', 'pada', 'adalah'];
+  let words = q.toLowerCase().split(/\s+/).filter(w => !stopwords.includes(w) && w.length > 2);
+  
+  if (words.length === 0) return q;
+  
+  // Gabungkan kembali kata kunci inti dan tambahkan opsi pencarian luas (mengambil artikel/pembahasan terkait)
+  return words.join(" ") + " artikel penjelasan referensi";
+}
+
+function parseDDG(html){
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  const out = [];
+  const anchors = doc.querySelectorAll("a.result__a");
+  anchors.forEach(a=>{
+    if(out.length >= MAX_RESULTS) return;
+    const href = a.getAttribute("href") || "";
+    let url = "";
+    const m = href.match(/[?&]uddg=([^&]+)/);
+    if(m){ try{ url = decodeURIComponent(m[1]); }catch(e){ url=""; } }
+    else if(/^https?:\/\//i.test(href)){ url = href; }
+    if(!url || /duckduckgo\.com/i.test(url)) return;
+    if(out.some(r=>r.url===url)) return;
+    const title = (a.textContent||"").trim();
+    if(!title) return;
+    let snippet = "";
+    const box = a.closest(".result");
+    if(box){
+      const sn = box.querySelector(".result__snippet");
+      if(sn) snippet = (sn.textContent||"").trim();
+    }
+    out.push({title:title, url:url, snippet:snippet});
+  });
+  return out;
+}
+
+async function searchDDG(query){
+  const relaxedQuery = expandQuery(query);
+  const ddgUrl = "https://html.duckduckgo.com/html/?q=" + encodeURIComponent(relaxedQuery) + "&kl=id-id";
+  let lastErr = null;
+  for(const px of PROXIES){
+    try{
+      const resp = await fetchTimeout(px(ddgUrl), 22000);
+      if(!resp.ok) throw new Error("HTTP " + resp.status);
+      const html = await resp.text();
+      const results = parseDDG(html);
+      if(results.length) return {results:results, source:"Web Relevan"};
+      lastErr = new Error("Tidak ada hasil dari jalur ini.");
+    }catch(e){ lastErr = e; }
+  }
+  throw lastErr || "Semua jalur pencarian gagal.";
+}
+
+async function doSearch(){
+  const q = $("keyword").value.trim();
+  if(!q){ setStatus("⚠ Masukkan topik atau kata kunci terlebih dahulu.", true); $("keyword").focus(); return; }
+  const btn = $("btnCari");
+  btn.disabled = true; btn.textContent = "Mencari...";
+  $("resultCard").style.display = "none";
+  setStatus('<span class="spin"></span>Sedang mencari artikel dan referensi terkait...');
+
+  try{
+    const data = await searchDDG(q);
+    lastResults = data.results.slice(0, MAX_RESULTS);
+    renderResults(lastResults, data.source);
+  }catch(e){
+    const msg = (e && e.message) ? e.message : "Terjadi kesalahan koneksi atau pencarian.";
+    setStatus("❌ " + esc(msg) + "<br><br><span style='font-size:.85rem'>Tips: Coba gunakan kata kunci lain yang lebih umum atau periksa koneksi internet Anda.</span>", true);
+  }finally{
+    btn.disabled = false; btn.textContent = "Cari Artikel";
+  }
+}
+
+function renderResults(results, source){
+  hideStatus();
+  $("resultCard").style.display = "block";
+  $("srcBadge").textContent = results.length + " Artikel Ditemukan";
+  const box = $("results");
+  box.innerHTML = "";
+  results.forEach((r,i)=>{
+    const d = domainOf(r.url);
+    const idBadge = /\.id(\.|$)/i.test(d) ? '<span class="badge id">.id</span>' : "";
+    const div = document.createElement("div");
+    div.className = "result";
+    div.innerHTML =
+      '<span class="num">' + (i+1) + '.</span>' +
+      '<a class="title" href="' + esc(r.url) + '" target="_blank" rel="noopener">' + esc(r.title) + '</a>' + idBadge +
+      '<div class="url">' + esc(r.url) + '</div>' +
+      (r.snippet ? '<div class="snippet">' + esc(r.snippet) + '</div>' : '');
+    box.appendChild(div);
+  });
+  window.scrollTo({top:$("resultCard").offsetTop-10, behavior:"smooth"});
+}
+
+function copyAll(){
+  if(!lastResults.length) return;
+  const txt = lastResults.map((r,i)=>(i+1)+". "+r.url).join("\n");
+  const done = ()=>{ const b=event.target; const t=b.textContent; b.textContent="✓ Tersalin!"; setTimeout(()=>b.textContent=t,1800); };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(done).catch(()=>fallbackCopy(txt, done));
+  }else{ fallbackCopy(txt, done); }
+}
+function fallbackCopy(txt, done){
+  const ta = document.createElement("textarea");
+  ta.value = txt; ta.style.position="fixed"; ta.style.opacity="0";
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand("copy"); done(); }catch(e){}
+  document.body.removeChild(ta);
+}
+
+$("keyword").addEventListener("keydown", e=>{ if(e.key==="Enter") doSearch(); });
+</script>
+</body>
+</html>
