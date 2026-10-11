@@ -13,8 +13,13 @@
   p.sub { font-size:14px; color:#666; text-align:center; margin-bottom:18px; line-height:1.55; }
   .card { background:#fff; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,.10); padding:18px; }
   label.lbl { display:block; font-size:14.5px; font-weight:bold; color:#333; margin-bottom:7px; }
-  #soal { width:100%; padding:12px 14px; font-size:15.5px; border:2px solid #c9ced6; border-radius:8px;
+  #soal { width:100%; padding:12px 44px 12px 14px; font-size:15.5px; border:2px solid #c9ced6; border-radius:8px;
           resize:vertical; min-height:74px; font-family:inherit; line-height:1.5; }
+  .soal-wrap { position:relative; }
+  .clear-x { position:absolute; top:9px; right:9px; width:28px; height:28px; border-radius:50%;
+             border:none; background:#ECEFF1; color:#546E7A; font-size:14px; font-weight:bold;
+             cursor:pointer; line-height:1; display:none; }
+  .clear-x:hover { background:#CFD8DC; color:#263238; }
   #soal:focus { outline:none; border-color:#1565C0; }
   .drop { margin-top:16px; border:2px dashed #90a4ae; border-radius:10px; padding:18px 14px;
           text-align:center; background:#FAFAFA; transition:background .15s, border-color .15s; }
@@ -62,7 +67,10 @@
 
   <div class="card">
     <label class="lbl" for="soal">📝 Soal / pertanyaan</label>
-    <textarea id="soal" placeholder="Contoh: cara penerapan tata kelola TI yang baik untuk perusahaan itu bagaimana?"></textarea>
+    <div class="soal-wrap">
+      <textarea id="soal" placeholder="Contoh: cara penerapan tata kelola TI yang baik untuk perusahaan itu bagaimana?"></textarea>
+      <button id="clearSoal" class="clear-x" type="button" title="Hapus teks">✕</button>
+    </div>
 
     <div class="drop" id="drop">
       <button id="btnFile" type="button">📁 Pilih File PDF</button>
@@ -83,6 +91,7 @@
   <div id="skipped"></div>
 
   <footer>Semua proses berjalan lokal di perangkatmu — file PDF tidak diunggah ke mana pun.<br>
+  Pencarian paham sinonim &amp; akar kata: "cara" ketemu "metode", "pemilihan" ketemu "memilih", "sample" ketemu "sampel".<br>
   Potongan yang tampil adalah teks asli dari PDF (bukan ringkasan), siap diparafrase untuk jawaban tugas.</footer>
 </div>
 
@@ -136,6 +145,93 @@
 // ---------- Mesin relevansi ----------
 const STOPWORDS = new Set(("yang dan di ke dari untuk dengan adalah itu ini atau pada dalam tidak cara bagaimana mengapa kenapa kapan dimana siapa apa apakah agar supaya oleh sebagai juga akan telah sudah dapat bisa harus lebih sangat antara melalui terhadap tentang menjadi memiliki ada yaitu yakni bahwa seperti ketika saat jika kalau maka namun tetapi tapi serta maupun ataupun pun lah kah nya sih dong kok ya saja hanya tersebut mereka kita kami saya anda dia " +
   "the a an of to in on for and or is are was were how what why when where which who whom can could should would with by at from as it its this that these those be been being do does did").split(/\s+/));
+// ---------- Sinonim akademik & stemming ----------
+// Satu grup = satu konsep. Kata di soal diperluas ke semua anggota grup,
+// jadi "cara" bisa ketemu "metode", "sample" ketemu "sampel"/"sampling".
+const SYN_GROUPS = [
+  ["cara", "metode", "teknik", "pendekatan", "prosedur", "langkah", "method", "technique", "approach", "procedure"],
+  ["sampel", "sample", "sampling"],
+  ["pemilihan", "penentuan", "seleksi", "pengambilan", "penarikan", "selection"],
+  ["populasi", "population"],
+  ["responden", "respondent", "respondents"],
+  ["acak", "random"],
+  ["analisis", "analisa", "analysis"],
+  ["penelitian", "kajian", "research", "study", "studi"],
+  ["pengaruh", "dampak", "effect", "influence", "impact"],
+  ["hubungan", "korelasi", "kaitan", "relation", "relationship", "correlation"],
+  ["perbedaan", "difference"],
+  ["perbandingan", "comparison"],
+  ["kualitas", "mutu", "quality"],
+  ["kinerja", "performance"],
+  ["risiko", "resiko", "risk"],
+  ["penerapan", "implementasi", "implementation", "aplikasi", "application"],
+  ["penggunaan", "pemanfaatan", "use", "usage"],
+  ["evaluasi", "penilaian", "evaluation", "assessment"],
+  ["strategi", "strategy", "upaya"],
+  ["faktor", "factor"],
+  ["model", "kerangka", "framework"],
+  ["sistem", "system"],
+  ["informasi", "information"],
+  ["teknologi", "technology"],
+  ["etik", "etika", "ethic", "ethics"],
+  ["keuangan", "financial", "finance"],
+  ["perusahaan", "organisasi", "company", "organization", "corporate"],
+  ["keputusan", "decision"],
+  ["kepuasan", "satisfaction"],
+  ["manajemen", "management", "pengelolaan"],
+  ["variabel", "variable"],
+  ["hasil", "result", "temuan", "findings"],
+  ["tujuan", "objective", "purpose"],
+  ["kriteria", "criteria", "criterion"],
+  ["proses", "process"],
+  ["struktur", "structure"],
+  ["pengujian", "pengukuran", "measurement", "testing"],
+  ["signifikan", "significant", "significance"],
+  ["positif", "positive"],
+  ["negatif", "negative"]
+];
+const SYN_OF = new Map();
+SYN_GROUPS.forEach((g, gi) => g.forEach(w => { if (!SYN_OF.has(w)) SYN_OF.set(w, gi); }));
+// Kandidat akar kata: lepas partikel, akhiran, dan awalan (termasuk bentuk
+// nasal meN-/peN- yang menghilangkan huruf awal akar: memilih->pilih, pemilihan->pilih).
+function stemCandidates(w) {
+  const out = new Set();
+  let base = (w || "").toLowerCase().replace(/(lah|kah|tah|pun|nya)$/, "");
+  if (!base) base = (w || "").toLowerCase();
+  const forms = new Set([base]);
+  for (const f of [...forms]) {
+    if (f.endsWith("kan") && f.length > 5) forms.add(f.slice(0, -3));
+    else if (f.endsWith("an") && f.length > 4) forms.add(f.slice(0, -2));
+    else if (f.endsWith("i") && f.length > 4) forms.add(f.slice(0, -1));
+  }
+  const NASAL = [["meny", "s"], ["meng", "k"], ["mem", "p"], ["men", "t"],
+                 ["peny", "s"], ["peng", "k"], ["pem", "p"], ["pen", "t"]];
+  const PLAIN = ["memper", "diper", "ber", "ter", "per", "me", "pe", "di", "ke", "se"];
+  for (const f of forms) {
+    out.add(f);
+    let done = false;
+    for (const pair of NASAL) {
+      const p = pair[0];
+      if (f.startsWith(p) && f.length - p.length >= 3) {
+        out.add(f.slice(p.length));
+        out.add(pair[1] + f.slice(p.length));
+        done = true; break;
+      }
+    }
+    if (!done) for (const p of PLAIN) {
+      if (f.startsWith(p) && f.length - p.length >= 3) { out.add(f.slice(p.length)); break; }
+    }
+  }
+  return [...out].filter(s => s.length >= 3 || s === base);
+}
+function buildGroup(term) {
+  const variants = new Set();
+  const addWord = w => { variants.add(w); for (const c of stemCandidates(w)) variants.add(c); };
+  addWord(term);
+  const gi = SYN_OF.get(term);
+  if (gi != null) for (const m of SYN_GROUPS[gi]) addWord(m);
+  return variants;
+}
 function tokenizeTerms(keyword, question) {
   const text = ((keyword || "") + " " + (question || "")).toLowerCase();
   const raw = text.match(/[a-z0-9]+/g) || [];
@@ -145,6 +241,17 @@ function tokenizeTerms(keyword, question) {
     if (t.length < 2) continue;
     if (!terms.includes(t)) terms.push(t);
   }
+  // kata-kata yang satu grup sinonim digabung jadi SATU grup pencocokan
+  const groups = [], labels = [], seenSyn = new Set();
+  for (const t of terms) {
+    const gi = SYN_OF.get(t);
+    if (gi != null) {
+      if (seenSyn.has(gi)) continue;
+      seenSyn.add(gi);
+    }
+    groups.push({ label: t, variants: buildGroup(t) });
+    labels.push(t);
+  }
   const bigrams = [];
   for (let i = 0; i + 1 < raw.length; i++) {
     if (terms.includes(raw[i]) && terms.includes(raw[i + 1])) {
@@ -152,35 +259,42 @@ function tokenizeTerms(keyword, question) {
       if (!bigrams.includes(b)) bigrams.push(b);
     }
   }
-  return { terms: terms, bigrams: bigrams };
+  return { groups: groups, labels: labels, bigrams: bigrams };
 }
 function splitSentences(text) {
   const clean = (text || "").replace(/\s+/g, " ").trim();
   if (!clean) return [];
   return clean.split(/(?<=[.!?])\s+(?=[A-Z0-9"“(\[])/).map(s => s.trim()).filter(s => s.length > 25);
 }
-function scoreSentence(sent, terms, bigrams) {
-  const low = " " + sent.toLowerCase() + " ";
-  let distinct = 0, hits = 0;
-  for (const t of terms) {
-    const re = new RegExp("[^a-z0-9]" + t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "[^a-z0-9]", "g");
-    const m = low.match(re);
-    if (m) { distinct++; hits += m.length; }
+function sentenceCands(sent) {
+  const set = new Set();
+  const words = sent.toLowerCase().match(/[a-z0-9]+/g) || [];
+  for (const w of words) { set.add(w); for (const c of stemCandidates(w)) set.add(c); }
+  return set;
+}
+function scoreSentence(sent, groups, bigrams) {
+  const cands = sentenceCands(sent);
+  let distinct = 0;
+  for (const g of groups) {
+    for (const v of g.variants) {
+      if (cands.has(v)) { distinct++; break; }
+    }
   }
+  const low = " " + sent.toLowerCase() + " ";
   let bScore = 0;
-  for (const b of bigrams) if (low.includes(" " + b + " ") || low.includes(" " + b)) bScore++;
-  return { distinct: distinct, score: distinct * 100 + hits * 3 + bScore * 40 };
+  for (const b of (bigrams || [])) if (low.includes(" " + b + " ") || low.includes(" " + b)) bScore++;
+  return { distinct: distinct, score: distinct * 100 + bScore * 40 };
 }
 // pages: [{page:Number, text:String}] -> SEMUA potongan relevan, urut sesuai dokumen
-function findAllExcerpts(pages, terms, bigrams) {
-  const minDistinct = terms.length <= 1 ? 1 : 2;
+function findAllExcerpts(pages, groups, bigrams) {
+  const minDistinct = groups.length <= 1 ? 1 : 2;
   const passages = [];
   for (const pg of pages) {
     const sents = splitSentences(pg.text);
     if (!sents.length) continue;
     const hotIdx = [];
     for (let i = 0; i < sents.length; i++) {
-      if (scoreSentence(sents[i], terms, bigrams).distinct >= minDistinct) hotIdx.push(i);
+      if (scoreSentence(sents[i], groups, bigrams).distinct >= minDistinct) hotIdx.push(i);
     }
     if (!hotIdx.length) continue;
     // jendela konteks: 2 kalimat sebelum & sesudah tiap kalimat yang relevan
@@ -215,6 +329,16 @@ function findAllExcerpts(pages, terms, bigrams) {
 const $ = id => document.getElementById(id);
 let selectedFiles = [];
 let foundEntries = [];   // {name, passages:[{page, text}]}
+
+// tombol silang: hapus teks soal
+$("soal").addEventListener("input", () => {
+  $("clearSoal").style.display = $("soal").value ? "block" : "none";
+});
+$("clearSoal").onclick = () => {
+  $("soal").value = "";
+  $("clearSoal").style.display = "none";
+  $("soal").focus();
+};
 
 // siapkan pdf.js + worker tertanam (offline)
 try {
@@ -271,8 +395,8 @@ async function proses() {
   if (!question) { $("status").textContent = "⚠️ Isi dulu soal / pertanyaannya."; $("soal").focus(); return; }
   if (!selectedFiles.length) { $("status").textContent = "⚠️ Pilih dulu file PDF-nya."; return; }
   if (!window.pdfjsLib) { $("status").textContent = "❌ Mesin PDF gagal dimuat."; return; }
-  const { terms, bigrams } = tokenizeTerms("", question);
-  if (!terms.length) { $("status").textContent = "⚠️ Soal tidak mengandung kata inti yang bisa dipakai."; return; }
+  const { groups, labels, bigrams } = tokenizeTerms("", question);
+  if (!groups.length) { $("status").textContent = "⚠️ Soal tidak mengandung kata inti yang bisa dipakai."; return; }
 
   const btn = $("btnProses");
   btn.disabled = true; btn.textContent = "⏳ Memproses...";
@@ -294,7 +418,7 @@ async function proses() {
       const buf = await f.arrayBuffer();
       const pages = await extractPages(buf);
       if (pages.some(p => p.text.trim().length > 100)) {
-        passages = findAllExcerpts(pages, terms, bigrams);
+        passages = findAllExcerpts(pages, groups, bigrams);
       }
     } catch (e) { passages = []; }
     if (passages.length) {
@@ -311,7 +435,7 @@ async function proses() {
   btn.disabled = false; btn.textContent = "▶ Proses Semua PDF";
   $("status").textContent = foundEntries.length
     ? "✅ Selesai — " + foundEntries.length + " dari " + selectedFiles.length +
-      " file punya potongan relevan, total " + totalPassages + " potongan (kata inti: " + terms.join(", ") + ")."
+      " file punya potongan relevan, total " + totalPassages + " potongan (kata inti: " + labels.join(", ") + ")."
     : "Selesai — tidak ada file yang punya potongan cukup relevan dengan soal ini.";
   if (skippedNames.length) {
     const sk = $("skipped");
