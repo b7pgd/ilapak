@@ -3,222 +3,471 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pencari Artikel Modern</title>
+<title>Pencari Referensi Akademik — Jurnal, Buku, Prosiding, Tesis</title>
 <style>
-  :root{
-    --bg:#f8fafc; --card:#ffffff; --primary:#2563eb; --primary-hover:#1d4ed8;
-    --text:#1e293b; --muted:#64748b; --border:#e2e8f0; --green:#059669;
-    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-  }
-  *{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
-  body{background:var(--bg);color:var(--text);padding:24px;max-width:860px;margin:0 auto;min-height:100vh}
-  header{text-align:center;margin-bottom:24px}
-  header h1{font-size:1.8rem;color:#0f172a;margin-bottom:8px;font-weight:700}
-  header p{color:var(--muted);font-size:.95rem}
-  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:22px;margin-bottom:20px;box-shadow:var(--shadow)}
-  label{display:block;font-weight:600;font-size:.85rem;color:var(--primary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
-  .search-row{display:flex;gap:12px}
-  #keyword{flex:1;padding:14px 16px;border:1px solid var(--border);border-radius:10px;font-size:1rem;color:var(--text);background:#fff}
-  #keyword:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.15)}
-  .btn{background:var(--primary);color:#fff;border:none;padding:14px 24px;font-size:1rem;font-weight:600;border-radius:10px;cursor:pointer;white-space:nowrap;transition:background .2s}
-  .btn:hover{background:var(--primary-hover)}
-  .btn:disabled{background:#94a3b8;cursor:wait}
-  .btn-secondary{background:#f1f5f9;color:#334155;border:1px solid var(--border);padding:8px 16px;font-size:.85rem;border-radius:8px;font-weight:500}
-  .btn-secondary:hover{background:#e2e8f0}
-  #status{text-align:center;color:var(--muted);font-size:.95rem;padding:32px 10px}
-  #status .spin{display:inline-block;width:20px;height:20px;border:3px solid #cbd5e1;border-top-color:var(--primary);border-radius:50%;animation:sp 0.8s linear infinite;vertical-align:-4px;margin-right:10px}
-  @keyframes sp{to{transform:rotate(360deg)}}
-  #status.error{color:#dc2626}
-  .result-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px}
-  .result-head h2{font-size:1.15rem;color:#0f172a;font-weight:600}
-  .badge{display:inline-block;font-size:.75rem;font-weight:600;padding:4px 12px;border-radius:20px;background:#eff6ff;color:var(--primary);margin-left:8px;vertical-align:2px}
-  .badge.id{background:#ecfdf5;color:#047857}
-  .result{padding:16px 8px;border-bottom:1px solid var(--border)}
-  .result:last-child{border-bottom:none}
-  .result .num{font-weight:700;color:var(--primary);margin-right:8px}
-  .result a.title{font-size:1.05rem;font-weight:600;color:var(--primary);text-decoration:none}
-  .result a.title:hover{text-decoration:underline}
-  .result .url{font-size:.82rem;color:var(--green);margin:6px 0;word-break:break-all}
-  .result .snippet{font-size:.9rem;color:var(--muted);line-height:1.6}
-  footer{text-align:center;color:var(--muted);font-size:.8rem;margin-top:32px;padding-top:16px;border-top:1px solid var(--border)}
-  @media(max-width:560px){.search-row{flex-direction:column}.btn{width:100%}}
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: Arial, Helvetica, sans-serif; background:#f0f2f5; color:#1a1a1a;
+         display:flex; flex-direction:column; align-items:center; padding:24px 12px 48px; }
+  .wrap { width:100%; max-width:860px; }
+  h1 { font-size:23px; text-align:center; margin-bottom:4px; }
+  p.sub { font-size:14px; color:#666; text-align:center; margin-bottom:18px; }
+  .card { background:#fff; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,.10); padding:18px; }
+  .row { display:flex; gap:10px; flex-wrap:wrap; }
+  #q { flex:1 1 320px; padding:12px 14px; font-size:16px; border:2px solid #c9ced6; border-radius:8px; }
+  #q:focus { outline:none; border-color:#1565C0; }
+  #btnCari { padding:12px 26px; font-size:16px; font-weight:bold; color:#fff; background:#1565C0;
+             border:none; border-radius:8px; cursor:pointer; }
+  #btnCari:hover { background:#0D47A1; }
+  #btnCari:disabled { background:#90a4ae; cursor:wait; }
+  .filters { margin-top:14px; display:flex; gap:14px 22px; flex-wrap:wrap; font-size:14px; }
+  .filters label { display:flex; flex-direction:column; gap:5px; font-weight:bold; color:#444; }
+  .filters select, .filters input[type=number] { padding:8px; font-size:14px; border:1.5px solid #c9ced6;
+             border-radius:6px; font-weight:normal; background:#fff; }
+  .filters input[type=number] { width:92px; }
+  .srcs { flex-direction:row !important; align-items:center; gap:8px !important; }
+  .srcs span { display:flex; align-items:center; gap:5px; font-weight:normal; color:#1a1a1a; }
+  #status { margin-top:14px; font-size:14px; color:#555; min-height:20px; }
+  #actions { margin-top:6px; display:none; gap:10px; flex-wrap:wrap; }
+  #actions button { padding:9px 16px; font-size:14px; font-weight:bold; border-radius:7px; cursor:pointer;
+             border:2px solid #1565C0; background:#fff; color:#1565C0; }
+  #actions button:hover { background:#E3F2FD; }
+  #note { margin-top:8px; font-size:12.5px; color:#888; display:none; }
+  #results { margin-top:16px; display:flex; flex-direction:column; gap:12px; }
+  .item { background:#fff; border-radius:10px; box-shadow:0 1px 6px rgba(0,0,0,.08); padding:14px 16px; }
+  .item .num { color:#1565C0; font-weight:bold; }
+  .item a.title { font-size:16.5px; font-weight:bold; color:#0D47A1; text-decoration:none; line-height:1.35; }
+  .item a.title:hover { text-decoration:underline; }
+  .badges { margin:7px 0 5px; display:flex; gap:6px; flex-wrap:wrap; }
+  .badge { font-size:11.5px; font-weight:bold; padding:3px 9px; border-radius:20px; background:#ECEFF1; color:#37474F; }
+  .badge.jurnal { background:#E8EAF6; color:#283593; }
+  .badge.buku { background:#FFF3E0; color:#E65100; }
+  .badge.prosiding { background:#E0F2F1; color:#00695C; }
+  .badge.tesis { background:#FCE4EC; color:#AD1457; }
+  .badge.pdf { background:#E8F5E9; color:#2E7D32; }
+  .badge.src { background:#fff; border:1.5px solid #cfd8dc; color:#607D8B; }
+  .meta { font-size:13.5px; color:#555; line-height:1.5; }
+  .abs { font-size:13.5px; color:#444; line-height:1.55; margin-top:6px; }
+  .doi { font-size:13px; margin-top:6px; word-break:break-all; }
+  .doi a { color:#1565C0; }
+  .item .row2 { margin-top:9px; display:flex; gap:8px; flex-wrap:wrap; }
+  .item .row2 button, .item .row2 a { font-size:13px; font-weight:bold; padding:7px 13px; border-radius:6px;
+             cursor:pointer; text-decoration:none; }
+  .btn-cite { background:#1565C0; color:#fff; border:none; }
+  .btn-cite:hover { background:#0D47A1; }
+  .btn-open { background:#fff; color:#1565C0; border:1.5px solid #1565C0 !important; }
+  .btn-pdf { background:#2E7D32; color:#fff; border:none; }
+  .copied { background:#2E7D32 !important; }
+  footer { margin-top:22px; font-size:12.5px; color:#999; text-align:center; line-height:1.6; }
 </style>
 </head>
 <body>
+<div class="wrap">
+  <h1>🎓 Pencari Referensi Akademik</h1>
+  <p class="sub">Cari <b>jurnal, buku, prosiding, dan tesis</b> dari kata kunci atau potongan pertanyaan — bukan artikel web.<br>
+  Sumber data: OpenAlex &amp; Crossref (gratis, tanpa API key).</p>
 
-<header>
-  <h1>📚 Pencari Artikel & Referensi</h1>
-  <p>Masukkan topik atau pertanyaan untuk menemukan artikel dan referensi relevan</p>
-</header>
-
-<div class="card">
-  <label for="keyword">Topik / Pertanyaan</label>
-  <div class="search-row">
-    <input type="text" id="keyword" placeholder="cth: Keunggulan arsitektur data warehouse terdistribusi" autocomplete="off">
-    <button class="btn" id="btnCari" onclick="doSearch()">Cari Artikel</button>
+  <div class="card">
+    <div class="row">
+      <input id="q" type="text" placeholder="Contoh: pengaruh materialitas terhadap risiko audit" autocomplete="off">
+      <button id="btnCari">🔍 Cari</button>
+    </div>
+    <div class="filters">
+      <label>Jenis
+        <select id="fType">
+          <option value="all">Semua jenis</option>
+          <option value="jurnal">Artikel Jurnal</option>
+          <option value="buku">Buku / Bab Buku</option>
+          <option value="prosiding">Prosiding</option>
+          <option value="tesis">Tesis / Disertasi</option>
+        </select>
+      </label>
+      <label>Bahasa
+        <select id="fLang">
+          <option value="all">Semua bahasa</option>
+          <option value="id">Indonesia</option>
+          <option value="en">Inggris</option>
+        </select>
+      </label>
+      <label>Tahun dari
+        <input id="fFrom" type="number" min="1900" max="2100" placeholder="2018">
+      </label>
+      <label>Tahun sampai
+        <input id="fTo" type="number" min="1900" max="2100" placeholder="2026">
+      </label>
+      <label>Urutkan
+        <select id="fSort">
+          <option value="relevance">Paling relevan</option>
+          <option value="newest">Terbaru</option>
+          <option value="cited">Paling banyak disitasi</option>
+        </select>
+      </label>
+      <label class="srcs">Sumber
+        <span><input type="checkbox" id="srcOA" checked> OpenAlex</span>
+        <span><input type="checkbox" id="srcCR" checked> Crossref</span>
+      </label>
+    </div>
+    <div id="status">Masukkan kata kunci lalu tekan Cari. Tips: pakai kata kunci inti, bukan kalimat pertanyaan utuh.</div>
+    <div id="actions">
+      <button id="btnCopyLinks">📋 Salin Semua Link</button>
+      <button id="btnCopyCites">📚 Salin Semua Sitasi (Daftar Pustaka APA)</button>
+    </div>
+    <div id="note">Catatan: filter bahasa berlaku penuh di OpenAlex; Crossref tidak menyediakan filter bahasa, jadi sebagian hasil Crossref bisa berbahasa lain.</div>
   </div>
-</div>
 
-<div class="card" id="resultCard" style="display:none">
-  <div class="result-head">
-    <h2>Hasil Pencarian <span class="badge" id="srcBadge"></span></h2>
-    <button class="btn btn-secondary" onclick="copyAll()">📋 Salin Semua Link</button>
-  </div>
   <div id="results"></div>
+
+  <footer>Sitasi dibuat otomatis format APA 7 — cek lagi ejaan nama &amp; kapitalisasi judul sebelum dimasukkan ke tugas.<br>
+  Maksimal 25 hasil per pencarian, digabung &amp; dideduplikasi dari kedua sumber.</footer>
 </div>
-
-<div id="status" class="empty">Belum ada pencarian. Ketik topik di atas lalu tekan <b>Cari Artikel</b>.</div>
-
-<footer>Pencarian dioptimalkan untuk referensi dan artikel berkualitas • Maksimal 25 link per pencarian</footer>
 
 <script>
-"use strict";
-const MAX_RESULTS = 25;
+/*__PURE_START__*/
+// ---------- Pemetaan jenis ----------
+const TYPE_FILTER = {
+  all:      { oa: null,                        cr: null },
+  jurnal:   { oa: "article",                   cr: "journal-article" },
+  buku:     { oa: "book|book-chapter",         cr: "book" },
+  prosiding:{ oa: "proceedings-article",       cr: "proceedings-article" },
+  tesis:    { oa: "dissertation",              cr: "dissertation" }
+};
+const TYPE_LABEL_OA = { "article":"Jurnal", "book":"Buku", "book-chapter":"Bab Buku",
+  "proceedings-article":"Prosiding", "dissertation":"Tesis/Disertasi", "report":"Laporan", "other":"Lainnya" };
+const TYPE_LABEL_CR = { "journal-article":"Jurnal", "book":"Buku", "monograph":"Buku", "edited-book":"Buku",
+  "book-chapter":"Bab Buku", "book-section":"Bab Buku", "proceedings-article":"Prosiding",
+  "proceedings":"Prosiding", "dissertation":"Tesis/Disertasi", "posted-content":"Preprint", "report":"Laporan" };
+const BOOK_TYPES = ["Buku", "Bab Buku"];
+
+function normTitleKey(t) {
+  return "t:" + (t || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+function dedupeKey(r) {
+  return r.doi ? "doi:" + r.doi.toLowerCase() : normTitleKey(r.title);
+}
+function reconstructAbstract(inv) {
+  if (!inv) return "";
+  const words = [];
+  for (const w in inv) for (const pos of inv[w]) words[pos] = w;
+  return words.join(" ");
+}
+// Nama tampang "First Middle Last" -> APA "Last, F. M."
+function nameToApa(name) {
+  const parts = (name || "").trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "";
+  if (parts.length === 1) return parts[0];
+  const last = parts[parts.length - 1];
+  const initials = parts.slice(0, -1).map(p => p[0].toUpperCase() + ".").join(" ");
+  return last + ", " + initials;
+}
+function crAuthorToApa(a) {
+  if (a.family) {
+    const ini = (a.given || "").trim().split(/\s+/).filter(Boolean).map(p => p[0].toUpperCase() + ".").join(" ");
+    return ini ? a.family + ", " + ini : a.family;
+  }
+  return nameToApa(a.name || "");
+}
+function joinApaAuthors(list) {
+  if (!list.length) return "";
+  if (list.length === 1) return list[0];
+  if (list.length === 2) return list[0] + ", & " + list[1];
+  return list.slice(0, -1).join(", ") + ", & " + list[list.length - 1];
+}
+function fmtPages(p) {
+  return p ? String(p).replace(/(\d)\s*-\s*(\d)/, "$1–$2") : "";
+}
+function apaCitation(r) {
+  const auth = r.authorsApa && r.authorsApa.length ? joinApaAuthors(r.authorsApa) : (r.authors[0] || "Anonim");
+  let s = auth + " (" + (r.year || "n.d.") + "). " + (r.title || "").replace(/\.+$/, "") + ".";
+  const isBook = BOOK_TYPES.includes(r.typeLabel);
+  if (isBook) {
+    if (r.typeLabel === "Bab Buku" && r.venue) {
+      s += " Dalam " + r.venue;
+      if (r.pages) s += " (hlm. " + fmtPages(r.pages) + ")";
+      s += ".";
+    }
+    if (r.publisher) s += " " + r.publisher + ".";
+    else if (r.typeLabel === "Buku" && r.venue) s += " " + r.venue + ".";
+  } else {
+    if (r.venue) {
+      s += " " + r.venue;
+      if (r.volume) {
+        s += ", " + r.volume;
+        if (r.issue) s += "(" + r.issue + ")";
+      }
+      if (r.pages) s += ", " + fmtPages(r.pages);
+      s += ".";
+    } else if (r.publisher) {
+      s += " " + r.publisher + ".";
+    }
+  }
+  if (r.doi) s += " https://doi.org/" + r.doi;
+  else if (r.url) s += " " + r.url;
+  return s;
+}
+function normalizeOA(w) {
+  const loc = w.primary_location || {};
+  const src = loc.source || {};
+  const bib = w.biblio || {};
+  const pages = bib.first_page ? (bib.last_page && bib.last_page !== bib.first_page
+    ? bib.first_page + "-" + bib.last_page : bib.first_page) : "";
+  const doi = w.doi ? w.doi.replace(/^https?:\/\/doi\.org\//, "") : "";
+  let pdf = (w.open_access && w.open_access.oa_url) || loc.pdf_url || "";
+  if (!pdf && Array.isArray(w.locations)) {
+    const l = w.locations.find(x => x.pdf_url);
+    if (l) pdf = l.pdf_url;
+  }
+  const authors = (w.authorships || []).map(a => (a.author || {}).display_name).filter(Boolean);
+  return {
+    source: "OpenAlex",
+    title: w.display_name || "",
+    authors: authors,
+    authorsApa: authors.map(nameToApa),
+    year: w.publication_year || null,
+    venue: src.display_name || "",
+    publisher: "",
+    volume: bib.volume || "", issue: bib.issue || "", pages: pages,
+    doi: doi,
+    url: doi ? "https://doi.org/" + doi : (loc.landing_page_url || w.id || ""),
+    pdf: pdf,
+    cited: w.cited_by_count || 0,
+    abstract: reconstructAbstract(w.abstract_inverted_index),
+    typeLabel: TYPE_LABEL_OA[w.type] || "Lainnya"
+  };
+}
+function normalizeCR(w) {
+  const dp = (w.published && w.published["date-parts"]) || (w.issued && w.issued["date-parts"]) ||
+             (w.created && w.created["date-parts"]) || [[null]];
+  const authors = (w.author || []).map(a => a.name || [a.given, a.family].filter(Boolean).join(" ")).filter(Boolean);
+  let pdf = "";
+  if (Array.isArray(w.link)) {
+    const l = w.link.find(x => x["content-type"] === "application/pdf");
+    if (l) pdf = l.URL;
+  }
+  return {
+    source: "Crossref",
+    title: (w.title && w.title[0]) || "",
+    authors: authors,
+    authorsApa: (w.author || []).map(crAuthorToApa).filter(Boolean),
+    year: (dp[0] && dp[0][0]) || null,
+    venue: (w["container-title"] && w["container-title"][0]) || "",
+    publisher: w.publisher || "",
+    volume: w.volume || "", issue: w.issue || "", pages: w.page || "",
+    doi: w.DOI || "",
+    url: w.DOI ? "https://doi.org/" + w.DOI : (w.URL || ""),
+    pdf: pdf,
+    cited: w["is-referenced-by-count"] || 0,
+    abstract: (w.abstract || "").replace(/<[^>]+>/g, ""),
+    typeLabel: TYPE_LABEL_CR[w.type] || "Lainnya"
+  };
+}
+function mergeResults(oaList, crList) {
+  const map = new Map();
+  const order = [];
+  function add(r) {
+    if (!r.title) return;
+    const k = dedupeKey(r);
+    if (!map.has(k)) { map.set(k, r); order.push(k); return; }
+    const ex = map.get(k);
+    // lengkapi field yang kosong dari duplikat
+    for (const f of ["venue", "publisher", "volume", "issue", "pages", "pdf", "abstract", "doi", "url"]) {
+      if (!ex[f] && r[f]) ex[f] = r[f];
+    }
+    if (!ex.year && r.year) ex.year = r.year;
+    if ((r.cited || 0) > (ex.cited || 0)) ex.cited = r.cited;
+    if (!ex.authorsApa.length && r.authorsApa.length) { ex.authorsApa = r.authorsApa; ex.authors = r.authors; }
+    if (!ex.source.includes(r.source)) ex.source += "+" + r.source;
+  }
+  oaList.forEach(add);
+  crList.forEach(add);
+  return order.map(k => map.get(k));
+}
+/*__PURE_END__*/
+
+// ---------- UI ----------
+const $ = id => document.getElementById(id);
 let lastResults = [];
 
-function $(id){ return document.getElementById(id); }
-function esc(s){
-  return String(s==null?"":s)
-    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
-    .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+function buildOAUrl(q, o) {
+  const p = new URLSearchParams({ search: q, "per-page": 25 });
+  const f = [];
+  const tf = TYPE_FILTER[o.type].oa;
+  if (tf) f.push("type:" + tf);
+  if (o.lang !== "all") f.push("language:" + o.lang);
+  if (o.from && o.to) f.push("publication_year:" + o.from + "-" + o.to);
+  else if (o.from) f.push("from_publication_date:" + o.from + "-01-01");
+  else if (o.to) f.push("to_publication_date:" + o.to + "-12-31");
+  if (f.length) p.set("filter", f.join(","));
+  if (o.sort === "newest") p.set("sort", "publication_date:desc");
+  else if (o.sort === "cited") p.set("sort", "cited_by_count:desc");
+  return "https://api.openalex.org/works?" + p.toString();
 }
-function setStatus(html, isError){
-  const st = $("status");
-  st.innerHTML = html;
-  st.className = isError ? "error" : "";
-  st.style.display = "block";
-}
-function hideStatus(){ $("status").style.display = "none"; }
-function fetchTimeout(url, ms, opts){
-  const c = new AbortController();
-  const t = setTimeout(()=>c.abort(), ms||20000);
-  return fetch(url, Object.assign({signal:c.signal}, opts||{}))
-    .finally(()=>clearTimeout(t));
-}
-function domainOf(u){
-  try{ return new URL(u).hostname.replace(/^www\./,""); }catch(e){ return ""; }
-}
-
-const PROXIES = [
-  u => "https://api.allorigins.win/raw?url=" + encodeURIComponent(u),
-  u => "https://corsproxy.io/?url=" + encodeURIComponent(u),
-  u => "https://api.codetabs.com/v1/proxy?quest=" + encodeURIComponent(u)
-];
-
-// Melonggarkan query pencarian agar mengambil artikel sejenis / turunan keyword
-function expandQuery(q) {
-  q = q.trim();
-  // Jika berupa kalimat panjang atau pertanyaan, ambil kata kunci penting dan tambahkan sinonim/kata terkait
-  const stopwords = ['apa', 'saja', 'bagaimana', 'mengapa', 'untuk', 'dan', 'yang', 'di', 'ke', 'dari', 'pada', 'adalah'];
-  let words = q.toLowerCase().split(/\s+/).filter(w => !stopwords.includes(w) && w.length > 2);
-  
-  if (words.length === 0) return q;
-  
-  // Gabungkan kembali kata kunci inti dan tambahkan opsi pencarian luas (mengambil artikel/pembahasan terkait)
-  return words.join(" ") + " artikel penjelasan referensi";
+function buildCRUrl(q, o) {
+  const p = new URLSearchParams({ query: q, rows: 25 });
+  const f = [];
+  const tf = TYPE_FILTER[o.type].cr;
+  if (tf) f.push("type:" + tf);
+  if (o.from) f.push("from-pub-date:" + o.from + "-01-01");
+  if (o.to) f.push("until-pub-date:" + o.to + "-12-31");
+  if (f.length) p.set("filter", f.join(","));
+  if (o.sort === "newest") { p.set("sort", "published"); p.set("order", "desc"); }
+  else if (o.sort === "cited") { p.set("sort", "is-referenced-by-count"); p.set("order", "desc"); }
+  return "https://api.crossref.org/works?" + p.toString();
 }
 
-function parseDDG(html){
-  const doc = new DOMParser().parseFromString(html, "text/html");
-  const out = [];
-  const anchors = doc.querySelectorAll("a.result__a");
-  anchors.forEach(a=>{
-    if(out.length >= MAX_RESULTS) return;
-    const href = a.getAttribute("href") || "";
-    let url = "";
-    const m = href.match(/[?&]uddg=([^&]+)/);
-    if(m){ try{ url = decodeURIComponent(m[1]); }catch(e){ url=""; } }
-    else if(/^https?:\/\//i.test(href)){ url = href; }
-    if(!url || /duckduckgo\.com/i.test(url)) return;
-    if(out.some(r=>r.url===url)) return;
-    const title = (a.textContent||"").trim();
-    if(!title) return;
-    let snippet = "";
-    const box = a.closest(".result");
-    if(box){
-      const sn = box.querySelector(".result__snippet");
-      if(sn) snippet = (sn.textContent||"").trim();
-    }
-    out.push({title:title, url:url, snippet:snippet});
-  });
-  return out;
-}
-
-async function searchDDG(query){
-  const relaxedQuery = expandQuery(query);
-  const ddgUrl = "https://html.duckduckgo.com/html/?q=" + encodeURIComponent(relaxedQuery) + "&kl=id-id";
-  let lastErr = null;
-  for(const px of PROXIES){
-    try{
-      const resp = await fetchTimeout(px(ddgUrl), 22000);
-      if(!resp.ok) throw new Error("HTTP " + resp.status);
-      const html = await resp.text();
-      const results = parseDDG(html);
-      if(results.length) return {results:results, source:"Web Relevan"};
-      lastErr = new Error("Tidak ada hasil dari jalur ini.");
-    }catch(e){ lastErr = e; }
-  }
-  throw lastErr || "Semua jalur pencarian gagal.";
-}
-
-async function doSearch(){
-  const q = $("keyword").value.trim();
-  if(!q){ setStatus("⚠ Masukkan topik atau kata kunci terlebih dahulu.", true); $("keyword").focus(); return; }
+async function cari() {
+  const q = $("q").value.trim();
+  if (!q) { $("status").textContent = "⚠️ Isi dulu kata kuncinya."; $("q").focus(); return; }
+  const useOA = $("srcOA").checked, useCR = $("srcCR").checked;
+  if (!useOA && !useCR) { $("status").textContent = "⚠️ Pilih minimal satu sumber."; return; }
+  const o = {
+    type: $("fType").value, lang: $("fLang").value, sort: $("fSort").value,
+    from: $("fFrom").value, to: $("fTo").value
+  };
   const btn = $("btnCari");
-  btn.disabled = true; btn.textContent = "Mencari...";
-  $("resultCard").style.display = "none";
-  setStatus('<span class="spin"></span>Sedang mencari artikel dan referensi terkait...');
+  btn.disabled = true; btn.textContent = "⏳ Mencari...";
+  $("status").textContent = "Mencari di " + [useOA && "OpenAlex", useCR && "Crossref"].filter(Boolean).join(" & ") + "...";
+  $("actions").style.display = "none";
+  $("note").style.display = o.lang !== "all" && useCR ? "block" : "none";
+  $("results").innerHTML = "";
 
-  try{
-    const data = await searchDDG(q);
-    lastResults = data.results.slice(0, MAX_RESULTS);
-    renderResults(lastResults, data.source);
-  }catch(e){
-    const msg = (e && e.message) ? e.message : "Terjadi kesalahan koneksi atau pencarian.";
-    setStatus("❌ " + esc(msg) + "<br><br><span style='font-size:.85rem'>Tips: Coba gunakan kata kunci lain yang lebih umum atau periksa koneksi internet Anda.</span>", true);
-  }finally{
-    btn.disabled = false; btn.textContent = "Cari Artikel";
+  const jobs = [];
+  if (useOA) jobs.push(fetch(buildOAUrl(q, o)).then(r => { if (!r.ok) throw new Error("OA " + r.status); return r.json(); })
+    .then(d => ({ src: "oa", items: (d.results || []).map(normalizeOA) })));
+  if (useCR) jobs.push(fetch(buildCRUrl(q, o)).then(r => { if (!r.ok) throw new Error("CR " + r.status); return r.json(); })
+    .then(d => ({ src: "cr", items: ((d.message || {}).items || []).map(normalizeCR) })));
+
+  const settled = await Promise.allSettled(jobs);
+  let oaList = [], crList = [], errs = [];
+  for (const s of settled) {
+    if (s.status === "fulfilled") { if (s.value.src === "oa") oaList = s.value.items; else crList = s.value.items; }
+    else errs.push(s.reason.message);
   }
+  let merged = mergeResults(oaList, crList);
+  if (o.sort === "newest") merged.sort((a, b) => (b.year || 0) - (a.year || 0));
+  else if (o.sort === "cited") merged.sort((a, b) => (b.cited || 0) - (a.cited || 0));
+  lastResults = merged.slice(0, 25);
+
+  btn.disabled = false; btn.textContent = "🔍 Cari";
+  if (!lastResults.length) {
+    $("status").textContent = errs.length
+      ? "❌ Gagal mengambil data (" + errs.join(", ") + "). Cek koneksi internet lalu coba lagi."
+      : "Tidak ada hasil. Coba kata kunci yang lebih umum atau longgarkan filter.";
+    return;
+  }
+  $("status").textContent = "✅ Ditemukan " + lastResults.length + " referensi" +
+    (errs.length ? " (sebagian sumber gagal: " + errs.join(", ") + ")" : "") + ":";
+  $("actions").style.display = "flex";
+  render(lastResults);
 }
 
-function renderResults(results, source){
-  hideStatus();
-  $("resultCard").style.display = "block";
-  $("srcBadge").textContent = results.length + " Artikel Ditemukan";
+function badgeClass(label) {
+  if (label === "Jurnal") return "badge jurnal";
+  if (BOOK_TYPES.includes(label)) return "badge buku";
+  if (label === "Prosiding") return "badge prosiding";
+  if (label === "Tesis/Disertasi") return "badge tesis";
+  return "badge";
+}
+function render(list) {
   const box = $("results");
   box.innerHTML = "";
-  results.forEach((r,i)=>{
-    const d = domainOf(r.url);
-    const idBadge = /\.id(\.|$)/i.test(d) ? '<span class="badge id">.id</span>' : "";
+  list.forEach((r, i) => {
     const div = document.createElement("div");
-    div.className = "result";
-    div.innerHTML =
-      '<span class="num">' + (i+1) + '.</span>' +
-      '<a class="title" href="' + esc(r.url) + '" target="_blank" rel="noopener">' + esc(r.title) + '</a>' + idBadge +
-      '<div class="url">' + esc(r.url) + '</div>' +
-      (r.snippet ? '<div class="snippet">' + esc(r.snippet) + '</div>' : '');
+    div.className = "item";
+
+    const head = document.createElement("div");
+    const num = document.createElement("span");
+    num.className = "num"; num.textContent = (i + 1) + ". ";
+    const a = document.createElement("a");
+    a.className = "title"; a.href = r.url; a.target = "_blank"; a.rel = "noopener";
+    a.textContent = r.title;
+    head.appendChild(num); head.appendChild(a);
+    div.appendChild(head);
+
+    const badges = document.createElement("div");
+    badges.className = "badges";
+    const b1 = document.createElement("span");
+    b1.className = badgeClass(r.typeLabel); b1.textContent = r.typeLabel;
+    badges.appendChild(b1);
+    if (r.pdf) {
+      const bp = document.createElement("span");
+      bp.className = "badge pdf"; bp.textContent = "📄 PDF tersedia";
+      badges.appendChild(bp);
+    }
+    if (r.cited) {
+      const bc = document.createElement("span");
+      bc.className = "badge"; bc.textContent = "Disitasi " + r.cited + "×";
+      badges.appendChild(bc);
+    }
+    const bs = document.createElement("span");
+    bs.className = "badge src"; bs.textContent = r.source;
+    badges.appendChild(bs);
+    div.appendChild(badges);
+
+    const meta = document.createElement("div");
+    meta.className = "meta";
+    const au = r.authors.length > 3 ? r.authors.slice(0, 3).join(", ") + ", dkk." : r.authors.join(", ");
+    meta.textContent = [au, r.year, r.venue || r.publisher].filter(Boolean).join(" • ") ||
+      "Metadata terbatas — buka link untuk detail.";
+    div.appendChild(meta);
+
+    if (r.abstract) {
+      const ab = document.createElement("div");
+      ab.className = "abs";
+      ab.textContent = r.abstract.length > 240 ? r.abstract.slice(0, 240).trim() + "…" : r.abstract;
+      div.appendChild(ab);
+    }
+
+    if (r.doi) {
+      const dl = document.createElement("div");
+      dl.className = "doi";
+      dl.appendChild(document.createTextNode("DOI: "));
+      const da = document.createElement("a");
+      da.href = "https://doi.org/" + r.doi; da.target = "_blank"; da.rel = "noopener";
+      da.textContent = r.doi;
+      dl.appendChild(da);
+      div.appendChild(dl);
+    }
+
+    const row2 = document.createElement("div");
+    row2.className = "row2";
+    const bc2 = document.createElement("button");
+    bc2.className = "btn-cite"; bc2.textContent = "📚 Salin Sitasi APA";
+    bc2.onclick = () => copyText(apaCitation(r), bc2);
+    row2.appendChild(bc2);
+    if (r.pdf) {
+      const ap = document.createElement("a");
+      ap.className = "btn-pdf"; ap.href = r.pdf; ap.target = "_blank"; ap.rel = "noopener";
+      ap.textContent = "⬇ Buka PDF";
+      row2.appendChild(ap);
+    }
+    const ao = document.createElement("a");
+    ao.className = "btn-open"; ao.href = r.url; ao.target = "_blank"; ao.rel = "noopener";
+    ao.textContent = "🔗 Buka Sumber";
+    row2.appendChild(ao);
+    div.appendChild(row2);
+
     box.appendChild(div);
   });
-  window.scrollTo({top:$("resultCard").offsetTop-10, behavior:"smooth"});
 }
-
-function copyAll(){
-  if(!lastResults.length) return;
-  const txt = lastResults.map((r,i)=>(i+1)+". "+r.url).join("\n");
-  const done = ()=>{ const b=event.target; const t=b.textContent; b.textContent="✓ Tersalin!"; setTimeout(()=>b.textContent=t,1800); };
-  if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(txt).then(done).catch(()=>fallbackCopy(txt, done));
-  }else{ fallbackCopy(txt, done); }
+async function copyText(txt, btn) {
+  try { await navigator.clipboard.writeText(txt); }
+  catch (e) {
+    const ta = document.createElement("textarea");
+    ta.value = txt; document.body.appendChild(ta); ta.select();
+    document.execCommand("copy"); ta.remove();
+  }
+  if (btn) {
+    const old = btn.textContent;
+    btn.textContent = "✅ Tersalin!"; btn.classList.add("copied");
+    setTimeout(() => { btn.textContent = old; btn.classList.remove("copied"); }, 1500);
+  }
 }
-function fallbackCopy(txt, done){
-  const ta = document.createElement("textarea");
-  ta.value = txt; ta.style.position="fixed"; ta.style.opacity="0";
-  document.body.appendChild(ta); ta.select();
-  try{ document.execCommand("copy"); done(); }catch(e){}
-  document.body.removeChild(ta);
-}
-
-$("keyword").addEventListener("keydown", e=>{ if(e.key==="Enter") doSearch(); });
+$("btnCari").onclick = cari;
+$("q").addEventListener("keydown", e => { if (e.key === "Enter") cari(); });
+$("btnCopyLinks").onclick = e => copyText(
+  lastResults.map((r, i) => (i + 1) + ". " + r.url).join("\n"), e.currentTarget);
+$("btnCopyCites").onclick = e => copyText(
+  [...lastResults].sort((a, b) => apaCitation(a).localeCompare(apaCitation(b)))
+    .map(apaCitation).join("\n\n"), e.currentTarget);
 </script>
 </body>
 </html>
