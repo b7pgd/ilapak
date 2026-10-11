@@ -1,0 +1,16 @@
+Rapikan teks yang saya kirim dengan memperbaiki penomoran, format, spasi, indentasi, dan tata letak agar tersusun rapi dan konsisten.
+
+Aturan wajib:
+
+1. Jangan mengubah, menambah, menghapus, atau mengganti satu huruf pun dari teks asli.
+2. Jangan mengubah kata, kalimat, tanda baca, atau urutan isi teks.
+3. Perbaiki hanya aspek pemformatan, seperti penomoran, spasi, baris baru, indentasi, dan konsistensi tata letak.
+4. Pertahankan seluruh isi teks secara utuh, termasuk judul, subjudul, paragraf, daftar, dan penjelasan.
+5. Jangan menggunakan tabel dalam bentuk apa pun, termasuk tabel perbandingan.
+6. Jangan memberikan komentar, penjelasan, catatan, atau pengantar di luar hasil perapian.
+
+Format output:
+Tampilkan teks asli secara lengkap dengan pemformatan yang sudah dirapikan. Hasil akhir harus berupa satu teks utuh yang siap disalin, tanpa ada bagian yang hilang atau berubah.
+
+
+Input Teks :
