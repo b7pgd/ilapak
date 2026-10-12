@@ -10,7 +10,7 @@
 <body class="bg-blue-50 min-h-screen antialiased p-4 sm:p-6">
 
     <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
-        
+
         <div class="bg-white rounded-2xl shadow-sm border border-blue-100 p-5 flex flex-col gap-4 h-fit">
             <div class="border-b border-gray-100 pb-3">
                 <h1 class="text-xl font-bold text-blue-600 flex items-center gap-2">
@@ -26,23 +26,26 @@
 
             <div>
                 <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Daftar Judul Menu (Pisah dengan koma)</label>
-                <textarea 
-                    id="bulk-labels" 
+                <textarea
+                    id="bulk-labels"
                     class="w-full h-28 p-3 text-gray-700 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-mono placeholder-gray-400"
                     placeholder="Facebook,&#10;YouTube,&#10;Google"></textarea>
             </div>
 
             <div>
                 <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Daftar Link Menu (Pisah dengan koma)</label>
-                <textarea 
-                    id="bulk-urls" 
+                <textarea
+                    id="bulk-urls"
                     class="w-full h-28 p-3 text-gray-700 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-mono placeholder-gray-400"
                     placeholder="facebook.com,&#10;youtube.com,&#10;google.com"></textarea>
             </div>
 
-            <div class="pt-2">
+            <div class="pt-2 flex flex-col gap-2">
                 <button id="btn-generate" class="w-full flex items-center justify-center gap-2 py-3 px-4 bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-medium rounded-xl shadow-md shadow-blue-100 transition-all text-sm">
                     <i data-lucide="cog" class="w-4 h-4"></i> Generate HTML
+                </button>
+                <button id="btn-open-load-modal" class="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-gray-100 hover:bg-gray-200 active:scale-98 text-gray-700 font-medium rounded-xl border border-gray-200 transition-all text-sm">
+                    <i data-lucide="upload" class="w-4 h-4"></i> Load HTML (Reverse)
                 </button>
             </div>
         </div>
@@ -64,14 +67,39 @@
             </div>
 
             <div class="flex-1 flex flex-col">
-                <textarea 
-                    id="output-code" 
+                <textarea
+                    id="output-code"
                     readonly
                     class="w-full flex-1 min-h-[350px] p-4 font-mono text-xs text-gray-800 bg-gray-900 rounded-xl border border-gray-800 focus:outline-none resize-none text-white"
                     placeholder="Klik 'Generate HTML' untuk melihat hasil kode di sini..."></textarea>
             </div>
         </div>
 
+    </div>
+
+    <!-- Modal Pop-up Load HTML -->
+    <div id="load-modal" class="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-2xl shadow-xl border border-gray-100 max-w-lg w-full p-6 flex flex-col gap-4">
+            <div class="flex justify-between items-center border-b border-gray-100 pb-3">
+                <h3 class="text-base font-bold text-gray-800 flex items-center gap-2">
+                    <i data-lucide="file-code" class="w-5 h-5 text-blue-600"></i> Load & Parse HTML
+                </h3>
+                <button id="btn-close-modal" class="text-gray-400 hover:text-gray-600 p-1 rounded-lg">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Tempel Kode HTML Di Sini</label>
+                <textarea
+                    id="input-load-html"
+                    class="w-full h-48 p-3 text-gray-800 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-mono placeholder-gray-400"
+                    placeholder="Paste kode HTML hasil generate sebelumnya..."></textarea>
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button id="btn-cancel-load" class="py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl text-sm transition-all">Batal</button>
+                <button id="btn-execute-load" class="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl text-sm transition-all shadow-md shadow-blue-100">Load & Reverse</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -85,10 +113,18 @@
         const bulkUrls = document.getElementById('bulk-urls');
         const outputCode = document.getElementById('output-code');
 
+        // Elemen Modal
+        const loadModal = document.getElementById('load-modal');
+        const btnOpenLoadModal = document.getElementById('btn-open-load-modal');
+        const btnCloseModal = document.getElementById('btn-close-modal');
+        const btnCancelLoad = document.getElementById('btn-cancel-load');
+        const btnExecuteLoad = document.getElementById('btn-execute-load');
+        const inputLoadHtml = document.getElementById('input-load-html');
+
         // Fungsi Membuat Template HTML Berdasarkan Parsing Koma Massal
         btnGenerate.addEventListener('click', () => {
             const titleValue = mainTitleInput.value.trim() || "Menu Utama";
-            
+
             // Memecah teks berdasarkan koma dan membersihkan spasi/baris baru di sekitarnya
             const rawLabels = bulkLabels.value.split(',');
             const rawUrls = bulkUrls.value.split(',');
@@ -105,7 +141,7 @@
 
                 const isExternal = url.startsWith('http') && (url.includes('google.com') || url.includes('drive'));
                 const targetAttribute = isExternal ? ' target="_blank"' : '';
-                
+
                 linksHtmlMarkup += `      <a href="${url}"${targetAttribute}>${label}</a>\n`;
             }
 
@@ -221,11 +257,11 @@ ${linksHtmlMarkup || '      '}    </div>
         btnDownload.addEventListener('click', () => {
             const code = outputCode.value.trim();
             if (!code) return;
-            
+
             const titleValue = mainTitleInput.value.trim() || "menu";
             const blob = new Blob([code], { type: "text/html;charset=utf-8" });
             const url = URL.createObjectURL(blob);
-            
+
             const a = document.createElement("a");
             a.href = url;
             a.download = `${titleValue.toLowerCase().replace(/\s+/g, '_')}.html`;
@@ -234,7 +270,76 @@ ${linksHtmlMarkup || '      '}    </div>
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
         });
+
+        // Kontrol Modal Load HTML
+        btnOpenLoadModal.addEventListener('click', () => {
+            inputLoadHtml.value = '';
+            loadModal.classList.remove('hidden');
+        });
+
+        const closeModal = () => {
+            loadModal.classList.add('hidden');
+        };
+
+        btnCloseModal.addEventListener('click', closeModal);
+        btnCancelLoad.addEventListener('click', closeModal);
+        loadModal.addEventListener('click', (e) => {
+            if (e.target === loadModal) closeModal();
+        });
+
+        // Logika Reverse HTML (Parsing kembali ke form input)
+        btnExecuteLoad.addEventListener('click', () => {
+            const htmlContent = inputLoadHtml.value.trim();
+            if (!htmlContent) {
+                alert('Silakan masukkan kode HTML terlebih dahulu!');
+                return;
+            }
+
+            try {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(htmlContent, 'text/html');
+
+                // 1. Ambil Judul Utama dari tag <title> atau <h1> pertama di dalam container
+                let title = '';
+                const titleTag = doc.querySelector('title');
+                const h1Tag = doc.querySelector('.container h1, h1');
+                
+                if (titleTag && titleTag.textContent.trim()) {
+                    title = titleTag.textContent.trim();
+                } else if (h1Tag && h1Tag.textContent.trim()) {
+                    title = h1Tag.textContent.trim();
+                }
+
+                if (title) {
+                    mainTitleInput.value = title;
+                }
+
+                // 2. Ambil semua elemen tag <a> di dalam kontainer menu
+                const anchorTags = doc.querySelectorAll('.menu a, a');
+                const labels = [];
+                const urls = [];
+
+                anchorTags.forEach(a => {
+                    const href = a.getAttribute('href') || '';
+                    const label = a.textContent.trim() || '';
+                    if (href && label) {
+                        urls.push(href);
+                        labels.push(label);
+                    }
+                });
+
+                // Masukkan kembali ke textarea dengan format pemisah koma
+                bulkLabels.value = labels.join(',\n');
+                bulkUrls.value = urls.join(',\n');
+
+                // Tutup modal dan masukkan juga ke output code
+                closeModal();
+                outputCode.value = htmlContent;
+            } catch (err) {
+                console.error(err);
+                alert('Gagal memparsing kode HTML. Pastikan format HTML valid.');
+            }
+        });
     </script>
 </body>
 </html>
-
