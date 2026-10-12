@@ -3,8 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pencari Referensi Akademik v2 — Jurnal, Buku, Prosiding, Tesis + Ekstrak PDF</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<title>Pencari Referensi Akademik — Jurnal, Buku, Prosiding, Tesis</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family: Arial, Helvetica, sans-serif; background:#f0f2f5; color:#1a1a1a;
@@ -44,11 +43,6 @@
   #pager button { padding:8px 18px; font-size:14px; font-weight:bold; border-radius:7px; cursor:pointer;
              border:2px solid #1565C0; background:#fff; color:#1565C0; }
   #pager button:disabled { border-color:#b0bec5; color:#b0bec5; cursor:default; background:#fff; }
-  #pageInfo { font-size:14px; font-weight:bold; color:#444; }
-  #tabs { margin-top:18px; display:none; gap:8px; }
-  #tabs button { flex:1; padding:12px; font-size:15.5px; font-weight:bold; border-radius:10px 10px 0 0;
-             border:2px solid #c9ced6; border-bottom:none; background:#ECEFF1; color:#546E7A; cursor:pointer; }
-  #tabs button.active { background:#fff; color:#0D47A1; }
   .view { background:#fff; border:2px solid #c9ced6; border-radius:0 0 12px 12px; padding:16px;
           box-shadow:0 2px 12px rgba(0,0,0,.08); }
   .view.plain { border:none; background:transparent; box-shadow:none; padding:0; }
@@ -87,61 +81,91 @@
   .btn-cite:hover { background:#0D47A1; }
   .btn-open { background:#fff; color:#1565C0; border:1.5px solid #1565C0 !important; }
   .btn-pdf { background:#2E7D32; color:#fff; border:none; }
-  .btn-meta { background:#607D8B; color:#fff; border:none; }
-  .btn-meta:hover { background:#455A64; }
   .copied { background:#2E7D32 !important; }
-  
-  /* Modal Pop-up Metadata Bibliografi */
-  .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5);
-                   display:flex; justify-content:center; align-items:center; z-index:1000; padding:12px; }
-  .modal-content { background:#fff; border-radius:12px; width:100%; max-width:600px; max-height:90vh;
-                   display:flex; flex-direction:column; box-shadow:0 4px 20px rgba(0,0,0,0.15); overflow:hidden; }
-  .modal-header { padding:16px 20px; border-bottom:1px solid #e0e0e0; display:flex; justify-content:space-between; align-items:center; background:#f8f9fa; }
-  .modal-header h3 { font-size:18px; color:#1565C0; }
-  .modal-close { background:transparent; border:none; font-size:20px; font-weight:bold; color:#666; cursor:pointer; }
-  .modal-body { padding:20px; overflow-y:auto; font-size:14px; line-height:1.6; color:#333; }
-  .meta-table { width:100%; border-collapse:collapse; margin-bottom:16px; }
-  .meta-table th, .meta-table td { text-align:left; padding:8px 10px; border-bottom:1px solid #eee; vertical-align:top; }
-  .meta-table th { width:30%; color:#555; font-weight:bold; background:#fdfdfd; }
-  .meta-table td { width:70%; color:#1a1a1a; }
-  .modal-footer { padding:14px 20px; border-top:1px solid #e0e0e0; background:#f8f9fa; display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
-  .modal-footer button { padding:9px 16px; font-size:14px; font-weight:bold; border-radius:7px; cursor:pointer; border:none; }
-  .btn-make-bib { background:#2E7D32; color:#fff; }
-  .btn-make-bib:hover { background:#1B5E20; }
-  .btn-copy-bib { background:#1565C0; color:#fff; }
-  .btn-copy-bib:hover { background:#0D47A1; }
-  .bib-preview-box { margin-top:12px; background:#F5F7FA; border:1.5px solid #dcdde1; border-radius:8px; padding:12px; font-size:13.5px; display:none; }
-  .bib-preview-box b { color:#1565C0; display:block; margin-bottom:4px; }
-
-  #finderBar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:12px; }
-  #finderStatus { font-size:14px; color:#555; flex:1 1 260px; line-height:1.5; }
-  #btnStopFinder { padding:8px 16px; font-size:13.5px; font-weight:bold; border-radius:7px; cursor:pointer;
-             border:2px solid #C62828; background:#fff; color:#C62828; display:none; }
-  #btnCopyFinder { padding:8px 16px; font-size:13.5px; font-weight:bold; border-radius:7px; cursor:pointer;
-             border:2px solid #1565C0; background:#fff; color:#1565C0; display:none; }
   .empty { font-size:14px; color:#888; text-align:center; padding:22px 10px; line-height:1.6; }
   footer { margin-top:22px; font-size:12.5px; color:#999; text-align:center; line-height:1.6; }
+</style>
+<style>
+  /* ===== Tema putih-biru + pagination nomor + modal + anti melebar ===== */
+  body { background: linear-gradient(180deg, #D6E9F8 0, #f0f2f5 260px) fixed, #f0f2f5; }
+  .hero { background: linear-gradient(135deg, #0D47A1 0%, #1565C0 55%, #42A5F5 100%);
+          border-radius: 16px; padding: 26px 20px; text-align: center;
+          box-shadow: 0 8px 24px rgba(13,71,161,.35); margin-bottom: 18px; }
+  .hero h1 { color: #fff; font-size: 25px; margin: 0; text-shadow: 0 1px 3px rgba(0,0,0,.25); }
+  .card { border-radius: 16px; box-shadow: 0 4px 18px rgba(13,71,161,.12); }
+  #btnCari { background: linear-gradient(135deg, #1565C0, #1E88E5); border-radius: 10px;
+             box-shadow: 0 3px 10px rgba(21,101,192,.35); }
+  #btnCari:disabled { background: #90a4ae; box-shadow: none; }
+  .item { border-radius: 14px; }
+  #pageNums { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+  #pager .pnum { min-width: 38px; padding: 8px 10px; font-size: 14px; font-weight: bold; border-radius: 7px;
+                 cursor: pointer; border: 2px solid #1565C0; background: #fff; color: #1565C0; }
+  #pager .pnum:hover { background: #E3F2FD; }
+  #pager .pnum.active { background: #1565C0; color: #fff; cursor: default; }
+  .btn-meta { background: #455A64; color: #fff; border: none; }
+  .btn-meta:hover { background: #37474F; }
+  .modal-overlay { position: fixed; inset: 0; background: rgba(13,41,71,.55); display: flex;
+                   justify-content: center; align-items: center; z-index: 1000; padding: 12px; }
+  .modal-content { background: #fff; border-radius: 14px; width: 100%; max-width: 600px; max-height: 90vh;
+                   display: flex; flex-direction: column; box-shadow: 0 10px 34px rgba(0,0,0,.3); overflow: hidden; }
+  .modal-header { padding: 15px 20px; border-bottom: 1px solid #e0e0e0; display: flex;
+                  justify-content: space-between; align-items: center;
+                  background: linear-gradient(135deg, #E3F2FD, #fff); }
+  .modal-header h3 { font-size: 18px; color: #0D47A1; margin: 0; }
+  .modal-close { background: transparent; border: none; font-size: 22px; font-weight: bold;
+                 color: #666; cursor: pointer; line-height: 1; }
+  .modal-body { padding: 18px 20px; overflow-y: auto; font-size: 14px; line-height: 1.6; color: #333; }
+  .meta-table { width: 100%; border-collapse: collapse; }
+  .meta-table th, .meta-table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #eee; vertical-align: top; }
+  .meta-table th { width: 30%; color: #546E7A; font-weight: bold; background: #FAFCFE; }
+  .meta-table td { width: 70%; color: #1a1a1a; word-break: break-word; }
+  .bib-box { margin-top: 14px; background: #F5F7FA; border: 1.5px solid #d6e4f0; border-radius: 8px;
+             padding: 12px; font-size: 13.5px; line-height: 1.6; }
+  .bib-box b { color: #1565C0; display: block; margin-bottom: 4px; }
+  .modal-footer { padding: 13px 20px; border-top: 1px solid #e0e0e0; background: #f8f9fa;
+                  display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+  .modal-footer button { padding: 9px 16px; font-size: 14px; font-weight: bold; border-radius: 7px;
+                          cursor: pointer; border: none; }
+  .btn-copy-bib { background: #1565C0; color: #fff; }
+  .btn-copy-bib:hover { background: #0D47A1; }
+  .btn-close-modal { background: #ECEFF1; color: #37474F; }
+  .btn-close-modal:hover { background: #CFD8DC; }
+  /* anti melebar: layout dikunci selebar layar */
+  html { -webkit-text-size-adjust: 100%; }
+  html, body { overflow-x: hidden; }
+  .wrap, .card, .item { min-width: 0; }
+  .item a.title, .meta, .abs, .cite, #status, #note { overflow-wrap: anywhere; }
+  .meta-table { table-layout: fixed; }
+  .meta-table td, .bib-box { overflow-wrap: anywhere; }
+  .modal-body { overflow-x: hidden; }
+  .modal-content { min-width: 0; }
+  input, select { max-width: 100%; }
+  @media (max-width: 600px) {
+    body { padding: 14px 8px 32px; }
+    .hero { padding: 20px 12px; border-radius: 12px; }
+    .hero h1 { font-size: 20px; }
+    .card { padding: 14px; }
+    .item { padding: 12px 13px; }
+    #q { flex: 1 1 100%; }
+    #btnCari { width: 100%; }
+    .modal-body { padding: 14px; }
+    .meta-table th { width: 34%; }
+    .modal-footer button { flex: 1; }
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>🎓 Pencari Referensi Akademik v2</h1>
-  <p class="sub">Cari <b>jurnal, buku, prosiding, dan tesis</b> dari kata kunci — bukan artikel web.<br>
-  Aktifkan <b>Mode Combine</b> untuk mengekstrak potongan teks PDF yang relevan dengan pertanyaanmu.<br>
-  Sumber data: OpenAlex &amp; Crossref (gratis, tanpa API key).</p>
+  <div class="hero">
+    <h1>🎓 Pencari Referensi Akademik</h1>
+  </div>
 
   <div class="card">
     <div class="row">
       <input id="q" type="text" placeholder="Kata kunci, contoh: tata kelola TI" autocomplete="off">
       <button id="btnCari">🔍 Cari</button>
     </div>
-    <div class="combine-box">
-      <label class="combine-toggle">
-        <input type="checkbox" id="combineToggle">
-        <span><b>Mode Combine</b> — gabungkan dengan pertanyaan: ekstrak potongan teks dari PDF yang paling relevan dengan pertanyaanmu (tab Versi Finder).</span>
-      </label>
-      <input id="question" type="text" placeholder="Tulis pertanyaan tugasmu, contoh: cara penerapan tata kelola TI yang baik untuk perusahaan itu bagaimana?" disabled>
-    </div>
+    
     <div class="filters">
       <label>Jenis
         <select id="fType">
@@ -185,32 +209,20 @@
     <div id="note">Catatan: filter bahasa berlaku penuh di OpenAlex; Crossref tidak menyediakan filter bahasa, jadi sebagian hasil Crossref bisa berbahasa lain.</div>
     <div id="pager">
       <button id="btnPrev">← Sebelumnya</button>
-      <span id="pageInfo"></span>
+      <span id="pageNums"></span>
       <button id="btnNext">Berikutnya →</button>
     </div>
   </div>
 
-  <div id="tabs">
-    <button id="tabBiasa" class="active">📑 Versi Biasa</button>
-    <button id="tabFinder">🔎 Versi Finder <span id="finderCount"></span></button>
-  </div>
+  
 
   <div id="viewBiasa" class="view plain">
     <div id="results"></div>
   </div>
 
-  <div id="viewFinder" class="view" style="display:none">
-    <div id="finderBar">
-      <div id="finderStatus">Mesin Finder siap.</div>
-      <button id="btnCopyFinder">📋 Salin Semua Potongan + Sitasi</button>
-      <button id="btnStopFinder">⏹ Berhenti</button>
-    </div>
-    <div id="finderResults"></div>
-  </div>
+  
 
-  <footer>Sitasi dibuat otomatis format APA 7 — cek lagi ejaan nama &amp; kapitalisasi judul sebelum dimasukkan ke tugas.<br>
-  Versi Biasa: 25 referensi per halaman, maksimal 3 halaman. Versi Finder: memproses PDF satu per satu (maks 25 potongan),<br>
-  PDF yang tidak terbuka / hasil scan / tidak relevan otomatis dilewati.</footer>
+  
 </div>
 
 <script>
@@ -372,86 +384,16 @@ function mergeResults(oaList, crList) {
   return order.map(k => map.get(k));
 }
 
-// ---------- Mesin relevansi (Mode Combine) ----------
-const STOPWORDS = new Set(("yang dan di ke dari untuk dengan adalah itu ini atau pada dalam tidak cara bagaimana mengapa kenapa kapan dimana siapa apa apakah agar supaya oleh sebagai juga akan telah sudah dapat bisa harus lebih sangat antara melalui terhadap tentang menjadi memiliki ada yaitu yakni bahwa seperti ketika saat jika kalau maka namun tetapi tapi serta maupun ataupun pun lah kah nya sih dong kok ya saja hanya tersebut mereka kita kami saya anda dia ia mereka ke- di- " +
-  "the a an of to in on for and or is are was were how what why when where which who whom can could should would with by at from as it its this that these those be been being do does did").split(/\s+/));
-function tokenizeTerms(keyword, question) {
-  const text = ((keyword || "") + " " + (question || "")).toLowerCase();
-  const raw = text.match(/[a-z0-9]+/g) || [];
-  const terms = [];
-  for (const t of raw) {
-    if (STOPWORDS.has(t)) continue;
-    if (t.length < 2) continue;
-    if (!terms.includes(t)) terms.push(t);
-  }
-  const bigrams = [];
-  for (let i = 0; i + 1 < raw.length; i++) {
-    if (terms.includes(raw[i]) && terms.includes(raw[i + 1])) {
-      const b = raw[i] + " " + raw[i + 1];
-      if (!bigrams.includes(b)) bigrams.push(b);
-    }
-  }
-  return { terms: terms, bigrams: bigrams };
-}
-function splitSentences(text) {
-  const clean = (text || "").replace(/\s+/g, " ").trim();
-  if (!clean) return [];
-  return clean.split(/(?<=[.!?])\s+(?=[A-Z0-9"“(\[])/).map(s => s.trim()).filter(s => s.length > 25);
-}
-function scoreSentence(sent, terms, bigrams) {
-  const low = " " + sent.toLowerCase() + " ";
-  let distinct = 0, hits = 0;
-  for (const t of terms) {
-    const re = new RegExp("[^a-z0-9]" + t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "[^a-z0-9]", "g");
-    const m = low.match(re);
-    if (m) { distinct++; hits += m.length; }
-  }
-  let bScore = 0;
-  for (const b of bigrams) if (low.includes(" " + b + " ") || low.includes(" " + b)) bScore++;
-  return { distinct: distinct, score: distinct * 100 + hits * 3 + bScore * 40 };
-}
-function findBestExcerpt(pages, terms, bigrams) {
-  let best = null;
-  for (const pg of pages) {
-    const sents = splitSentences(pg.text);
-    for (let i = 0; i < sents.length; i++) {
-      const sc = scoreSentence(sents[i], terms, bigrams);
-      if (!best || sc.score > best.score) {
-        best = { score: sc.score, distinct: sc.distinct, page: pg.page, sents: sents, idx: i };
-      }
-    }
-  }
-  if (!best) return null;
-  const minDistinct = terms.length <= 1 ? 1 : 2;
-  if (best.distinct < minDistinct) return null;
-  const from = Math.max(0, best.idx - 1);
-  const to = Math.min(best.sents.length - 1, best.idx + 1);
-  let excerpt = best.sents.slice(from, to + 1).join(" ");
-  if (excerpt.length > 850) excerpt = excerpt.slice(0, 850).trim() + "…";
-  return {
-    page: best.page,
-    excerpt: excerpt,
-    matched: best.distinct,
-    relPct: terms.length ? Math.round((best.distinct / terms.length) * 100) : 0
-  };
-}
 /*__PURE_END__*/
 
 // ---------- UI & pencarian ----------
 const $ = id => document.getElementById(id);
-const MAX_PAGES = 3, PER_PAGE = 25, FINDER_TARGET = 25;
-let lastQuery = null;            
-let pageCache = new Map();       
+const MAX_PAGES = 6, PER_PAGE = 25;
+let lastQuery = null;            // {q, o, useOA, useCR}
+let pageCache = new Map();       // page -> {items, total}
 let currentPage = 1, maxPage = 1, currentItems = [];
-let combineOn = false;
-let searchGen = 0;               
-let finder = null;               
-let finderFoundAll = [];         
+let searchGen = 0;               // nomor generasi pencarian (membatalkan job lama)
 
-if (window.pdfjsLib) {
-  pdfjsLib.GlobalWorkerOptions.workerSrc =
-    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-}
 
 function buildOAUrl(q, o, page) {
   const p = new URLSearchParams({ search: q, "per-page": PER_PAGE, page: page });
@@ -510,30 +452,13 @@ async function cari() {
   if (!q) { $("status").textContent = "⚠️ Isi dulu kata kuncinya."; $("q").focus(); return; }
   const useOA = $("srcOA").checked, useCR = $("srcCR").checked;
   if (!useOA && !useCR) { $("status").textContent = "⚠️ Pilih minimal satu sumber."; return; }
-  combineOn = $("combineToggle").checked;
-  const question = $("question").value.trim();
-  if (combineOn && !question) {
-    $("status").textContent = "⚠️ Mode Combine aktif — isi dulu pertanyaannya.";
-    $("question").focus(); return;
-  }
   const o = { type: $("fType").value, lang: $("fLang").value, sort: $("fSort").value,
               from: $("fFrom").value, to: $("fTo").value };
   lastQuery = { q: q, o: o, useOA: useOA, useCR: useCR };
   pageCache = new Map();
   currentPage = 1;
   searchGen++;
-  stopFinder();
-  $("tabs").style.display = combineOn ? "flex" : "none";
-  switchTab("biasa");
-  if (combineOn) {
-    finderFoundAll = [];
-    $("finderResults").innerHTML = "";
-    $("finderStatus").textContent = "Menunggu giliran — mesin Finder mulai setelah hasil biasa tampil...";
-    $("finderCount").textContent = "";
-    $("btnCopyFinder").style.display = "none";
-  }
   await goToPage(1);
-  if (combineOn && searchGen) runFinder(searchGen, q, question);
 }
 
 async function goToPage(page) {
@@ -564,10 +489,23 @@ async function goToPage(page) {
   $("note").style.display = lastQuery.o.lang !== "all" && lastQuery.useCR ? "block" : "none";
   $("actions").style.display = "flex";
   $("pager").style.display = "flex";
-  $("pageInfo").textContent = "Halaman " + page + " dari " + maxPage;
+  renderPageNums();
   $("btnPrev").disabled = page <= 1;
   $("btnNext").disabled = page >= maxPage;
   render(res.items, (page - 1) * PER_PAGE);
+}
+
+function renderPageNums() {
+  const box = $("pageNums");
+  box.innerHTML = "";
+  for (let i = 1; i <= maxPage; i++) {
+    const b = document.createElement("button");
+    b.className = "pnum" + (i === currentPage ? " active" : "");
+    b.textContent = i;
+    b.disabled = i === currentPage;
+    b.onclick = () => goToPage(i);
+    box.appendChild(b);
+  }
 }
 
 function badgeClass(label) {
@@ -606,17 +544,15 @@ function badgesFor(r, extraRel) {
 function actionRow(r) {
   const row2 = document.createElement("div");
   row2.className = "row2";
-  
+
   const bMeta = document.createElement("button");
   bMeta.className = "btn-meta"; bMeta.textContent = "📖 Metadata Bibliografi";
   bMeta.onclick = () => openMetadataModal(r);
   row2.appendChild(bMeta);
-
   const bc = document.createElement("button");
   bc.className = "btn-cite"; bc.textContent = "📚 Salin Sitasi APA";
   bc.onclick = () => copyText(apaCitation(r), bc);
   row2.appendChild(bc);
-
   if (r.pdf) {
     const ap = document.createElement("a");
     ap.className = "btn-pdf"; ap.href = r.pdf; ap.target = "_blank"; ap.rel = "noopener";
@@ -677,27 +613,18 @@ function render(list, offset) {
   });
 }
 
-// ---------- Fitur Metadata Bibliografi & Modal Pop-up ----------
+// ---------- Metadata Bibliografi ----------
 function formatVal(val) {
-  if (val === null || val === undefined || val === "" || (Array.isArray(val) && val.length === 0)) {
-    return "<span style='color:#999; font-style:italic;'>Tidak tersedia</span>";
-  }
-  if (Array.isArray(val)) {
-    return val.join(", ");
-  }
-  return String(val);
+  if (val === null || val === undefined || val === "" || (Array.isArray(val) && val.length === 0)) return null;
+  return Array.isArray(val) ? val.join(", ") : String(val);
 }
-
 function openMetadataModal(r) {
-  const existingOverlay = document.querySelector(".modal-overlay");
-  if (existingOverlay) existingOverlay.remove();
-
+  const existing = document.querySelector(".modal-overlay");
+  if (existing) existing.remove();
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay";
-
   const content = document.createElement("div");
   content.className = "modal-content";
-
   const header = document.createElement("div");
   header.className = "modal-header";
   const h3 = document.createElement("h3");
@@ -709,13 +636,10 @@ function openMetadataModal(r) {
   header.appendChild(h3);
   header.appendChild(closeBtn);
   content.appendChild(header);
-
   const body = document.createElement("div");
   body.className = "modal-body";
-
   const table = document.createElement("table");
   table.className = "meta-table";
-
   const fields = [
     { label: "Penulis", val: r.authors && r.authors.length ? r.authors : null },
     { label: "Tahun terbit", val: r.year },
@@ -727,227 +651,46 @@ function openMetadataModal(r) {
     { label: "Penerbit", val: r.publisher },
     { label: "DOI", val: r.doi }
   ];
-
   fields.forEach(f => {
     const tr = document.createElement("tr");
     const th = document.createElement("th");
     th.textContent = f.label;
     const td = document.createElement("td");
-    td.innerHTML = formatVal(f.val);
+    const fv = formatVal(f.val);
+    if (fv === null) td.innerHTML = "<span style='color:#999; font-style:italic;'>Tidak tersedia</span>";
+    else td.textContent = fv;
     tr.appendChild(th);
     tr.appendChild(td);
     table.appendChild(tr);
   });
   body.appendChild(table);
-
-  const bibPreviewBox = document.createElement("div");
-  bibPreviewBox.className = "bib-preview-box";
-  bibPreviewBox.innerHTML = "<b>Format Daftar Pustaka (APA 7):</b><span class='bib-text'></span>";
-  body.appendChild(bibPreviewBox);
-
+  const bibBox = document.createElement("div");
+  bibBox.className = "bib-box";
+  const bb = document.createElement("b");
+  bb.textContent = "Format Daftar Pustaka (APA 7):";
+  bibBox.appendChild(bb);
+  const bibSpan = document.createElement("span");
+  bibSpan.textContent = apaCitation(r);
+  bibBox.appendChild(bibSpan);
+  body.appendChild(bibBox);
   content.appendChild(body);
-
   const footer = document.createElement("div");
   footer.className = "modal-footer";
-
-  const btnMakeBib = document.createElement("button");
-  btnMakeBib.className = "btn-make-bib";
-  btnMakeBib.textContent = "Jadikan Daftar Pustaka";
-
-  const btnCopyBib = document.createElement("button");
-  btnCopyBib.className = "btn-copy-bib";
-  btnCopyBib.textContent = "Salin Daftar Pustaka";
-  btnCopyBib.style.display = "none";
-
-  btnMakeBib.onclick = () => {
-    const apaText = apaCitation(r);
-    bibPreviewBox.querySelector(".bib-text").textContent = apaText;
-    bibPreviewBox.style.display = "block";
-    btnCopyBib.style.display = "inline-block";
-  };
-
-  btnCopyBib.onclick = e => {
-    const apaText = apaCitation(r);
-    copyText(apaText, e.currentTarget);
-  };
-
-  footer.appendChild(btnMakeBib);
-  footer.appendChild(btnCopyBib);
+  const btnCopy = document.createElement("button");
+  btnCopy.className = "btn-copy-bib";
+  btnCopy.textContent = "📋 Salin Daftar Pustaka";
+  btnCopy.onclick = e => copyText(apaCitation(r), e.currentTarget);
+  footer.appendChild(btnCopy);
+  const btnClose = document.createElement("button");
+  btnClose.className = "btn-close-modal";
+  btnClose.textContent = "Tutup";
+  btnClose.onclick = () => overlay.remove();
+  footer.appendChild(btnClose);
   content.appendChild(footer);
-
   overlay.appendChild(content);
-  overlay.onclick = e => {
-    if (e.target === overlay) overlay.remove();
-  };
+  overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
   document.body.appendChild(overlay);
 }
-
-// ---------- Tab ----------
-function switchTab(which) {
-  const f = which === "finder";
-  $("tabBiasa").classList.toggle("active", !f);
-  $("tabFinder").classList.toggle("active", f);
-  $("viewBiasa").style.display = f ? "none" : "block";
-  $("viewFinder").style.display = f ? "block" : "none";
-}
-$("tabBiasa").onclick = () => switchTab("biasa");
-$("tabFinder").onclick = () => switchTab("finder");
-
-// ---------- Mesin Finder (ekstrak PDF) ----------
-function setFinderStatus(txt) { $("finderStatus").textContent = txt; }
-function stopFinder() {
-  if (finder) { finder.stop = true; finder = null; }
-  $("btnStopFinder").style.display = "none";
-}
-$("btnStopFinder").onclick = () => {
-  if (finder) { finder.stop = true; setFinderStatus("⏹ Dihentikan manual. " + finder.found.length + " potongan terkumpul."); }
-  $("btnStopFinder").style.display = "none";
-};
-async function fetchPdfBytes(url) {
-  const attempts = [
-    { u: url, t: 20000 },
-    { u: "https://api.allorigins.win/raw?url=" + encodeURIComponent(url), t: 60000 },
-    { u: "https://corsproxy.io/?url=" + encodeURIComponent(url), t: 30000 },
-    { u: "https://api.codetabs.com/v1/proxy?quest=" + encodeURIComponent(url), t: 30000 }
-  ];
-  for (const a of attempts) {
-    try {
-      const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), a.t);
-      const r = await fetch(a.u, { signal: ctrl.signal });
-      clearTimeout(t);
-      if (!r.ok) continue;
-      const cl = parseInt(r.headers.get("content-length") || "0", 10);
-      if (cl && cl > 30000000) continue;
-      const buf = await r.arrayBuffer();
-      if (buf.byteLength < 3000 || buf.byteLength > 40000000) continue;
-      const head = new TextDecoder().decode(buf.slice(0, 5));
-      if (!head.startsWith("%PDF")) continue;
-      return buf;
-    } catch (e) { /* coba jalur berikutnya */ }
-  }
-  return null;
-}
-async function extractPages(buf) {
-  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
-  const pages = [];
-  const n = Math.min(pdf.numPages, 80);
-  for (let i = 1; i <= n; i++) {
-    const pg = await pdf.getPage(i);
-    const tc = await pg.getTextContent();
-    pages.push({ page: i, text: tc.items.map(it => it.str).join(" ") });
-  }
-  return pages;
-}
-async function runFinder(gen, keyword, question) {
-  if (!window.pdfjsLib) {
-    setFinderStatus("❌ PDF.js gagal dimuat dari CDN — cek koneksi internet, lalu cari ulang.");
-    return;
-  }
-  const { terms, bigrams } = tokenizeTerms(keyword, question);
-  if (!terms.length) { setFinderStatus("❌ Pertanyaan tidak mengandung kata inti yang bisa dipakai."); return; }
-  const state = { stop: false, found: [], skipped: 0, tried: 0, seen: new Set() };
-  finder = state;
-  finderFoundAll = state.found;
-  $("btnStopFinder").style.display = "inline-block";
-  setFinderStatus("🔎 Mesin Finder jalan — kata inti: " + terms.join(", ") + ". Memproses PDF satu per satu...");
-  let done = false;
-  for (let page = 1; page <= MAX_PAGES && !state.stop && !done; page++) {
-    let res;
-    try { res = await searchPage(page); } catch (e) { break; }
-    if (gen !== searchGen || state.stop) break;
-    const cands = res.items.filter(r => r.pdf && !state.seen.has(dedupeKey(r)));
-    for (const r of cands) {
-      if (gen !== searchGen || state.stop || state.found.length >= FINDER_TARGET) { done = true; break; }
-      state.seen.add(dedupeKey(r));
-      state.tried++;
-      setFinderStatus("⏳ Memproses kandidat ke-" + state.tried + " (halaman hasil " + page + "): " +
-        r.title.slice(0, 60) + "… — terkumpul " + state.found.length + ", diskip " + state.skipped + ".");
-      const buf = await fetchPdfBytes(r.pdf);
-      if (!buf) { state.skipped++; continue; }
-      let pages = null;
-      try { pages = await extractPages(buf); } catch (e) { pages = null; }
-      if (!pages || !pages.some(p => p.text.trim().length > 100)) { state.skipped++; continue; }
-      const hit = findBestExcerpt(pages, terms, bigrams);
-      if (!hit) { state.skipped++; continue; }
-      const entry = { r: r, hit: hit };
-      state.found.push(entry);
-      renderFinderCard(entry, state.found.length);
-      $("finderCount").textContent = "(" + state.found.length + ")";
-      $("btnCopyFinder").style.display = "inline-block";
-      if (state.found.length >= FINDER_TARGET) done = true;
-    }
-  }
-  $("btnStopFinder").style.display = "none";
-  if (gen !== searchGen) return;
-  if (finder === state) finder = null;
-  if (!state.stop) {
-    setFinderStatus(state.found.length
-      ? "✅ Selesai — " + state.found.length + " potongan relevan terkumpul dari " + state.tried +
-        " PDF yang dicoba (" + state.skipped + " diskip: tidak terbuka / scan / tidak relevan)."
-      : "Selesai — tidak ada potongan yang cukup relevan dari " + state.tried +
-        " PDF yang dicoba. Coba longgarkan kata kunci atau pertanyaan.");
-    if (!state.found.length) {
-      const d = document.createElement("div");
-      d.className = "empty";
-      d.textContent = "Belum ada potongan yang lolos. PDF yang bisa diproses memang hanya sebagian referensi — sisanya tetap bisa dibaca manual dari tab Versi Biasa.";
-      $("finderResults").appendChild(d);
-    }
-  }
-}
-function renderFinderCard(entry, num) {
-  const r = entry.r, hit = entry.hit;
-  const div = document.createElement("div");
-  div.className = "item";
-  div.appendChild(cardHead(r, num));
-  div.appendChild(badgesFor(r, hit.relPct));
-  div.appendChild(metaLine(r));
-  const ex = document.createElement("div");
-  ex.className = "excerpt";
-  const pg = document.createElement("span");
-  pg.className = "pg";
-  pg.textContent = "📄 Potongan dari PDF — halaman " + hit.page;
-  ex.appendChild(pg);
-  ex.appendChild(document.createTextNode("“" + hit.excerpt + "”"));
-  div.appendChild(ex);
-  const cite = document.createElement("div");
-  cite.className = "cite";
-  const b = document.createElement("b");
-  b.textContent = "Sumber referensi: ";
-  cite.appendChild(b);
-  cite.appendChild(document.createTextNode(apaCitation(r)));
-  div.appendChild(cite);
-  const row2 = document.createElement("div");
-  row2.className = "row2";
-
-  const bMeta = document.createElement("button");
-  bMeta.className = "btn-meta"; bMeta.textContent = "📖 Metadata";
-  bMeta.onclick = () => openMetadataModal(r);
-  row2.appendChild(bMeta);
-
-  const bp = document.createElement("button");
-  bp.className = "btn-cite"; bp.textContent = "📋 Salin Potongan + Sitasi";
-  bp.onclick = () => copyText("Halaman " + hit.page + ": “" + hit.excerpt + "”\nSumber: " + apaCitation(r), bp);
-  row2.appendChild(bp);
-  const bs = document.createElement("button");
-  bs.className = "btn-cite"; bs.textContent = "📚 Salin Sitasi APA";
-  bs.onclick = () => copyText(apaCitation(r), bs);
-  row2.appendChild(bs);
-  if (r.pdf) {
-    const ap = document.createElement("a");
-    ap.className = "btn-pdf"; ap.href = r.pdf; ap.target = "_blank"; ap.rel = "noopener";
-    ap.textContent = "⬇ Buka PDF";
-    row2.appendChild(ap);
-  }
-  div.appendChild(row2);
-  $("finderResults").appendChild(div);
-}
-$("btnCopyFinder").onclick = e => {
-  if (!finderFoundAll.length) return;
-  copyText(finderFoundAll.map((en, i) =>
-    (i + 1) + ". Halaman " + en.hit.page + ": “" + en.hit.excerpt + "”\n   Sumber: " + apaCitation(en.r)
-  ).join("\n\n"), e.currentTarget);
-};
 
 // ---------- Salin ----------
 async function copyText(txt, btn) {
@@ -965,10 +708,8 @@ async function copyText(txt, btn) {
 }
 $("btnCari").onclick = cari;
 $("q").addEventListener("keydown", e => { if (e.key === "Enter") cari(); });
-$("question").addEventListener("keydown", e => { if (e.key === "Enter") cari(); });
 $("btnPrev").onclick = () => { if (currentPage > 1) goToPage(currentPage - 1); };
 $("btnNext").onclick = () => { if (currentPage < maxPage) goToPage(currentPage + 1); };
-$("combineToggle").addEventListener("change", e => { $("question").disabled = !e.target.checked; });
 $("btnCopyLinks").onclick = e => copyText(
   currentItems.map((r, i) => ((currentPage - 1) * PER_PAGE + i + 1) + ". " + r.url).join("\n"), e.currentTarget);
 $("btnCopyCites").onclick = e => copyText(
