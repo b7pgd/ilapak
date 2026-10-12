@@ -384,6 +384,61 @@ function mergeResults(oaList, crList) {
   return order.map(k => map.get(k));
 }
 
+// ---------- Peringkat ulang relevansi ----------
+// API mencari longgar (kata "java" ikut keindeks sebagai "Jawa", dokumen yang
+// cuma memuat satu kata query pun bisa naik). Di sini hasil diurutkan ulang
+// berdasarkan kata query yang benar-benar muncul di JUDUL, ditimbang dengan
+// kelangkaan kata itu di antara judul-judul hasil (kata umum = bobot kecil,
+// kata khas = bobot besar), plus bonus frasa 2 kata.
+const QSTOP = new Set(("yang dan di ke dari untuk dengan adalah itu ini atau pada dalam tidak cara bagaimana mengapa apa apakah agar supaya oleh sebagai juga akan telah sudah dapat bisa harus lebih sangat antara melalui terhadap tentang menjadi memiliki ada yaitu yakni bahwa seperti ketika saat jika kalau maka namun tetapi tapi serta maupun ataupun pun lah kah nya " +
+  "the a an of to in on for and or is are was were how what why when where which who whom can could should would with by at from as it its this that these those be been being do does did").split(/\s+/));
+function queryTerms(q) {
+  const raw = (q || "").toLowerCase().match(/[a-z0-9]+/g) || [];
+  const terms = [];
+  for (const t of raw) {
+    if (t.length < 3) continue;
+    if (QSTOP.has(t)) continue;
+    if (!terms.includes(t)) terms.push(t);
+  }
+  return terms;
+}
+function tokenSet(text) {
+  return new Set((text || "").toLowerCase().match(/[a-z0-9]+/g) || []);
+}
+function rerankByTitle(items, q) {
+  const terms = queryTerms(q);
+  if (terms.length < 2 || items.length < 3) return items;
+  const N = items.length;
+  const titleSets = items.map(r => tokenSet(r.title));
+  const weights = terms.map(t => {
+    const df = titleSets.reduce((n, s) => n + (s.has(t) ? 1 : 0), 0);
+    return Math.log((N + 1) / (df + 1)) + 0.1;
+  });
+  const raw = (q || "").toLowerCase().match(/[a-z0-9]+/g) || [];
+  const bigrams = [];
+  for (let i = 0; i + 1 < raw.length; i++) {
+    if (terms.includes(raw[i]) && terms.includes(raw[i + 1])) {
+      const b = raw[i] + " " + raw[i + 1];
+      if (!bigrams.includes(b)) bigrams.push(b);
+    }
+  }
+  const scored = items.map((r, idx) => {
+    const ts = titleSets[idx];
+    let s = 0;
+    terms.forEach((t, i) => { if (ts.has(t)) s += weights[i]; });
+    if (s > 0) {
+      const tlow = " " + (r.title || "").toLowerCase().replace(/\s+/g, " ") + " ";
+      for (const b of bigrams) if (tlow.includes(" " + b + " ")) s += 1.5;
+    } else if (r.abstract) {
+      const as = tokenSet(r.abstract);
+      terms.forEach((t, i) => { if (as.has(t)) s += weights[i] * 0.15; });
+    }
+    return { r: r, s: s, idx: idx };
+  });
+  scored.sort((a, b) => (b.s - a.s) || (a.idx - b.idx));
+  return scored.map(x => x.r);
+}
+
 /*__PURE_END__*/
 
 // ---------- UI & pencarian ----------
@@ -442,6 +497,7 @@ async function searchPage(page) {
   let items = mergeResults(oaList, crList);
   if (o.sort === "newest") items.sort((a, b) => (b.year || 0) - (a.year || 0));
   else if (o.sort === "cited") items.sort((a, b) => (b.cited || 0) - (a.cited || 0));
+  else items = rerankByTitle(items, q);
   const res = { items: items, total: total, errs: errs };
   pageCache.set(page, res);
   return res;
