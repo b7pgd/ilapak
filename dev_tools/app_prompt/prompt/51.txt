@@ -13,12 +13,14 @@ Kerjakan langkah-langkah ini:
 5. DILARANG merangkum, menulis ulang, atau membuat jawaban sendiri. Saya yang akan menganalisa manual dan menulis jawaban versi saya sendiri — tujuan saya adalah tidak mengandalkan AI untuk membuat jawabannya.
 6. Aturan relevansi: jika soal membahas PT A tetapi jurnal membahas PT Z, TETAP ambil potongannya selama inti pembahasannya relevan dengan soal. Contoh: soal tentang e-commerce, jurnal tentang manufaktur, tapi membahas langkah analisis kebutuhan data warehouse — tetap ambil sebagai bahan. Cocokkan berdasarkan substansi topik, bukan nama perusahaan/kasus.
 7. Tambahkan juga potongan teks yang cocok sebagai kata pembuka / kalimat pengantar / selingan jawaban (relevansi 60-70% tidak apa-apa), tetap verbatim dari PDF, untuk nanti saya parafrase ulang sendiri.
-8. Di bagian akhir tulis "Hasil analisa": daftarkan bagian-bagian soal yang TIDAK terjawab oleh PDF (tidak termuat / tidak ditemukan teks yang relevan). Contoh: "Soal nomor 2 bagian ERD tidak terjawab karena tidak termuat di dalam PDF."
+8. Di bagian akhir tulis "Hasil analisa" yang WAJIB berisi dua hal:
+   a. Daftar per soal: bagian-bagian soal mana saja yang TIDAK terjawab oleh PDF, lengkap dengan alasannya. Contoh: "Soal 1 — analisis kebutuhan khusus e-commerce: tidak ada PDF yang membahas langkah analisis kebutuhan untuk perusahaan e-commerce secara spesifik; contoh-contoh yang ada memakai kasus manufaktur dan pendidikan." / "Soal 2 — perbandingan langsung ER vs Dimensional: tidak ada PDF yang membandingkan kedua pemodelan secara head-to-head beserta panduan kapan masing-masing sebaiknya digunakan."
+   b. Catatan kondisi PDF: sebutkan PDF mana yang isinya tidak relevan dengan soal sama sekali (misal membahas topik lain), PDF mana yang kosong / tidak bisa diekstrak teksnya (hasil pindaian), dan PDF mana yang duplikat (artikel yang sama dengan file lain). Contoh: "13.pdf membahas arsitektur client/server secara umum (bukan data warehouse) sehingga tidak dimasukkan. 14.pdf tidak mengandung teks yang bisa diekstrak. 3.pdf dan 7.pdf adalah artikel yang sama (duplikat)."
 9. Sajikan SEMUA hasil dalam satu file PDF yang rapi dengan struktur:
    - Jawaban Soal 1 (daftar potongan + sumber tiap potongan)
    - Jawaban Soal 2 (dst, mengikuti jumlah soal)
    - Lampiran: Teks Pengantar & Selingan
-   - Hasil Analisa
+   - Hasil Analisa (sesuai poin 8, detail dan eksplisit)
 
 Contoh format yang saya mau:
 
@@ -33,6 +35,10 @@ Potongan teks G
 Potongan teks A
 (1.pdf)
 Potongan teks K
+...
+
+Hasil analisa:
+Soal nomor 2 bagian ERD tidak terjawab karena tidak termuat di dalam PDF.
 ...
 
 Paham? Kerjakan.
