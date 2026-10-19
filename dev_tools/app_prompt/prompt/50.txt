@@ -1,0 +1,148 @@
+Gw akan memberikan sebuah soal tugas kuliah. Tugas lu adalah membantu gw mencari referensi akademik secara mandiri dengan cara memecah soal menjadi kata kunci pencarian jurnal, sekaligus memberikan arah jawaban supaya gw tahu apa yang harus dicari dan dipahami.
+
+KONTEKS GW:
+Gw masih belajar mengerjakan tugas akademik setingkat mahasiswa. Gw ingin memahami materi dan menyusun jawaban menggunakan pemahaman serta bahasa gw sendiri, bukan sekadar menyalin jawaban AI.
+
+Masalah utama gw:
+1. Sulit menemukan jurnal yang relevan dengan pembahasan dalam soal.
+2. Kalau menemukan jurnal yang hanya relevan sebagian, gw kesulitan menghubungkan isi jurnal dengan permasalahan dalam soal.
+3. Gw belum terbiasa menentukan teori, konsep, metode, atau solusi yang tepat untuk menjawab setiap pertanyaan.
+4. Gw tidak ingin kewalahan membaca terlalu banyak jurnal yang sebenarnya membahas hal serupa.
+
+TUJUAN:
+Bantu gw mengubah soal menjadi panduan pencarian referensi yang praktis, terarah, dan bisa langsung gw gunakan untuk mencari jurnal secara mandiri.
+
+ATURAN PENGERJAAN:
+
+1. ANALISIS SOAL
+Baca seluruh soal terlebih dahulu. Identifikasi:
+- Jumlah pertanyaan utama.
+- Subpertanyaan atau tuntutan yang terdapat dalam setiap pertanyaan.
+- Konsep, teori, metode, perbandingan, atau keputusan yang perlu dijelaskan.
+- Jenis referensi yang dibutuhkan untuk mendukung setiap pembahasan.
+
+Pecah pertanyaan yang kompleks menjadi beberapa subsoal berdasarkan tuntutan sebenarnya. Jangan membuat subsoal yang tidak diperlukan.
+
+2. KATA KUNCI UNTUK SETIAP SUBSOAL
+Untuk setiap subsoal, berikan TEPAT 3 kata kunci pencarian referensi.
+
+Ketentuan:
+- Kata kunci harus spesifik dan relevan dengan tuntutan soal.
+- Prioritaskan kata kunci yang bisa menemukan jurnal penelitian, buku akademik, prosiding, atau publikasi ilmiah.
+- Gunakan bahasa Indonesia jika relevan, tetapi gunakan bahasa Inggris untuk istilah teknis yang lebih umum digunakan dalam literatur akademik.
+- Buat setiap kata kunci siap disalin langsung ke Google Scholar, GARUDA, atau repositori perguruan tinggi.
+- Hindari tiga kata kunci yang hanya berbeda sedikit tetapi menghasilkan pencarian yang sama.
+- Usahakan ketiga kata kunci memiliki fungsi berbeda, misalnya mencari teori, metode, dan contoh penerapan.
+- Jangan memberikan daftar jurnal yang tidak terverifikasi atau mengarang judul publikasi.
+
+3. ARAH JAWABAN UNTUK SETIAP SUBSOAL
+Setelah tiga kata kunci, berikan bagian "Arah jawaban".
+
+Pada bagian ini:
+- Jelaskan inti konsep yang perlu gw cari dan pahami.
+- Jika soal meminta memilih antara beberapa alternatif, berikan rekomendasi awal tentang alternatif yang paling sesuai berdasarkan informasi dalam soal.
+- Jika soal meminta metode atau tahapan, sebutkan metode atau tahapan yang layak dipertimbangkan.
+- Jika soal meminta analisis kasus, jelaskan aspek yang perlu gw hubungkan dengan kondisi perusahaan atau objek yang disebutkan.
+- Jika soal meminta perbandingan, jelaskan perbedaan utama yang harus gw cari.
+- Berikan contoh penerapan yang relevan dengan kasus dalam soal jika membantu.
+- Jelaskan alasan di balik rekomendasi tersebut secara singkat.
+
+Jangan menulis jawaban lengkap untuk tugas. Gw hanya membutuhkan arah pembahasan supaya bisa membaca referensi dan menyusun jawaban sendiri.
+
+PENTING:
+Jangan memberikan rekomendasi secara asal. Dasarkan arah jawaban pada teori yang relevan dan informasi yang benar-benar tersedia dalam soal. Jika informasi belum cukup untuk menentukan satu pilihan secara mutlak, berikan rekomendasi awal beserta pertimbangannya.
+
+4. EMPAT KATA KUNCI UTAMA UNTUK SELURUH SOAL
+Setelah semua subsoal selesai dibahas, pilih TEPAT 4 kata kunci utama yang paling efisien untuk mencari referensi bagi keseluruhan tugas.
+
+Ketentuan:
+- Keempat kata kunci harus mencakup sebagian besar konsep penting dalam soal.
+- Prioritaskan pencarian yang berpotensi menemukan sumber akademik yang mencakup beberapa subsoal sekaligus.
+- Jangan sekadar menyalin empat kata kunci dari daftar sebelumnya.
+- Pilih berdasarkan cakupan materi dan efisiensi pencarian.
+- Sertakan alasan singkat mengapa setiap kata kunci menjadi prioritas.
+
+Tujuannya agar gw bisa memulai dari empat pencarian utama tanpa harus mencari semua subsoal secara bersamaan.
+
+5. URUTAN PENCARIAN REFERENSI
+Berikan saran urutan pencarian yang paling efisien:
+- Kata kunci mana yang harus dicari terlebih dahulu.
+- Jenis sumber apa yang sebaiknya diprioritaskan.
+- Bagian jurnal atau buku mana yang perlu gw baca.
+- Kapan gw perlu mencari sumber tambahan untuk menutup kekurangan referensi.
+
+Prioritaskan jurnal ilmiah, buku akademik, prosiding, dan publikasi institusi yang kredibel. Artikel web boleh digunakan sebagai sumber pendukung apabila diperlukan, tetapi jangan menjadikannya landasan utama jika soal membutuhkan referensi akademik.
+
+6. SARAN AGAR REFERENSI BISA GW GUNAKAN
+Berikan saran praktis tentang cara menggunakan jurnal yang kasus penelitiannya berbeda dari kasus dalam soal.
+
+Jelaskan secara ringkas bagaimana gw harus:
+- Mengambil konsep atau teori dari jurnal.
+- Memahami penerapannya dalam penelitian.
+- Menentukan bagian yang relevan dengan kasus dalam soal.
+- Mengadaptasi konsep tersebut tanpa sekadar mengganti nama perusahaan.
+- Menyusun analisis sendiri berdasarkan teori dan informasi yang tersedia.
+- Menghindari penggunaan temuan penelitian yang tidak sesuai dengan kondisi kasus.
+
+Jangan menganggap seluruh isi jurnal relevan hanya karena topiknya mirip.
+
+7. BATASAN JAWABAN
+- Jangan langsung menjawab seluruh soal dalam bentuk esai.
+- Jangan membuat daftar referensi palsu.
+- Jangan mengarang judul jurnal atau menyatakan suatu jurnal membahas konsep tertentu tanpa dasar yang jelas.
+- Jangan membuat terlalu banyak kategori yang tidak diperlukan.
+- Jangan menggunakan istilah akademik yang rumit tanpa penjelasan singkat.
+- Jangan menyuruh gw membaca semua jurnal dari awal sampai akhir.
+- Jangan menganggap gw sudah menguasai konsep yang dibahas.
+- Utamakan panduan yang praktis, sederhana, dan bisa langsung gw gunakan.
+- Jika memiliki akses pencarian web, verifikasi istilah, metode, atau sumber yang meragukan sebelum merekomendasikannya. Jika tidak melakukan verifikasi, jangan mengklaim bahwa sumber tertentu telah diperiksa.
+
+FORMAT OUTPUT WAJIB:
+
+# SOAL 1 — [Topik pertanyaan pertama]
+
+### 1. [Subsoal pertama]
+
+**Kata kunci jurnal:**
+1. `Kata kunci pertama`
+2. `Kata kunci kedua`
+3. `Kata kunci ketiga`
+
+**Arah jawaban:**
+Jelaskan konsep yang perlu dicari, arah pembahasan, dan rekomendasi awal jika soal meminta keputusan.
+
+### 2. [Subsoal kedua]
+
+Gunakan format yang sama untuk semua subsoal.
+
+# SOAL 2 — [Topik pertanyaan kedua]
+
+Lanjutkan format yang sama sesuai jumlah pertanyaan dalam soal. Jangan memaksakan jumlah subsoal yang sama untuk setiap pertanyaan.
+
+# EMPAT KATA KUNCI UTAMA
+
+1. `Kata kunci utama pertama`
+   Alasan: [Cakupan materi yang dicari.]
+
+2. `Kata kunci utama kedua`
+   Alasan: [Cakupan materi yang dicari.]
+
+3. `Kata kunci utama ketiga`
+   Alasan: [Cakupan materi yang dicari.]
+
+4. `Kata kunci utama keempat`
+   Alasan: [Cakupan materi yang dicari.]
+
+# URUTAN PENCARIAN YANG DIREKOMENDASIKAN
+
+Berikan langkah pencarian yang sederhana dan berurutan agar gw tidak kewalahan.
+
+# SARAN AGAR JAWABAN BISA GW SUSUN SENDIRI
+
+Berikan panduan praktis untuk mengubah teori dan temuan dari jurnal menjadi analisis yang relevan dengan kasus dalam soal.
+
+PENUTUP:
+Akhiri dengan satu saran paling penting tentang langkah pertama yang sebaiknya gw lakukan. Jangan menawarkan untuk langsung mengerjakan seluruh jawaban tugas.
+
+Berikut soal tugas gw:
+
