@@ -1,0 +1,55 @@
+Course name
+
+
+
+1. Pengantar Sains Data 81	-
+Berikan contoh aplikasi data citra di bidang perikanan, sebutkan manfaatnya!
+
+
+2. Data Warehouse 9	-
+
+
+PT Retail Nusantara ingin menganalisis performa penjualan harian per kota, kategori produk, dan kanal (toko fisik vs online). Tim BI akan memakai OLAP di atas data warehouse yang sudah ada, lalu menyajikan analisis dengan operasi roll-up/drill-down, slice, dice, dan pivot. Tim juga harus memilih jenis sistem OLAP (ROLAP, MOLAP, atau HOLAP) yang paling sesuai untuk skala data dan kebutuhan akses.
+
+Tugas Diskusi (jawab 8 -10 kalimat, bahasa sendiri):
+
+1. Rancang cube: sebutkan ≥3 dimensi (mis. Waktu, Produk, Lokasi/Kanal) dan ≥2 measure (mis. jumlah transaksi, total penjualan), termasuk contoh hierarki pada satu dimensi (mis. Hari, Bulan, Tahun). Jelaskan 2 operasi OLAP yang akan Anda lakukan.
+
+2. Pilih jenis OLAP (ROLAP/MOLAP/HOLAP) untuk kasus ini dan jelaskan alasannya (kinerja, skala data, kemudahan agregasi, biaya, dan kemudahan pemeliharaan). Sertakan satu risiko dan cara mitigasinya.
+
+3. Implementasi singkat di Pentaho (PDI): sebut asal data, bagaimana dimensi waktu dibentuk (mis. surrogate key yyyymmdd), langkah transformasi kunci (lookup surrogate key, standardisasi tanggal), dan cara uji hasil (contoh: cocokkan agregat penjualan harian vs laporan POS)
+
+
+
+3. Manajemen Resiko dan Audit Sistem Informasi 4	-
+
+Pertanyaan Diskusi
+
+Sebuah organisasi ingin memastikan bahwa sistem informasi yang digunakan telah mendukung tujuan bisnis secara efektif dan aman. Anda ditugaskan sebagai auditor TI untuk melakukan audit terhadap sistem tersebut.
+
+Jelaskan tahapan audit Teknologi Informasi yang akan Anda lakukan mulai dari perencanaan hingga pelaporan hasil audit. Menurut Anda, tahapan mana yang paling menentukan kualitas hasil audit dan mengapa?
+
+
+
+4. Tata Kelola Teknologi Informasi 48	-
+
+
+Banyak organisasi telah memiliki kebijakan, prosedur, dan teknologi yang mendukung tata kelola TI. Namun, implementasinya sering tidak berjalan optimal karena kurangnya komitmen, kesadaran, dan budaya organisasi yang mendukung.
+
+Menurut Anda, apakah tata kelola TI seharusnya dipandang sebagai sekadar seperangkat aturan dan prosedur, atau sebagai budaya organisasi yang harus diterapkan oleh seluruh anggota organisasi? Jelaskan pendapat Anda dan berikan strategi yang dapat dilakukan organisasi untuk membangun budaya tata kelola TI yang berkelanjutan.
+
+
+
+5. Capstone Project 150	-
+
+
+6. Algoritma dan Pemrograman 23	
+
+
+7. Pemrograman Berbasis Web 170
+
+
+
+
+
+
