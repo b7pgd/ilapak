@@ -1,0 +1,110 @@
+JAWABAN TUGAS
+Tata Kelola Teknologi Informasi
+Nanda Yusuf Ramadhani
+NIM 051691675
+
+JAWABAN NOMOR 1
+
+Banyak organisasi telah memiliki kebijakan, prosedur, dan teknologi yang mendukung tata kelola TI, tetapi implementasinya sering tidak berjalan optimal karena kurangnya komitmen, kesadaran, dan budaya organisasi yang mendukung. Hal ini menunjukkan bahwa aturan dan prosedur saja tidak cukup, karena tata kelola teknologi informasi meliputi budaya, organisasi, aturan dan praktik yang mengarah pada sistem pemantauan serta transparansi dalam penggunaan teknologi informasi. Tata kelola TI lebih menekankan pada bagaimana membantu mengatur serta mengarahkan antara perilaku penggunaan TI dengan perilaku yang diinginkan, yaitu perilaku yang sesuai dengan visi, misi, nilai, strategi, dan budaya organisasi.
+Sumber: File ZIP: Tata kelola teknologi informasi.txt; File ZIP: 14. BAB II LANDASAN TEORI.pdf
+
+1. Pendapat: tata kelola TI adalah budaya organisasi, bukan sekadar seperangkat aturan dan prosedur.
+[Tambahan Original — dari 54-164-1-PB.pdf; Final+Rev5_Template+JSIT.pdf; Conference Sinesia 2(2025) 478-491.pdf; wahabpodungge,+HAL+167-179_ID+1671.pdf] Menurut saya, tata kelola TI seharusnya dipandang sebagai budaya organisasi yang harus diterapkan oleh seluruh anggota organisasi, bukan sekadar seperangkat aturan dan prosedur. Aturan dan prosedur hanya menjadi dokumen di atas kertas apabila tidak dihidupi sebagai nilai dan kebiasaan bersama, dan inilah yang menjelaskan mengapa banyak organisasi sudah punya kebijakan tetapi implementasinya tidak berjalan optimal. Tidak ada kerangka ataupun model tata kelola TI terbaik yang cocok untuk semua organisasi, sehingga setiap organisasi perlu menerapkan tata kelola TI berdasarkan karakteristik organisasinya yang unik dan tidak akan sama dengan organisasi yang lain. Aspek budaya organisasi dalam penerapan tata kelola TI berfungsi membantu organisasi dalam meningkatkan kinerja dan kesuksesan organisasi dalam pengembangan TI. Budaya organisasi bertindak sebagai pondasi utama yang menentukan kecepatan penyerapan inovasi digital, dan budaya organisasi menjelaskan 38,9% variabilitas adopsi AI, sedangkan kombinasi budaya organisasi dan adopsi AI menjelaskan 51,2% pembentukan tata kelola TI ringan. Transformasi digital dan budaya organisasi juga berpengaruh positif dan signifikan terhadap efektivitas pengendalian internal dan berpengaruh langsung terhadap perilaku tata kelola. Bukti lain menunjukkan bahwa budaya organisasi berpengaruh positif dan signifikan terhadap kinerja BUMDes, sedangkan tata kelola saja tidak berpengaruh signifikan, tetapi secara simultan kedua variabel memberikan kontribusi signifikan dengan koefisien determinasi sebesar 46,26%.
+Sumber: File ZIP: 54-164-1-PB.pdf; File ZIP: Final+Rev5_Template+JSIT.pdf; File ZIP: Conference+Sinesia+2(2025)+478-491.pdf; File ZIP: wahabpodungge,+HAL+167-179_ID+1671.pdf
+
+2. Strategi membangun budaya tata kelola TI yang berkelanjutan.
+[Tambahan Original — dari 54-164-1-PB.pdf; Final+Rev5_Template+JSIT.pdf] Strategi yang dapat dilakukan organisasi untuk membangun budaya tata kelola TI yang berkelanjutan adalah sebagai berikut:
+a. Melakukan analisis budaya organisasi terlebih dahulu: organisasi perlu melakukan analisis budaya dalam penerapan TI dan merumuskannya secara sistematis, sehingga tata kelola TI yang dibangun sesuai dengan karakteristik dan nilai yang sudah hidup di organisasi, bukan sekadar meniru kerangka dari organisasi lain.
+b. Membangun komitmen dan keteladanan pimpinan: pimpinan harus memberi contoh dalam mematuhi kebijakan TI, karena gaya kepemimpinan yang sangat sentralistik dan membatasi ruang eksperimen serta kolaborasi justru menghambat penyerapan inovasi digital.
+c. Meningkatkan kesadaran dan kompetensi seluruh anggota melalui sosialisasi dan pelatihan yang berkelanjutan: setiap anggota perlu memahami mengapa kebijakan TI ada, risiko apa yang ditimbulkan bila dilanggar, dan apa perannya masing-masing dalam menjaga keamanan serta keselarasan TI dengan tujuan organisasi.
+d. Mengintegrasikan nilai tata kelola ke dalam proses kerja sehari-hari: tata kelola TI dibangun berlapis, dengan Foundation Layer (Budaya/Dasar) sebagai pondasi, Operationalization Layer (Proses/Eksekusi) sebagai pelaksanaan dalam proses kerja, dan Governance Envelope Layer (Eksekutif/Kendali) sebagai pengendalian oleh pimpinan, sehingga budaya menjadi dasar, proses menjadi kebiasaan, dan pimpinan menjadi pengendali.
+e. Menegakkan akuntabilitas secara konsisten: kepatuhan terhadap kebijakan TI diberi penghargaan, sedangkan pelanggaran ditindak secara adil dan transparan, sehingga anggota organisasi melihat bahwa tata kelola TI benar-benar dijalankan, bukan sekadar slogan.
+f. Melakukan evaluasi dan perbaikan berkelanjutan: budaya tata kelola TI diukur dan dievaluasi secara berkala melalui audit, survei, dan umpan balik, lalu disesuaikan dengan perubahan teknologi dan kebutuhan organisasi, sehingga budaya tersebut tetap hidup dan tidak berhenti sebagai program sekali jalan.
+Sumber: File ZIP: 54-164-1-PB.pdf; File ZIP: Final+Rev5_Template+JSIT.pdf
+
+SUMBER REFERENSI SOAL NOMOR 1
+
+1. DEFINISI TATA KELOLA TI
+Snippet: "Tata kelola teknologi informasi meliputi budaya, organisasi, aturan dan praktik yang mengarah pada sistem pemantauan serta transparansi dalam penggunaan teknologi informasi."
+Asal: File ZIP: 14. BAB II LANDASAN TEORI.pdf
+Sumber: Bab II Landasan Teori (dokumen tesis; definisi mengutip Purnama & Kusumadewi, 2022)
+Lokasi: 2.1 Tata kelola TI
+Sumber 2:
+Snippet: "Definisi di atas menjelaskan bahwa tata kelola TI merupakan bagian dari manajemen bisnis secara keseluruhan yang meliputi kepemimpinan, struktur dan proses organisasi, yang digunakan untuk memastikan proses implementasi TI didalam organisasi berjalan dengan baik, dalam hal ini lebih menekankan pada bagaimana membantu mengatur serta mengarahkan antara perilaku penggunaan TI dengan perilaku yang diinginkan yaitu perilaku yang sesuai dengan visi, misi, nilai, strategi, dan budaya organisasi."
+Asal: File ZIP: 14. BAB II LANDASAN TEORI.pdf
+Sumber: Bab II Landasan Teori (dokumen tesis)
+Lokasi: 2.1 Tata kelola TI
+
+2. BUDAYA ORGANISASI DALAM PENERAPAN TATA KELOLA TI
+Snippet: "Penerapan tata kelola Teknologi Informasi (TI) pada organisasi saat ini menunjukkan bahwa tidak ada kerangka ataupun model tata kelola TI terbaik dalam upaya merespon lingkungan unik dari masing-masing organisasi tersebut. Sehingganya setiap organisasi perlu menerapkan tata kelola TI berdasarkan kepada karakteristik organisasi tersebut yang mempunyai ciri unik dan tidak akan sama dengan organisasi yang lain. Paper ini bertujuan mengidentifikasi pengaruh budaya organisasi dalam penerapan tata kelola TI yang baik. Hasil pembahasan menunjukkan bahwa aspek budaya organisasi dalam penerapan tata kelola TI berfungsi membantu organisasi dalam meningkatkan kinerja dan kesuksesan organisasi dalam pengembangan TI dan nantinya akan menjadi masukan bagi organisasi dalam merumuskan pengembangan TI yang sesuai dengan strategi dan tujuan organisasi."
+Asal: File ZIP: 54-164-1-PB.pdf
+Sumber: Amali, L. N., Hadjaratie, L., & Suhada, S. (2017). Penerapan Tata Kelola Teknologi Informasi dalam Perspektif Budaya Organisasi. Seminar Nasional Sistem Informasi 2017, Fakultas Teknologi Informasi, Universitas Negeri Gorontalo.
+Lokasi: Abstrak
+Sumber 2:
+Snippet: "Studi analisis budaya organisasi dalam menerapkan tata kelola TI perlu dilaksanakan bagi organisasi dalam mendukung tata kelola TI yang baik. Hal ini berguna untuk mempersiapkan organisasi dalam membina sumber daya manusia, lingkungan, infrastruktur, sistem serta acuan dalam penyusunan perencanaan organisasi, agar mampu menghadapi persaingan baik lokal maupun international."
+Asal: File ZIP: 54-164-1-PB.pdf
+Sumber: Amali, L. N., Hadjaratie, L., & Suhada, S. (2017).
+Lokasi: Kesimpulan
+
+3. BUDAYA SEBAGAI PONDASI FRAMEWORK TATA KELOLA TI
+Snippet: "Budaya organisasi bertindak sebagai pondasi utama (enabler) yang menentukan kecepatan penyerapan inovasi digital. Dalam ekosistem"
+Asal: File ZIP: Final+Rev5_Template+JSIT.pdf
+Sumber: Fergina, A., Sevtiana, A., Nursikuwagus, A., Handoko, Y., & Yunanto, R. (2026). Pengembangan Framework Tata Kelola TI Berbasis Budaya Organisasi untuk Akselerasi Adopsi Artificial Intelligence pada UMKM dalam Mendukung SDG 9. Jurnal Sains Informatika Terapan, 5(2), 695-702.
+Lokasi: Bagian 2, pembahasan budaya organisasi
+Sumber 2:
+Snippet: "The findings indicate that organizational culture plays an important role in encouraging AI adoption and supports the development of lightweight IT governance."
+Asal: File ZIP: Final+Rev5_Template+JSIT.pdf
+Sumber: Fergina, A., Sevtiana, A., Nursikuwagus, A., Handoko, Y., & Yunanto, R. (2026).
+Lokasi: Abstract
+Sumber 3:
+Snippet: "Pada variabel M (Adopsi AI) memiliki nilai R2=0.389, dan variabel budaya organisasi (X) menjelaskan 38.9% variabilitas adopsi AI (Kategori Moderat). Variabel Y (Lightweight IT Gov) memiliki nilai R2=0.512. Sehingga kombinasi Budaya Organisasi (X) dan Adopsi AI (M) menjelaskan 51.2% pembentukan tata kelola TI ringan pada sampel UMKM ini."
+Asal: File ZIP: Final+Rev5_Template+JSIT.pdf
+Sumber: Fergina, A., Sevtiana, A., Nursikuwagus, A., Handoko, Y., & Yunanto, R. (2026).
+Lokasi: Bagian 3.3.2, pengujian hipotesis
+
+4. BUDAYA DAN PERILAKU TATA KELOLA
+Snippet: "menunjukkan bahwa transformasi digital dan budaya organisasi berpengaruh positif dan signifikan terhadap efektivitas pengendalian internal. Kedua variabel juga terbukti berpengaruh langsung terhadap perilaku tata kelola. Selain itu, efektivitas pengendalian internal berperan sebagai mediator yang signifikan dalam hubungan antara transformasi digital dan budaya organisasi terhadap perilaku tata kelola."
+Asal: File ZIP: Conference+Sinesia+2(2025)+478-491.pdf
+Sumber: Assauqi, A. I., & Mukhlis. (2025). Dampak Transformasi Digital dan Budaya Organisasi terhadap Perilaku Tata Kelola dalam Pengelolaan Barang Milik Negara. Proceedings National Conference SISI Indonesia II, 478-491.
+Lokasi: Abstrak
+
+5. BUDAYA VS TATA KELOLA TERHADAP KINERJA
+Snippet: "Hasil penelitian menunjukkan bahwa budaya organisasi berpengaruh positif dan signifikan terhadap kinerja BUMDes (p < 0,05), sedangkan tata kelola tidak berpengaruh signifikan. Namun, secara simultan kedua variabel memberikan kontribusi signifikan terhadap kinerja BUMDes dengan koefisien determinasi (R²) sebesar 46,26%."
+Asal: File ZIP: wahabpodungge,+HAL+167-179_ID+1671.pdf
+Sumber: Ibrahim, S. R., Tui, F. P. D., & Abdussamad, J. (2025). Pengaruh Tata Kelola dan Budaya Organisasi terhadap Kinerja Badan Usaha Milik Desa (BUMDes) pada Kecamatan Bonepantai. Jurnal Ilmu Pemerintahan, 4(2), 167-179.
+Lokasi: Abstrak
+
+6. TIGA LAPISAN FRAMEWORK TATA KELOLA TI BERBASIS BUDAYA
+Snippet: "Pendekatan tersebut menghasilkan tiga lapisan utama, yaitu Foundation, Operationalization, dan Governance Envelope, sehingga kerangka kerja menjadi lebih sederhana dan sesuai dengan karakteristik UMKM. Pertama, pada aspek adopsi baris (layer bertingkat), kerangka kerja ini meniru pembagian baris Zachman dari tingkat Executive hingga Worker dengan mendekonstruksinya menjadi 3 lapisan adaptif, yaitu Governance Envelope Layer (Eksekutif/Kendali), Operationalization Layer (Proses/Eksekusi), dan Foundation Layer (Budaya/Dasar)."
+Asal: File ZIP: Final+Rev5_Template+JSIT.pdf
+Sumber: Fergina, A., Sevtiana, A., Nursikuwagus, A., Handoko, Y., & Yunanto, R. (2026). Pengembangan Framework Tata Kelola TI Berbasis Budaya Organisasi untuk Akselerasi Adopsi Artificial Intelligence pada UMKM dalam Mendukung SDG 9. Jurnal Sains Informatika Terapan, 5(2), 695-702.
+Lokasi: Bagian 3.3.2
+
+DAFTAR PUSTAKA
+
+Amali, L. N., Hadjaratie, L., & Suhada, S. (2017). Penerapan tata kelola teknologi informasi dalam perspektif budaya organisasi. Seminar Nasional Sistem Informasi 2017, Fakultas Teknologi Informasi, Universitas Negeri Gorontalo.
+
+Assauqi, A. I., & Mukhlis. (2025). Dampak transformasi digital dan budaya organisasi terhadap perilaku tata kelola dalam pengelolaan Barang Milik Negara. Proceedings National Conference SISI Indonesia II, 478–491.
+
+Bab II landasan teori: Tata kelola TI dan framework COBIT 2019 [Bab tesis, nama penulis tidak tercantum dalam dokumen].
+
+Fergina, A., Sevtiana, A., Nursikuwagus, A., Handoko, Y., & Yunanto, R. (2026). Pengembangan framework tata kelola TI berbasis budaya organisasi untuk akselerasi adopsi artificial intelligence pada UMKM dalam mendukung SDG 9. Jurnal Sains Informatika Terapan, 5(2), 695–702.
+
+Ibrahim, S. R., Tui, F. P. D., & Abdussamad, J. (2025). Pengaruh tata kelola dan budaya organisasi terhadap kinerja Badan Usaha Milik Desa (BUMDes) pada Kecamatan Bonepantai. Jurnal Ilmu Pemerintahan, 4(2), 167–179.
+
+Ramadhani, N. Y. (2026). Tata kelola teknologi informasi.txt [Dokumen tidak diterbitkan].
+
+HASIL ANALISA
+
+Semua bagian soal terjawab: pendapat bahwa tata kelola TI adalah budaya organisasi (bukan sekadar aturan dan prosedur) dan strategi membangun budaya tata kelola TI yang berkelanjutan.
+
+Temuan yang berbeda dari sumber di dalam ZIP:
+a. Yosefin & Rosalina (2022), Pengaruh Budaya Organisasi terhadap Tata Kelola Perusahaan pada Rumah Sakit di Jabodetabek, Formosa Journal of Multidisciplinary Research, 1(4), 1033-1058. Hasilnya menunjukkan bahwa budaya organisasi pada rumah sakit tidak mempengaruhi penerapan corporate governance pada rumah sakit secara signifikan, dan tipe kepemilikan tidak mempengaruhi budaya organisasi secara signifikan. Catatan: penelitian ini membahas corporate governance (bukan tata kelola TI) di rumah sakit, sehingga tidak membatalkan argumen jawaban ini, tetapi menunjukkan bahwa budaya saja tidak otomatis menjamin tata kelola berjalan.
+
+Sumber di dalam ZIP yang tidak dipakai dalam jawaban ini:
+a. Etika, Inklusivitas, dan Tata Kelola Budaya dalam Membangun Organisasi yang Berkeadilan. SNEFR, 2(1), Oktober 2026. Alasan: membahas etika, inklusivitas, dan tata kelola budaya untuk organisasi yang berkeadilan, bukan strategi membangun budaya tata kelola TI.
+b. Pengaruh Kepemimpinan, Budaya Organisasi, dan Iklim. DIMENSI, 7(1), 175-199, Maret 2018. Alasan: fokus pada kepemimpinan dan iklim organisasi, bukan tata kelola TI.
+c. Pengaruh Komitmen Organisasi, Budaya Organisasi dan Kepemimpinan. Kontigensi, 2(1), 10-16, Juni 2014. Alasan: membahas komitmen dan kepemimpinan, bukan tata kelola TI.
+d. Analisis Pengaruh Budaya Etika Organisasi, Pengendalian Internal, serta Tata Kelola terhadap Kepatuhan Pajak. Jurnal Ekonomi Trisakti, 6(1), 553-562, April 2026. Alasan: membahas kepatuhan pajak, bukan budaya tata kelola TI.
+e. Pengaruh Gaya Kepemimpinan, Iklim Organisasi dan [judul tidak lengkap terbaca]. TATA KELOLA, 10(1), Juni 2023. Alasan: membahas gaya kepemimpinan dan iklim organisasi, bukan tata kelola TI.
+f. Tekanan Pemangku Kepentingan, Tata Kelola Perusahaan, dan Budaya [Organisasi]. PARADOKS Jurnal Ilmu Ekonomi, 8(2), 2025. Alasan: membahas tata kelola perusahaan dan ESG, bukan budaya tata kelola TI.

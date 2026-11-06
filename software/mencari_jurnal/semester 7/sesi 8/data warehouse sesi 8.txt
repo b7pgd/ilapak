@@ -1,0 +1,140 @@
+JAWABAN TUGAS
+Data Warehouse
+Nanda Yusuf Ramadhani
+NIM 051691675
+
+JAWABAN NOMOR 1
+
+OLAP adalah metode khusus untuk melakukan analisis data yang terdapat di dalam media penyimpanan data (database) dan kemudian membuat laporannya sesuai dengan permintaan user. Cube dibangun dengan star schema, yaitu relasi dari beberapa tabel dimensi yang terpusat pada tabel fakta, sehingga query analitik menjadi cepat dan waktu responsnya baik.
+
+Dimensi yang dipakai adalah sebagai berikut:
+a. Dimensi Waktu (dim_waktu): tanggal transaksi, dengan atribut hari, bulan, kuartal, dan tahun.
+b. Dimensi Produk (dim_produk): kategori dan nama produk yang dijual.
+c. Dimensi Lokasi (dim_lokasi): kota dan toko tempat transaksi terjadi.
+d. Dimensi Kanal (dim_kanal): toko fisik atau online.
+
+Measure yang dipakai adalah sebagai berikut:
+a. Jumlah transaksi: banyaknya transaksi penjualan pada kombinasi dimensi yang dipilih.
+b. Total penjualan: nilai rupiah penjualan pada kombinasi dimensi yang dipilih.
+
+Hierarki pada dimensi Waktu adalah Hari, Bulan, Kuartal, lalu Tahun, sehingga analisis harian dapat diagregasi sampai ke tahunan. Dua operasi OLAP yang akan dilakukan adalah sebagai berikut:
+a. Drill-down: menampilkan data dalam bentuk yang lebih detail berdasarkan konsep hirarki data, misalnya dari total penjualan tahunan ke bulanan, lalu ke harian per kota.
+b. Slice: memotong data pada cube berdasarkan nilai pada satu dimensi, misalnya hanya kanal online, untuk melihat performa kanal tersebut saja.
+
+[Tambahan Original — dari Al Aufa et al. (2026); file data warehouse.txt] Untuk PT Retail Nusantara, cube ini menjawab kebutuhan analisis performa penjualan harian per kota, kategori produk, dan kanal, karena setiap transaksi membawa keempat dimensi tersebut dan kedua measure tersebut.
+Sumber: File ZIP: 173702-ID-implementasi-teknologi-olap-pada-sistem.pdf; File ZIP: VOL 2 NO 3 JULI 2026 (Ripan Laksmana Putra).pdf; File ZIP: V2N2-99-105-JITIFNA.pdf; File ZIP: data warehouse.txt
+
+JAWABAN NOMOR 2
+
+[Tambahan Original — dari Tresnawati & Susilowati (2014); file data warehouse.txt] Untuk kasus PT Retail Nusantara, jenis OLAP yang paling sesuai adalah HOLAP. HOLAP merupakan kombinasi antara MOLAP dan ROLAP, di mana HOLAP menyimpan data precomputed aggregate pada media penyimpanan HOLAP sendiri untuk beberapa level teratas, sedangkan data untuk level yang lebih rendah disimpan di database relasional. Pilihan ini menjaga kecepatan dashboard tanpa harus menyimpan seluruh kombinasi agregat.
+
+Alasannya adalah sebagai berikut:
+a. Kinerja: agregat level atas seperti penjualan per kota, kategori, dan bulan sudah dihitung sebelumnya, sehingga dashboard tampil cepat, sedangkan rincian harian tetap bisa diambil dari database relasional saat dibutuhkan.
+b. Skala data: data transaksi harian yang besar tetap disimpan di database relasional, sehingga tidak perlu membuat agregat untuk semua kombinasi seperti pada MOLAP.
+c. Kemudahan agregasi: agregat yang paling sering dipakai sudah tersedia, dan drill-down ke data transaksi tetap dapat dilakukan.
+d. Biaya: data warehouse relasional yang sudah ada dimanfaatkan langsung, tanpa storage tambahan sebesar MOLAP.
+e. Kemudahan pemeliharaan: tidak perlu membangun ulang seluruh cube seperti pada MOLAP ketika ada data baru, cukup memperbarui agregat yang berubah.
+
+ROLAP saja terlalu lambat untuk query dashboard yang berulang pada cube yang besar, karena setiap query harus dihitung dari database relasional. MOLAP saja memang paling cepat, tetapi ukuran penyimpanannya bisa lebih besar daripada sumbernya sendiri jika agregasi dibuat untuk semua level, dan cube harus dibangun ulang setiap ada data baru.
+
+[Tambahan Original — dari Tresnawati & Susilowati (2014); file data warehouse.txt] Risikonya, HOLAP memakai dua mesin penyimpanan, sehingga agregat yang sudah dihitung sebelumnya bisa tidak konsisten dengan data detail jika pembaruannya tidak berjalan serentak. Mitigasinya, agregat diperbarui secara incremental dan terjadwal setiap kali proses ETL berjalan, lalu dilakukan rekonsiliasi berkala dengan cara membandingkan total agregat dengan total data detail.
+Sumber: File ZIP: 173702-ID-implementasi-teknologi-olap-pada-sistem.pdf; File ZIP: jurnal data warehouse/data warehouse.txt; File ZIP: data warehouse.txt
+
+JAWABAN NOMOR 3
+
+Asal data adalah data transaksi penjualan dari laporan POS toko fisik dan data transaksi online, beserta data master produk dan toko. Data mentah tersebut dimasukkan ke staging area terlebih dahulu, lalu diproses dengan Pentaho Data Integration (PDI). Transformation adalah sekumpulan instruksi untuk merubah input menjadi output yang diinginkan, sedangkan Job adalah kumpulan instruksi untuk menjalankan transformasi.
+
+Dimensi waktu dibentuk secara generatif dari deret tanggal kontinu, sehingga tidak ada tanggal yang kosong meskipun pada tanggal itu tidak ada transaksi. [Tambahan Original — dari Al Aufa et al. (2026); file data warehouse.txt] Setiap tanggal diberi surrogate key dengan format yyyymmdd, misalnya 20260105 untuk 5 Januari 2026, beserta atribut hari dalam seminggu, nama bulan, kuartal, tahun, serta penanda akhir pekan.
+
+Langkah transformasi kunci adalah sebagai berikut:
+a. Lookup surrogate key: step Database Lookup menerjemahkan kunci natural dari data transaksi menjadi surrogate key yang merujuk pada primary key di masing-masing tabel dimensi.
+b. Standardisasi tanggal: format tanggal yang tidak seragam di-parse dan diseragamkan, lalu teks distandardisasi dan nilai kosong diisi dengan label "Unknown" agar tidak ada transaksi yang hilang.
+
+Hasil diuji dengan cara mencocokkan agregat penjualan harian di data warehouse dengan laporan POS pada hari yang sama. Selain itu, diambil beberapa sampel data secara acak dan dicocokkan hasil pemrosesan manual dengan hasil pemrosesan ETL di Pentaho Data Integration.
+Sumber: File ZIP: 2844-Article Text-7168-1-10-20210629.pdf; File ZIP: V2N2-99-105-JITIFNA.pdf; File ZIP: JPTIS-Volume. 2 Nomor. 4 Tahun 2024 Hal 100-109.pdf; File ZIP: data warehouse.txt
+
+SUMBER REFERENSI SOAL NOMOR 1
+
+1. PENGERTIAN OLAP DAN STAR SCHEMA
+Snippet: "OLAP singkatan dari On-Line Analytical Processing. Secara mendasar OLAP adalah suatu metode khusus untuk melakukan analisis data yang terdapat di dalam media penyimpanan data (database) dan kemudian membuat laporannya sesuai dengan permintaan user."
+Asal: File ZIP: 173702-ID-implementasi-teknologi-olap-pada-sistem.pdf
+Sumber: Tresnawati, I., & Susilowati, E. (2014). Implementasi Teknologi OLAP pada Sistem Pengolahan Data Penjualan. Seminar Nasional Sains dan Teknologi 2014, Universitas Muhammadiyah Jakarta.
+Lokasi: Bagian 2.2 OLAP dan 2.2.2.1 Star Schema
+Sumber 2:
+Snippet: "Star schema (skema bintang) adalah model desain basis data yang digunakan dalam data warehouse untuk mendukung analisis multidimensi. Skema ini terdiri dari satu tabel fakta yang berisi data numerik dan beberapa tabel dimensi yang berisi informasi deskriptif tentang data tersebut."
+Asal: File ZIP: VOL 2 NO 3 JULI 2026 (Ripan Laksmana Putra).pdf
+Sumber: Putra, R. L., Wafii, F. A., Zahrawi, I. H., Fathurahman, R., & Hilman, M. (2026). Perancangan Data Warehouse untuk Analisis Ekspor Komoditas Pertanian Indonesia Berbasis OLAP. Jurnal Ilmiah Ilmu Komputer & Elektronika (MURAKOM), 2(3), 62-75.
+Lokasi: Bagian 2.3 Star Schema
+
+2. DIMENSI DAN TABEL FAKTA PENJUALAN RITEL
+Snippet: "Pemodelan data dilakukan menggunakan pendekatan Star Schema yang terdiri dari satu tabel fakta (fact_sales) dan enam tabel dimensi (dim_date, dim_product, dim_region, dim_sales_channel, dim_payment_method, dan dim_customer_type)."
+Asal: File ZIP: V2N2-99-105-JITIFNA.pdf
+Sumber: Al Aufa, T. A., Rivaldy, A. F., Nurroyan, F. E., Hud, M. F. D., & Arifiyanti, A. A. (2026). Implementasi Arsitektur Data Warehouse dan Dashboard Business Intelligence untuk Analisis Performa Penjualan Ritel Elektronik di Myanmar Menggunakan Pentaho dan Tableau. JITIFNA: Jurnal Ilmu Teknologi Informasi Indonesia, 2(2), 99-105.
+Lokasi: Bagian Metodologi, Dimensional Modeling (Star Schema)
+
+3. OPERASI OLAP: DRILL-DOWN DAN SLICE
+Snippet: "Proses drill down adalah proses penampilan data dalam bentuk yang lebih detail. Proses pendetailan ini berdasarkan konsep hirarki data yang telah terformat sebelumnya."
+Asal: File ZIP: 173702-ID-implementasi-teknologi-olap-pada-sistem.pdf
+Sumber: Tresnawati, I., & Susilowati, E. (2014). Implementasi Teknologi OLAP pada Sistem Pengolahan Data Penjualan. Seminar Nasional Sains dan Teknologi 2014, Universitas Muhammadiyah Jakarta.
+Lokasi: Bagian 2.2.2, Drill Down dan Consolidation; Slicing dan Dicing; Pivoting
+
+SUMBER REFERENSI SOAL NOMOR 2
+
+1. TIGA ARSITEKTUR OLAP: MOLAP, ROLAP, DAN HOLAP
+Snippet: "MOLAP adalah singkatan dari Multidimensional OLAP yang merupakan tipe OLAP yang memiliki storage sendiri. Keuntungan dari MOLAP adalah performa kecepatan akses data yang sangat baik. Namun kelemahannya adalah jika kombinasi agregasi data yang dihasilkan untuk semua level, maka ukuran penyimpanan akan bisa lebih besar daripada sumbernya sendiri."
+Asal: File ZIP: 173702-ID-implementasi-teknologi-olap-pada-sistem.pdf
+Sumber: Tresnawati, I., & Susilowati, E. (2014). Implementasi Teknologi OLAP pada Sistem Pengolahan Data Penjualan. Seminar Nasional Sains dan Teknologi 2014, Universitas Muhammadiyah Jakarta.
+Lokasi: Bagian 2.2.1 Arsitektur OLAP (2.2.1.1 MOLAP, 2.2.1.2 ROLAP, 2.2.1.3 HOLAP)
+Sumber 2:
+Snippet: "ROLAP menggunakan SQL sebagai teknik query, sedangkan MOLAP bekerja dengan matriks sparse, dan HOLAP menggunakan teknologi SQL dan matriks sparse."
+Asal: File ZIP: jurnal data warehouse/data warehouse.txt (berisi salinan artikel EDUCBA, "ROLAP vs MOLAP vs HOLAP", oleh Priya Pedamkar, diperbarui 6 Juli 2023)
+Sumber: file data warehouse.txt (kompilasi artikel; artikel asli: Pedamkar, P. (2023). ROLAP vs MOLAP vs HOLAP. EDUCBA.)
+Lokasi: Bagian awal artikel EDUCBA dalam file
+
+SUMBER REFERENSI SOAL NOMOR 3
+
+1. ETL DENGAN PENTAHO DATA INTEGRATION
+Snippet: "Elemen utama dari Pentaho Data Integration (PDI) adalah Transformation dan Job. Transformation adalah sekumpulan instruksi untuk merubah input menjadi output yang diinginkan (input-proses-output). Sedangkan Job adalah kumpulan instruksi untuk menjalankan transformasi."
+Asal: File ZIP: 2844-Article Text-7168-1-10-20210629.pdf
+Sumber: Prasetia, I. P. W., & Kurniawan, I. N. H. (2021). Implementasi ETL (Extract, Transform, Load) pada Data warehouse Penjualan Menggunakan Tools Pentaho. TIERS Information Technology Journal, 2(1), 39-47.
+Lokasi: Bagian 2.1, pembahasan Pentaho Data Integration
+Sumber 2:
+Snippet: "Proses pengujian nantinya akan dilakukan dengan cara mengambil beberapa sampel data secara acak dan mencocokkan hasil antara pemrosesan data secara manual dengan hasil pemrosesan data melalui proses ETL di Pentaho Data Integration."
+Asal: File ZIP: 2844-Article Text-7168-1-10-20210629.pdf
+Sumber: Prasetia, I. P. W., & Kurniawan, I. N. H. (2021). Implementasi ETL (Extract, Transform, Load) pada Data warehouse Penjualan Menggunakan Tools Pentaho. TIERS Information Technology Journal, 2(1), 39-47.
+Lokasi: Bagian 2.2 Gambaran Umum Sistem
+
+2. PEMBENTUKAN DIMENSI WAKTU DAN SURROGATE KEY
+Snippet: "Berdiferensiasi dari dimensi kategorikal yang diekstrak dari data transaksi, tabel dimensi waktu dibangun menggunakan pendekatan generatif melalui kueri native PostgreSQL. Fungsi generate_series() dimanfaatkan untuk menghasilkan deret tanggal kontinu yang mencakup seluruh rentang waktu dataset tanpa celah (gap), bahkan untuk tanggal di mana tidak terjadi transaksi sama sekali."
+Asal: File ZIP: V2N2-99-105-JITIFNA.pdf
+Sumber: Al Aufa, T. A., Rivaldy, A. F., Nurroyan, F. E., Hud, M. F. D., & Arifiyanti, A. A. (2026). Implementasi Arsitektur Data Warehouse dan Dashboard Business Intelligence untuk Analisis Performa Penjualan Ritel Elektronik di Myanmar Menggunakan Pentaho dan Tableau. JITIFNA: Jurnal Ilmu Teknologi Informasi Indonesia, 2(2), 99-105.
+Lokasi: Bagian Hasil dan Pembahasan, pembangunan tabel dimensi waktu
+Sumber 2:
+Snippet: "Pada tahap akhir transformasi fakta, dilakukan serangkaian step Database Lookup yang menerjemahkan kunci natural dari data transaksi menjadi surrogate key yang merujuk pada primary key di masing-masing tabel dimensi."
+Asal: File ZIP: V2N2-99-105-JITIFNA.pdf
+Sumber: Al Aufa, T. A., Rivaldy, A. F., Nurroyan, F. E., Hud, M. F. D., & Arifiyanti, A. A. (2026). Implementasi Arsitektur Data Warehouse dan Dashboard Business Intelligence untuk Analisis Performa Penjualan Ritel Elektronik di Myanmar Menggunakan Pentaho dan Tableau. JITIFNA: Jurnal Ilmu Teknologi Informasi Indonesia, 2(2), 99-105.
+Lokasi: Bagian Hasil dan Pembahasan, transformasi fakta
+
+3. DATA WAREHOUSE PENJUALAN DENGAN PENTAHO
+Snippet: "Data processing on Wish can be done by implementing the Extract, Transform, Load process in the data warehouse using Pentaho and visualizing business intelligence with a dashboard using Metabase. The data used in this research is Wish transaction data for the period 2020-2023."
+Asal: File ZIP: JPTIS-Volume. 2 Nomor. 4 Tahun 2024 Hal 100-109.pdf
+Sumber: Murtiwiyati, Agathon, H., & Safitri, L. (2024). Implementasi Data Warehouse dan Business Intelligence Menggunakan Pentaho dan Metabase untuk Membuat Dashboard Visualisasi Kinerja Penjualan E-Commerce Wish. Jurnal Penelitian Teknologi Informasi dan Sains, 2(4), 100-109. https://doi.org/10.54066/jptis.v2i4.2783
+Lokasi: Abstract
+
+DAFTAR PUSTAKA
+
+Al Aufa, T. A., Rivaldy, A. F., Nurroyan, F. E., Hud, M. F. D., & Arifiyanti, A. A. (2026). Implementasi arsitektur data warehouse dan dashboard business intelligence untuk analisis performa penjualan ritel elektronik di Myanmar menggunakan Pentaho dan Tableau. JITIFNA: Jurnal Ilmu Teknologi Informasi Indonesia, 2(2), 99–105.
+
+Murtiwiyati, Agathon, H., & Safitri, L. (2024). Implementasi data warehouse dan business intelligence menggunakan Pentaho dan Metabase untuk membuat dashboard visualisasi kinerja penjualan E-Commerce Wish. Jurnal Penelitian Teknologi Informasi dan Sains, 2(4), 100–109. https://doi.org/10.54066/jptis.v2i4.2783
+
+Pedamkar, P. (2023). ROLAP vs MOLAP vs HOLAP. EDUCBA. https://www.educba.com/rolap-vs-molap-vs-holap/ (diperiksa aktif pada 5 November 2026)
+
+Prasetia, I. P. W., & Kurniawan, I. N. H. (2021). Implementasi ETL (Extract, Transform, Load) pada data warehouse penjualan menggunakan tools Pentaho. TIERS Information Technology Journal, 2(1), 39–47.
+
+Putra, R. L., Wafii, F. A., Zahrawi, I. H., Fathurahman, R., & Hilman, M. (2026). Perancangan data warehouse untuk analisis ekspor komoditas pertanian Indonesia berbasis OLAP. Jurnal Ilmiah Ilmu Komputer & Elektronika (MURAKOM), 2(3), 62–75. https://doi.org/10.64365/murakom.v2i3.336
+
+Ramadhani, N. Y. (2026). data warehouse.txt [Dokumen tidak diterbitkan].
+
+Ramadhani, N. Y. (2026). jurnal data warehouse/data warehouse.txt [Dokumen tidak diterbitkan].
+
+Tresnawati, I., & Susilowati, E. (2014). Implementasi teknologi OLAP pada sistem pengolahan data penjualan. Seminar Nasional Sains dan Teknologi 2014, Universitas Muhammadiyah Jakarta.

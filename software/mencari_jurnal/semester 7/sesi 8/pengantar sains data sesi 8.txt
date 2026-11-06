@@ -1,0 +1,97 @@
+JAWABAN TUGAS
+Pengantar Sains Data
+Nanda Yusuf Ramadhani
+NIM 051691675
+
+JAWABAN NOMOR 1
+
+Data citra di bidang perikanan adalah data citra satelit penginderaan jauh (remote sensing), terutama dari sensor Aqua-MODIS, yang mengukur suhu permukaan laut (SPL) dan konsentrasi klorofil-a. Ikan berkumpul di daerah dengan kondisi oseanografi tertentu, seperti daerah thermal front dan daerah dengan klorofil-a tinggi di dekat pesisir, sehingga data citra tersebut diolah menjadi peta zona potensi penangkapan ikan. Parameter oseanografi seperti suhu permukaan laut, salinitas, konsentrasi klorofil laut, dan cuaca berpengaruh pada pergerakan air laut, dan data penginderaan jauh dapat diperoleh lebih cepat, efektif, efisien, serta mencakup wilayah yang lebih luas.
+Sumber: File ZIP: 2215-Article Text-12320-1-10-20241116.pdf; File ZIP: 7254-Article Text-23903-1-10-20220526.pdf; File ZIP: Mochamad Doni Hafit.pdf
+
+1. Pemetaan Zona Potensi Penangkapan Ikan (ZPPI).
+Aplikasi utama data citra di bidang perikanan adalah pemetaan Zona Potensi Penangkapan Ikan (ZPPI) untuk membantu nelayan mengetahui letak ikan berkumpul. Contoh penerapannya adalah sebagai berikut:
+a. Ikan cakalang di Sumatera Utara: data sensor Aqua-MODIS dipakai untuk mengetahui sebaran suhu permukaan laut dan konsentrasi klorofil-a serta membentuk peta ZPPI setiap bulan. Suhu permukaan laut paling tinggi berlangsung pada bulan Februari yaitu 34,5°C dan paling rendah pada bulan Desember yaitu 27,3°C, sedangkan konsentrasi klorofil-a yang tinggi cenderung berkumpul dekat pesisir pantai. Bulan September memiliki titik potensi terbanyak disusul oleh bulan Oktober.
+b. Perairan Kabupaten Alor: data citra Ocean Color level 3 selama 1 tahun, dari bulan Agustus 2020 sampai Juli 2021, dipakai untuk mengetahui zona potensi penangkapan ikan berdasarkan sebaran suhu permukaan laut. Zona potensi penangkapan ikan diperoleh berdasarkan kejadian thermal front dari suhu permukaan laut, dengan rata-rata nilai suhu permukaan laut berkisar 25,59°C–31°C dan informasi zona potensi penangkapan ikan yang dihasilkan sekitar 67 titik.
+c. Ikan pelagis di Kabupaten Pasangkayu: citra satelit Aqua MODIS dipakai untuk memetakan prediksi area potensial penangkapan ikan pelagis. Suhu permukaan laut berkisar antara 26°C hingga 30°C dengan variasi musiman yang signifikan, konsentrasi klorofil-a berkisar antara 0,3 µg/L hingga 20 µg/L, dan sebagian besar zona potensial penangkapan berada dalam radius 12 mil dari pantai.
+d. Pantai timur dan barat Sumatera Utara: data citra MODIS dipakai untuk memprediksi lokasi penangkapan ikan, sehingga peta prediksi daerah tangkapan ikan dapat dijadikan sebagai pedoman bagi nelayan dalam melakukan tangkapan ikan.
+Sumber: File ZIP: 2215-Article Text-12320-1-10-20241116.pdf; File ZIP: 7254-Article Text-23903-1-10-20220526.pdf; File ZIP: dsultan, HARYANTO ASRI.pdf; File ZIP: dosen,+2.ALI.pdf
+
+2. Analisis persebaran suhu permukaan laut terhadap hasil tangkap ikan.
+Data citra MODIS dipakai untuk menganalisis persebaran suhu permukaan laut terhadap hasil tangkap ikan tongkol (Euthynnus affinis) serta ikan tenggiri (Scomberomorus spp.) di wilayah Kabupaten Lamongan selama tahun 2010 hingga tahun 2014. Hasil persebaran suhu permukaan laut tertinggi terjadi pada bulan November dengan nilai rata-rata sebesar 30,9°C, sedangkan yang terendah terjadi pada bulan Januari dengan nilai rata-rata sebesar 29°C. Hubungan antara suhu permukaan laut dengan hasil tangkapan ikan tongkol dan tenggiri mengacu pada hasil korelasi keduanya yakni sebesar 0,83, yang berarti korelasi keduanya cukup berhubungan nyata. Analisis regresi menunjukkan R² = 0,69, yang berarti 69% data dapat menggambarkan pola prediksi antara suhu permukaan laut terhadap hasil produksi tongkol dan tenggiri.
+Sumber: File ZIP: Mochamad Doni Hafit.pdf
+
+3. Manfaat penggunaan data citra di bidang perikanan.
+Manfaat penggunaan data citra di bidang perikanan adalah sebagai berikut:
+a. Efisiensi waktu, tenaga, dan biaya: penginderaan jauh diharapkan dapat menghasilkan data yang akurat dengan efisiensi waktu, tenaga, dan biaya.
+b. Peningkatan hasil tangkapan: dengan terbentuknya pemetaan ZPPI, diharapkan terjadi peningkatan produksi hasil ikan tangkap di laut, dan teknologi penginderaan jauh sangat membantu nelayan untuk mempermudah operasi penangkapan ikan guna meningkatkan hasil tangkapan ikan yang optimal.
+c. Mengurangi waktu pencarian ikan: nelayan tidak perlu lagi mencari ikan secara acak karena sudah ada peta zona potensi penangkapan ikan.
+d. Cakupan wilayah luas dan pemantauan berkala: data penginderaan jauh dapat mencakup wilayah cakupan yang lebih luas, dan peta ZPPI dapat dibentuk setiap bulan sehingga kondisi perairan dapat dipantau secara berkala.
+Sumber: File ZIP: 2215-Article Text-12320-1-10-20241116.pdf; File ZIP: 7254-Article Text-23903-1-10-20220526.pdf; File ZIP: Mochamad Doni Hafit.pdf
+
+SUMBER REFERENSI SOAL NOMOR 1
+
+1. PENGINDERAAN JAUH DAN DATA CITRA DI PERIKANAN
+Snippet: "Parameter oseanografi seperti suhu permukaan laut, salinitas, konsentrasi klorofil laut, cuaca dan sebagainya, berpengaruh pada pergerakan air laut baik secara horisontal maupun vertikal. Parameter-parameter laut yang dapat diperoleh dengan penggunaan data penginderaan jauh akan lebih cepat, efektif, efisien dan dapat mencakup wilayah cakupan yang lebih luas."
+Asal: File ZIP: Mochamad Doni Hafit.pdf
+Sumber: Hafit, M. D. (2018). Pemanfaatan Data Citra MODIS untuk Analisis Persebaran Suhu Permukaan Laut terhadap Hasil Tangkap Ikan Tongkol (Euthynnus affinis) serta Ikan Tenggiri (Scomberomorus spp.) di Wilayah Kabupaten Lamongan [Skripsi, Universitas Brawijaya].
+Lokasi: Bab 1 Pendahuluan
+
+2. ZPPI IKAN CAKALANG SUMATERA UTARA
+Snippet: "Penelitian ini bertujuan untuk mengimplementasikan metode remote sensing untuk pendeteksian ZPPI menggunakan data sensor Aqua-MODIS, mengetahui sebaran suhu permukaan laut (SPL) dan konsentrasi klorofil-a (Chl-a), serta membentuk peta ZPPI setiap bulan."
+Asal: File ZIP: 2215-Article Text-12320-1-10-20241116.pdf
+Sumber: Sagitama, D. A., & Marsisno, W. (2024). Pemanfaatan Citra Satelit untuk Mendeteksi Zona Potensi Penangkapan Ikan Cakalang: Studi Kasus di Sumatera Utara. Seminar Nasional Official Statistics 2024, Politeknik Statistika STIS.
+Lokasi: Abstrak
+
+3. ZPPI PERAIRAN KABUPATEN ALOR
+Snippet: "Pemanfaatan teknologi penginderaan jauh dalam perikanan sangat membantu nelayan untuk mempermudah dalam operasi penangkapan ikan guna meningkatkan hasil tangkapan ikan yang optimal. Tujuan penelitian ini adalah untuk mengetahui zona potensi penangkapan ikan berdasarkan sebaran suhu permukaan laut di perairan Kabupaten Alor. Zona potensi penangkapan ikan diperolah berdasarkan kejadian thermal front dari suhu permukaan laut. Data citra yang digunakan adalah data citra Ocean Color level 3, data yang diambil selama 1 tahun yaitu dari bulan Agustus 2020 sampai Juli 2021."
+Asal: File ZIP: 7254-Article Text-23903-1-10-20220526.pdf
+Sumber: Ena, O. S., Tallo, I., & Al Ayubi, A. (2022). Zona Potensi Penangkapan Ikan Menggunakan Citra Satelit di Perairan Kabupaten Alor. Jurnal Bahari Papadak, 3(1), 60-67.
+Lokasi: Abstrak
+
+4. ZPPI IKAN PELAGIS KABUPATEN PASANGKAYU
+Snippet: "Penelitian ini bertujuan untuk memetakan prediksi area potensial penangkapan ikan pelagis di perairan Kabupaten Pasangkayu menggunakan citra satelit Aqua MODIS. Data suhu permukaan laut (SPL) dan klorofil-a dari satelit ini diolah untuk mengidentifikasi zona penangkapan yang optimal. Hasil penelitian menunjukkan bahwa suhu permukaan laut berkisar antara 26°C hingga 30°C dengan variasi musiman yang signifikan, lebih tinggi pada musim timur (Juni-Agustus) dan lebih rendah pada musim barat (Desember-Februari). Konsentrasi klorofil-a berkisar antara 0,3 µg/L hingga 20 µg/L, dengan nilai tinggi di area dekat pantai yang menunjukkan produktivitas primer yang mendukung keberadaan ikan pelagis. Pemetaan menunjukkan bahwa sebagian besar zona potensial penangkapan berada dalam radius 12 mil dari pantai, dengan konsentrasi klorofil-a yang tinggi."
+Asal: File ZIP: dsultan, HARYANTO ASRI.pdf
+Sumber: Haryanto Asri, Agustina, Kamaruddin, Widya Utami, & Nur Apriati Putri. (2024). Pemanfaatan Citra Satelit Aqua MODIS untuk Prediksi Wilayah Potensial Penangkapan Ikan Pelagis di Perairan Kabupaten Pasangkayu. Jurnal Ilmiah Wahana Laut Lestari, 2(1), 8-21.
+Lokasi: Abstrak
+
+5. DAERAH TANGKAPAN IKAN PANTAI TIMUR DAN BARAT SUMATERA UTARA
+Snippet: "Penelitian ini bertujuan untuk memprediksi lokasi penangkapan ikan disekitar perairan Sumatera Utara dengan memanfaatkan data citra Modis, sehingga nantinya peta prediksi daerah tangkapan ikan dapat dijadikan sebagai pedoman bagi nelayan dalam melakukan tangkapan ikan."
+Asal: File ZIP: dosen,+2.ALI.pdf
+Sumber: Nurman, A. (2010). Pemanfaatan Data MODIS untuk Mendeteksi Daerah Tangkapan Ikan Pantai Timur dan Barat Sumatera Utara. Jurnal Geografi, 2(2).
+Lokasi: Abstrak
+
+6. SPL TERHADAP HASIL TANGKAP IKAN TONGKOL DAN TENGGIRI LAMONGAN
+Snippet: "Hubungan antara suhu permukaan laut dengan hasil tangkapan ikan tongkol dan tenggiri mengacu pada hasil korelasi keduanya yakni sebesar 0,83. Dapat diartikan korelasi keduanya cukup berhubungan nyata. Sedangkan pengaruh ketergantungan antara suhu permukaan laut ataupun untuk mengetahui pola prediksi suhu permukaan laut dengan hasil tangkap ikan tongkol dan tenggiri mengacu pada hasil analisa regresi yakni R² = 0,69. Ini diartikan 69% data dapat menggambarkan pola prediksi antara suhu permukaan laut terhadap hasil produksi tongkol dan tenggiri."
+Asal: File ZIP: Mochamad Doni Hafit.pdf
+Sumber: Hafit, M. D. (2018). Pemanfaatan Data Citra MODIS untuk Analisis Persebaran Suhu Permukaan Laut terhadap Hasil Tangkap Ikan Tongkol (Euthynnus affinis) serta Ikan Tenggiri (Scomberomorus spp.) di Wilayah Kabupaten Lamongan [Skripsi, Universitas Brawijaya].
+Lokasi: Ringkasan
+
+7. MANFAAT DATA CITRA DI PERIKANAN
+Snippet: "Salah satu metode yang dapat digunakan yaitu penginderaan jauh (remote sensing). Metode ini diharapkan dapat menghasilkan data yang akurat dengan efisiensi waktu, tenaga, dan biaya. Selanjutnya, dengan terbentuknya pemetaan ZPPI, diharapkan terjadi peningkatan produksi hasil ikan tangkap di laut dan mengurangi waktu pencarian ikan."
+Asal: File ZIP: 2215-Article Text-12320-1-10-20241116.pdf
+Sumber: Sagitama, D. A., & Marsisno, W. (2024). Pemanfaatan Citra Satelit untuk Mendeteksi Zona Potensi Penangkapan Ikan Cakalang: Studi Kasus di Sumatera Utara. Seminar Nasional Official Statistics 2024, Politeknik Statistika STIS.
+Lokasi: Pendahuluan
+
+DAFTAR PUSTAKA
+
+Ena, O. S., Tallo, I., & Al Ayubi, A. (2022). Zona potensi penangkapan ikan menggunakan citra satelit di perairan Kabupaten Alor. Jurnal Bahari Papadak, 3(1), 60–67.
+
+Hafit, M. D. (2018). Pemanfaatan data citra MODIS untuk analisis persebaran suhu permukaan laut terhadap hasil tangkap ikan tongkol (Euthynnus affinis) serta ikan tenggiri (Scomberomorus spp.) di wilayah Kabupaten Lamongan [Skripsi, Universitas Brawijaya].
+
+Haryanto Asri, Agustina, Kamaruddin, Widya Utami, & Nur Apriati Putri. (2024). Pemanfaatan citra satelit Aqua MODIS untuk prediksi wilayah potensial penangkapan ikan pelagis di perairan Kabupaten Pasangkayu. Jurnal Ilmiah Wahana Laut Lestari, 2(1), 8–21.
+
+Nurman, A. (2010). Pemanfaatan data MODIS untuk mendeteksi daerah tangkapan ikan pantai timur dan barat Sumatera Utara. Jurnal Geografi, 2(2).
+
+Ramadhani, N. Y. (2026). pengantar sains data.txt [Dokumen tidak diterbitkan].
+
+Sagitama, D. A., & Marsisno, W. (2024). Pemanfaatan citra satelit untuk mendeteksi zona potensi penangkapan ikan cakalang: Studi kasus di Sumatera Utara. Seminar Nasional Official Statistics 2024, Politeknik Statistika STIS.
+
+HASIL ANALISA
+
+Semua bagian soal terjawab: contoh aplikasi data citra di bidang perikanan (pemetaan Zona Potensi Penangkapan Ikan dan analisis persebaran suhu permukaan laut terhadap hasil tangkap) dan manfaatnya.
+
+Sumber di dalam ZIP yang tidak dipakai dalam jawaban ini:
+a. Siregar, J. J., & Musawaris, R. (2023). Pemanfaatan Big Data dalam Bidang Pendidikan. Jurnal Ilmu Sosial dan Teknologi, 4(2). Alasan: membahas big data di bidang pendidikan, bukan data citra di bidang perikanan.
+b. Stanislaus, Jiwandana, & Pinasthika. (2024). Aplikasi Pembelajaran Mesin dalam Pengolahan Data Citra untuk Bidang Medis: Sebuah Kajian Pustaka. Journal of Information Engineering and Technology, 2(1), 1-16. Alasan: membahas pengolahan data citra di bidang medis, bukan perikanan.
+c. Ilamsyah, dkk. Pemanfaatan IoT (Internet of Things) dan Data Mining Bidang Perikanan untuk Meningkatkan Nilai Ekonomi. ICIT Journal. Alasan: membahas IoT dan data mining untuk budidaya ikan (pemantauan kualitas air tambak), bukan data citra.
+d. P0400316406_disertasi bab 1-2.pdf (Rekonstruksi Hukum Penanggulangan Tindak Pidana di Bidang Perikanan Tangkap yang Berkeadilan Sosial). Alasan: membahas hukum perikanan tangkap, tidak membahas data citra.

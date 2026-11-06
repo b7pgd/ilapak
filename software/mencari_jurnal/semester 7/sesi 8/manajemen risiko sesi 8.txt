@@ -1,0 +1,117 @@
+JAWABAN TUGAS
+Manajemen Risiko dan Audit Sistem Informasi
+Nanda Yusuf Ramadhani
+NIM 051691675
+
+JAWABAN NOMOR 1
+
+IT Auditing merupakan proses yang dilakukan untuk menganalisa dan mengevaluasi infrastruktur, kebijakan dan prosedur IT dari sebuah organisasi. Tujuannya adalah untuk menilai risiko yang terkait dengan sistem IT dan menemukan cara untuk mengurangi risiko tersebut, sehingga sistem informasi mendukung tujuan bisnis secara efektif dan aman.
+Sumber: File ZIP: jurnal manajemen risiko/manajemen resiko dan audit.txt; File ZIP: manejemen risiko dan audit.txt
+
+1. Perencanaan Audit (Planning).
+Perencanaan audit TI dapat dimulai dengan menentukan area-area yang relevan dan berisiko paling tinggi. Pada tahap ini perlu dirumuskan rencana audit TI yang terperinci yang menguraikan ruang lingkup, tujuan, anggaran, proses, dan milestone. Langkah-langkah dalam perencanaan audit TI meliputi:
+a. Mengembangkan tujuan dan lingkup audit: menentukan sistem, aplikasi, jaringan, dan proses yang akan diaudit.
+b. Menetapkan tujuan dan risiko audit: menganalisis potensi risiko yang dapat mempengaruhi sistem TI.
+c. Melakukan survei pendahuluan: memahami bisnis organisasi, infrastruktur TI, serta risiko yang terkait dengan sistem TI yang diaudit.
+d. Mengembangkan audit program: menentukan metode audit yang akan digunakan, alat yang diperlukan, jadwal audit, dan tim auditor.
+Sumber: File ZIP: mp08_spiub.pdf; File ZIP: jurnal manajemen risiko/manajemen resiko dan audit.txt
+
+2. Pengumpulan Bukti dan Pelaksanaan Audit (Fieldwork).
+Pada tahap ini, IT Auditor mengumpulkan bukti untuk mengevaluasi efektivitas kontrol TI. Teknik yang dipakai adalah sebagai berikut:
+a. Wawancara: mewawancarai staf TI untuk memahami prosedur operasional dan kebijakan keamanan.
+b. Pemeriksaan dokumen dan kebijakan: mengevaluasi dokumen seperti kebijakan keamanan, prosedur pemulihan bencana, dan peraturan kepatuhan.
+c. Pengujian sistem: menguji kontrol keamanan seperti otorisasi pengguna, enkripsi data, dan mekanisme pencadangan.
+d. Analisis data: menggunakan teknik analisis data untuk mengidentifikasi anomali atau pola mencurigakan dalam sistem.
+Sumber: File ZIP: jurnal manajemen risiko/manajemen resiko dan audit.txt; File ZIP: Audit Teknologi Informasi Untuk Mengoptimalkan Sumber Daya Dan Tata Kelola Teknologi Informasi.pdf
+
+3. Pengujian dan Evaluasi Kontrol TI.
+Pada tahap ini auditor menguji apakah struktur pengendalian intern yang digariskan diterapkan sebagaimana mestinya atau tidak. Auditor dapat menggunakan Computer Assisted Audit Techniques (CAAT) untuk menilai keberadaan dan kepercayaan terhadap struktur pengendalian intern tersebut. Evaluasi dilakukan berdasarkan standar yang relevan, seperti:
+a. COBIT (Control Objectives for Information and Related Technologies).
+b. ISO 27001 (Standar Manajemen Keamanan Informasi).
+c. NIST Cybersecurity Framework.
+Sumber: File ZIP: mp08_spiub.pdf; File ZIP: jurnal manajemen risiko/manajemen resiko dan audit.txt
+
+4. Analisis Hasil dan Penyusunan Temuan.
+Pada tahapan ini dilakukan analisis total berdasarkan semua data-data yang sudah diperoleh. Analisis ini kemudian dijabarkan dalam bentuk temuan, baik temuan negatif atau temuan positif, dan dibuatlah rekomendasi yang merupakan hasil akhir dari proses audit. Temuan negatif berarti ada kelemahan kontrol yang perlu diperbaiki, sedangkan temuan positif berarti ada keunggulan yang telah dicapai organisasi dengan memanfaatkan fasilitas TI yang sudah ada.
+Sumber: File ZIP: mp08_spiub.pdf
+
+5. Pelaporan Hasil Audit (Reporting).
+Setelah proses auditing selesai, tim audit mendokumentasikan temuan mereka dan membuat laporan lengkap tentang seluruh temuan. Laporan audit berisi temuan audit, dampak risiko jika kelemahan tersebut tidak diperbaiki, dan rekomendasi perbaikan. Sebelum diterbitkan, draft laporan didiskusikan dengan pihak manajemen dan dimintakan tanggapan manajemen atas temuan audit, lalu laporan akhir diterbitkan dan disampaikan kepada manajemen perusahaan agar dapat mengambil tindakan yang diperlukan.
+Sumber: File ZIP: mp08_spiub.pdf; File ZIP: jurnal manajemen risiko/manajemen resiko dan audit.txt
+
+Setelah laporan diterbitkan, audit dilanjutkan dengan tindak lanjut: rekomendasi dari laporan audit perlu diterapkan, lalu dilakukan pengujian kembali untuk memastikan bahwa resolusi audit TI berfungsi sebagaimana mestinya. Setelah proses follow up terbukti berhasil, proses IT audit akan resmi ditutup.
+Sumber: File ZIP: jurnal manajemen risiko/manajemen resiko dan audit.txt
+
+6. Tahapan yang paling menentukan kualitas hasil audit: perencanaan.
+[Tambahan Original — dari mp08_spiub.pdf; file manajemen resiko dan audit.txt] Menurut saya, tahapan yang paling menentukan kualitas hasil audit adalah perencanaan. Perencanaan menentukan area mana yang diaudit, risiko apa yang menjadi fokus, dan metode apa yang dipakai, sehingga seluruh tahapan sesudahnya hanya menguji apa yang sudah ditentukan pada tahap ini. Jika perencanaan salah, misalnya area berisiko tinggi terlewat atau ruang lingkup terlalu sempit, maka pengumpulan bukti akan menguji hal yang salah dan laporan sebaik apa pun hanya menjawab pertanyaan yang salah. Sebaliknya, perencanaan yang tepat membuat pengujian terarah, bukti yang dikumpulkan relevan, dan rekomendasi yang dihasilkan tepat sasaran.
+Sumber: File ZIP: mp08_spiub.pdf; File ZIP: jurnal manajemen risiko/manajemen resiko dan audit.txt
+
+SUMBER REFERENSI SOAL NOMOR 1
+
+1. PENGERTIAN DAN TUJUAN AUDIT TI
+Snippet: "IT Auditing merupakan proses yang dilakukan untuk menganalisa dan mengevaluasi infrastruktur, kebijakan dan prosedur IT dari sebuah organisasi."
+Asal: File ZIP: jurnal manajemen risiko/manajemen resiko dan audit.txt (berisi salinan artikel web "4 Proses Utama dalam IT Auditing" dan artikel UNMAHA "Audit Teknologi Informasi (TI)")
+Sumber: file manajemen resiko dan audit.txt (kompilasi artikel)
+Lokasi: Bagian awal file, artikel "4 Proses Utama dalam IT Auditing"
+
+2. TAHAPAN AUDIT TI MENURUT MANUAL PROSEDUR
+Snippet: "Secara umum tahapan dalam audit TI pada prinsipnya sama dengan audit lainnya. Tahap-tahap audit Teknologi Informasi yang umum terdiri dari 5 tahap sebagai berikut: 1. Tahap pra-penugasan Audit. 2. Tahap Perencanaan Audit. 3. Tahap Pengujian Struktur Pengendalian Internal. 4. Tahap pemeriksaan rinci. 5. Tahap penilaian secara umum atas hasil pengujian. 6. Tahap Laporan Audit. 7. Tindak Lanjut Temuan / Rekomendasi Audit."
+Asal: File ZIP: mp08_spiub.pdf
+Sumber: Satuan Pengawas Internal Universitas Brawijaya. (2011). Manual Prosedur Audit Teknologi Informasi. Universitas Brawijaya, Malang.
+Lokasi: Bagian Prosedur Audit Teknologi Informasi
+
+3. PERENCANAAN AUDIT TI
+Snippet: "Suatu perencanaan audit TI dapat dimulai dengan menentukan area-area yang relevan dan berisiko paling tinggi."
+Asal: File ZIP: mp08_spiub.pdf
+Sumber: Satuan Pengawas Internal Universitas Brawijaya. (2011). Manual Prosedur Audit Teknologi Informasi. Universitas Brawijaya, Malang.
+Lokasi: Bagian Perencanaan Audit Teknologi Informasi
+Sumber 2:
+Snippet: "Pada tahap ini perlu dirumuskan rencana IT audit yang terperinci yang menguraikan ruang lingkup, tujuan, anggaran, proses, dan milestone."
+Asal: File ZIP: jurnal manajemen risiko/manajemen resiko dan audit.txt
+Sumber: file manajemen resiko dan audit.txt (kompilasi artikel)
+Lokasi: Artikel "4 Proses Utama dalam IT Auditing", bagian Planning
+
+4. PENGUMPULAN BUKTI DAN TEKNIK AUDIT
+Snippet: "Pada tahap ini, IT Auditor mengumpulkan bukti untuk mengevaluasi efektivitas kontrol TI. Proses ini melibatkan beberapa teknik seperti wawancara, pengujian sistem, serta analisis dokumen."
+Asal: File ZIP: jurnal manajemen risiko/manajemen resiko dan audit.txt
+Sumber: file manajemen resiko dan audit.txt (kompilasi artikel)
+Lokasi: Artikel UNMAHA, bagian 2. Pengumpulan Bukti dan Evaluasi (Fieldwork)
+Sumber 2:
+Snippet: "Pada tahap awal dilakukan pengumpulan data melalui observasi, wawancara, dan dokumentasi di lokasi penelitian."
+Asal: File ZIP: Audit Teknologi Informasi Untuk Mengoptimalkan Sumber Daya Dan Tata Kelola Teknologi Informasi.pdf
+Sumber: Sanuri, R., & Siswaya. (2026). Audit Teknologi Informasi untuk Mengoptimalkan Sumber Daya dan Tata Kelola Teknologi Informasi. FAHMA – Jurnal Informatika Komputer, Bisnis dan Manajemen, 24(2), 147-156.
+Lokasi: Bagian Hasil, Bagan Alur Penelitian
+
+5. EVALUASI KONTROL TI DAN KERANGKA KERJA
+Snippet: "Auditor menilai apakah kontrol yang diterapkan organisasi cukup untuk mengurangi risiko TI dan apakah ada celah yang dapat dieksploitasi oleh ancaman keamanan."
+Asal: File ZIP: jurnal manajemen risiko/manajemen resiko dan audit.txt
+Sumber: file manajemen resiko dan audit.txt (kompilasi artikel)
+Lokasi: Artikel UNMAHA, bagian 3. Evaluasi Kontrol TI
+Sumber 2:
+Snippet: "Kerangka kerja Cobit merupakan suatu konsep manajemen tata kelola IT, yang dipergunakan sebagai standar internasional yang dikembangkan oleh ISACA (Information System Audit and Control Association) untuk perusahaan besar di dunia."
+Asal: File ZIP: 01darwisvol7no1methodika1-10.pdf
+Sumber: Manalu, D. R. (2021). Audit Teknologi Informasi dengan COBIT pada Sistem Informasi Universitas Methodist Indonesia. Jurnal METHODIKA, 7(1).
+Lokasi: Bagian 2, pembahasan COBIT
+
+6. PELAPORAN DAN TINDAK LANJUT
+Snippet: "Setelah menyelesaikan proses IT audit, auditor akan membuat laporan lengkap tentang seluruh temuan mereka."
+Asal: File ZIP: jurnal manajemen risiko/manajemen resiko dan audit.txt
+Sumber: file manajemen resiko dan audit.txt (kompilasi artikel)
+Lokasi: Artikel "4 Proses Utama dalam IT Auditing", bagian Audit Completion dan Follow Up
+Sumber 2:
+Snippet: "Menyiapkan draft laporan audit. Mendiskusikan draft dengan pihak manajemen dan meminta tanggapan manajemen atas temuan audit. Menerbitkan Laporan Akhir Audit."
+Asal: File ZIP: mp08_spiub.pdf
+Sumber: Satuan Pengawas Internal Universitas Brawijaya. (2011). Manual Prosedur Audit Teknologi Informasi. Universitas Brawijaya, Malang.
+Lokasi: Bagian 6. Tahap Laporan Audit
+
+DAFTAR PUSTAKA
+
+Manalu, D. R. (2021). Audit teknologi informasi dengan COBIT pada sistem informasi Universitas Methodist Indonesia. Jurnal METHODIKA, 7(1).
+
+Ramadhani, N. Y. (2026). manejemen risiko dan audit.txt [Dokumen tidak diterbitkan].
+
+Ramadhani, N. Y. (2026). jurnal manajemen risiko/manajemen resiko dan audit.txt [Dokumen tidak diterbitkan].
+
+Sanuri, R., & Siswaya. (2026). Audit teknologi informasi untuk mengoptimalkan sumber daya dan tata kelola teknologi informasi. FAHMA – Jurnal Informatika Komputer, Bisnis dan Manajemen, 24(2), 147–156.
+
+Satuan Pengawas Internal Universitas Brawijaya. (2011). Manual prosedur audit teknologi informasi. Universitas Brawijaya, Malang.
