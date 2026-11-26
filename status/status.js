@@ -264,11 +264,11 @@ function processCSVData(csvText) {
         
         // Pemetaan Sesuai Petunjuk Teknis:
         // Kolom B (Index 1) = Kode Produk, Kolom D (Index 3) = Nama Produk
-        // Kolom J (Index 9) = Approved Supv, Kolom K (Index 10) = Status Release
+        // Kolom J (Index 9) = Approved Supv, Kolom H (Index 7) = Status Release (Sample Arrival Date)
         let kodeProdukRaw = cells[1] ? cells[1].trim() : "";
         const namaProduk = cells[3] ? cells[3].trim() : "";
         const rawApproved = cells[9] ? cells[9].trim() : "";
-        const rawRelease = cells[10] ? cells[10].trim() : "";
+        const rawRelease = cells[7] ? cells[7].trim() : "";
 
         if (kodeProdukRaw === "") continue; // Bersihkan baris kosong jika ada
 
@@ -293,7 +293,7 @@ function processCSVData(csvText) {
             isApproved: isApproved,
             isReleased: isReleased,
             approvedTime: rawApproved, // Menyimpan teks tanggal/jam asli dari kolom J
-            releasedTime: rawRelease   // Menyimpan teks tanggal/jam asli dari kolom K
+            releasedTime: rawRelease   // Menyimpan teks tanggal/jam asli dari kolom H
         });
     }
 
