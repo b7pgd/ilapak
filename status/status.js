@@ -264,10 +264,9 @@ function processCSVData(csvText) {
         
         // Pemetaan Sesuai Petunjuk Teknis:
         // Kolom B (Index 1) = Kode Produk, Kolom D (Index 3) = Nama Produk
-        // Kolom J (Index 9) = Approved Supv, Kolom H (Index 7) = Status Release (Sample Arrival Date)
+        // Kolom H (Index 7) = Status Release (Sample Arrival Date)
         let kodeProdukRaw = cells[1] ? cells[1].trim() : "";
         const namaProduk = cells[3] ? cells[3].trim() : "";
-        const rawApproved = cells[9] ? cells[9].trim() : "";
         const rawRelease = cells[7] ? cells[7].trim() : "";
 
         if (kodeProdukRaw === "") continue; // Bersihkan baris kosong jika ada
@@ -281,7 +280,6 @@ function processCSVData(csvText) {
         const storage = storageData.get(createStorageKey(kodeProdukRaw.substring(0, 5), kodeProdukRaw.substring(5)));
         const storageLabel = storage?.label || "";
 
-        const isApproved = rawApproved !== "";
         const isReleased = rawRelease !== "";
 
         parsedRows.push({
@@ -290,9 +288,7 @@ function processCSVData(csvText) {
             namaProduk: namaProduk,
             storageLabel: storageLabel,
             storageNumber: storage?.storageNumber || "",
-            isApproved: isApproved,
             isReleased: isReleased,
-            approvedTime: rawApproved, // Menyimpan teks tanggal/jam asli dari kolom J
             releasedTime: rawRelease   // Menyimpan teks tanggal/jam asli dari kolom H
         });
     }
@@ -350,17 +346,6 @@ function renderLatestData() {
         const storageNumberText = card.querySelector(".storage-number-text");
         if (storageNumberText) storageNumberText.textContent = item.storageNumber || "Tidak ditemukan";
 
-        // Update Badge & Teks Status Approved secara real-time di tempat
-        const appvContainer = card.querySelector(".approved-status-container");
-        if (appvContainer) {
-            const appvBadgeClass = item.isApproved ? "text-emerald-600 bg-emerald-50 border-emerald-100" : "text-rose-600 bg-rose-50 border-rose-100";
-            const appvIcon = item.isApproved ? "fa-solid fa-circle-check text-emerald-500" : "fa-solid fa-circle-xmark text-rose-500";
-            const appvText = item.isApproved ? item.approvedTime : "Belum approve";
-
-            appvContainer.className = `approved-status-container px-2.5 py-1 rounded-full border ${appvBadgeClass} flex items-center gap-1.5 font-bold text-xs text-right break-all`;
-            appvContainer.innerHTML = `<i class="${appvIcon}"></i> ${appvText}`;
-        }
-
         // Update Badge & Teks Status Released secara real-time di tempat
         const relContainer = card.querySelector(".released-status-container");
         if (relContainer) {
@@ -380,10 +365,6 @@ function createCardElement(item) {
     card.className = "bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md hover:border-blue-200 transition-all duration-200 flex flex-col justify-between space-y-4";
     card.setAttribute("data-row", item.rowNumber);
     
-    const appvBadgeClass = item.isApproved ? "text-emerald-600 bg-emerald-50 border-emerald-100" : "text-rose-600 bg-rose-50 border-rose-100";
-    const appvIcon = item.isApproved ? "fa-solid fa-circle-check text-emerald-500" : "fa-solid fa-circle-xmark text-rose-500";
-    const appvText = item.isApproved ? item.approvedTime : "Belum approve";
-
     const relBadgeClass = item.isReleased ? "text-emerald-600 bg-emerald-50 border-emerald-100" : "text-rose-600 bg-rose-50 border-rose-100";
     const relIcon = item.isReleased ? "fa-solid fa-circle-check text-emerald-500" : "fa-solid fa-circle-xmark text-rose-500";
     const relText = item.isReleased ? item.releasedTime : "Belum release";
@@ -408,12 +389,6 @@ function createCardElement(item) {
             <div class="flex justify-between items-center gap-4 text-sm">
                 <span class="text-slate-400 text-xs font-medium shrink-0">No Storage :</span>
                 <span class="storage-number-text text-slate-700 text-xs font-semibold text-right">${escapeHTML(item.storageNumber || "Tidak ditemukan")}</span>
-            </div>
-            <div class="flex justify-between items-center gap-4 text-sm">
-                <span class="text-slate-400 text-xs font-medium shrink-0">Approved Supv QC :</span>
-                <span class="approved-status-container px-2.5 py-1 rounded-full border ${appvBadgeClass} flex items-center gap-1.5 font-bold text-xs text-right break-all">
-                    <i class="${appvIcon}"></i> ${appvText}
-                </span>
             </div>
             <div class="flex justify-between items-center gap-4 text-sm">
                 <span class="text-slate-400 text-xs font-medium shrink-0">Status Release :</span>
@@ -488,10 +463,6 @@ function showSearchResultCard(item) {
     const card = document.createElement("div");
     card.className = "bg-gradient-to-br from-blue-50/50 to-white rounded-2xl p-5 border-2 border-blue-500/30 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4 w-full";
     
-    const appvBadgeClass = item.isApproved ? "text-emerald-700 bg-emerald-50 border-emerald-200" : "text-rose-700 bg-rose-50 border-rose-200";
-    const appvIcon = item.isApproved ? "fa-solid fa-circle-check text-emerald-500" : "fa-solid fa-circle-xmark text-rose-500";
-    const appvText = item.isApproved ? item.approvedTime : "Belum approve";
-    
     const relBadgeClass = item.isReleased ? "text-emerald-700 bg-emerald-50 border-emerald-200" : "text-rose-700 bg-rose-50 border-rose-200";
     const relIcon = item.isReleased ? "fa-solid fa-circle-check text-emerald-500" : "fa-solid fa-circle-xmark text-rose-500";
     const relText = item.isReleased ? item.releasedTime : "Belum release";
@@ -507,7 +478,7 @@ function showSearchResultCard(item) {
             <h3 class="text-lg font-bold text-slate-900">${item.namaProduk || "-"}</h3>
         </div>
         
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 min-w-[280px]">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 min-w-[280px]">
             <div class="flex-1 bg-white p-3 rounded-xl border border-slate-100 shadow-xs flex flex-col justify-center items-start gap-1">
                 <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Storage</span>
                 <div class="text-xs font-semibold text-slate-700 mt-1">${escapeHTML(item.storageLabel || "Tidak ditemukan")}</div>
@@ -515,12 +486,6 @@ function showSearchResultCard(item) {
             <div class="flex-1 bg-white p-3 rounded-xl border border-slate-100 shadow-xs flex flex-col justify-center items-start gap-1">
                 <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">No Storage</span>
                 <div class="text-xs font-semibold text-slate-700 mt-1">${escapeHTML(item.storageNumber || "Tidak ditemukan")}</div>
-            </div>
-            <div class="flex-1 bg-white p-3 rounded-xl border border-slate-100 shadow-xs flex flex-col justify-center items-start gap-1">
-                <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Approved Supv</span>
-                <div class="px-2.5 py-1 rounded-lg border ${appvBadgeClass} flex items-center gap-1.5 font-bold text-xs mt-1 break-all">
-                    <i class="${appvIcon}"></i> ${appvText}
-                </div>
             </div>
             <div class="flex-1 bg-white p-3 rounded-xl border border-slate-100 shadow-xs flex flex-col justify-center items-start gap-1">
                 <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Status Release</span>
